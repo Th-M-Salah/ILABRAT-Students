@@ -1,4 +1,3 @@
-
 "use strict";
 
 /* =========================================================
@@ -50,6 +49,7 @@ let originalDbIds = new Set();
 let isBusy = false;
 let toastTimer = null;
 let loadToken = 0;
+let pendingDeleteAction = null;
 
 /* =========================================================
    أدوات عامة
@@ -1081,11 +1081,273 @@ function renderSchedule() {
 }
 
 /* =========================================================
-   حذف الحصة مباشرة من بطاقة الجدول
-   الحذف محلي حتى الضغط على حفظ التغييرات
+   نافذة تأكيد حذف الحصة داخل الصفحة
    ========================================================= */
 
-function deleteLessonFromCard(id) {
+function ensureDeleteConfirmModal() {
+    if ($("deleteConfirmModal")) return;
+
+    const style = document.createElement("style");
+
+    style.id = "deleteConfirmModalStyles";
+
+    style.textContent = `
+        #deleteConfirmModal {
+            position: fixed;
+            inset: 0;
+            z-index: 10050;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(25, 12, 15, 0.62);
+            backdrop-filter: blur(4px);
+            opacity: 1;
+            visibility: visible;
+            transition: opacity .2s ease, visibility .2s ease;
+        }
+
+        #deleteConfirmModal[hidden] {
+            display: none !important;
+        }
+
+        #deleteConfirmModal .delete-confirm-box {
+            width: min(100%, 430px);
+            background: #fff;
+            border-radius: 18px;
+            padding: 26px;
+            box-shadow: 0 18px 55px rgba(0, 0, 0, .25);
+            text-align: center;
+            direction: rtl;
+            animation: deleteConfirmIn .2s ease;
+        }
+
+        #deleteConfirmModal .delete-confirm-icon {
+            width: 58px;
+            height: 58px;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #fbeaec;
+            color: #b43a42;
+            font-size: 30px;
+            font-weight: 700;
+        }
+
+        #deleteConfirmModal .delete-confirm-title {
+            margin: 0 0 10px;
+            color: #43131D;
+            font-size: 21px;
+            font-weight: 800;
+        }
+
+        #deleteConfirmModal .delete-confirm-description {
+            margin: 0 0 18px;
+            color: #6f6264;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        #deleteConfirmModal .delete-confirm-details {
+            padding: 13px 15px;
+            margin-bottom: 18px;
+            border: 1px solid #eee3df;
+            border-radius: 12px;
+            background: #faf7f4;
+            text-align: right;
+        }
+
+        #deleteConfirmModal .delete-confirm-details p {
+            margin: 5px 0;
+            color: #514347;
+            font-size: 14px;
+        }
+
+        #deleteConfirmModal .delete-confirm-details strong {
+            color: #5A1825;
+        }
+
+        #deleteConfirmModal .delete-confirm-note {
+            margin: 0 0 20px;
+            color: #8b6b42;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        #deleteConfirmModal .delete-confirm-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        #deleteConfirmModal .delete-confirm-actions button {
+            flex: 1;
+            min-height: 44px;
+            border: 0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            transition: .2s ease;
+        }
+
+        #deleteConfirmModal .delete-confirm-cancel {
+            background: #f0ece9;
+            color: #514347;
+        }
+
+        #deleteConfirmModal .delete-confirm-cancel:hover {
+            background: #e5ddd8;
+        }
+
+        #deleteConfirmModal .delete-confirm-submit {
+            background: #b43a42;
+            color: #fff;
+        }
+
+        #deleteConfirmModal .delete-confirm-submit:hover {
+            background: #922b34;
+        }
+
+        @keyframes deleteConfirmIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(.97);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @media (max-width: 480px) {
+            #deleteConfirmModal .delete-confirm-box {
+                padding: 21px 17px;
+            }
+
+            #deleteConfirmModal .delete-confirm-title {
+                font-size: 19px;
+            }
+        }
+    `;
+
+    document.head.appendChild(style);
+
+    const modal = document.createElement("div");
+
+    modal.id = "deleteConfirmModal";
+    modal.hidden = true;
+
+    modal.innerHTML = `
+        <div
+            class="delete-confirm-box"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="deleteConfirmTitle">
+
+            <div class="delete-confirm-icon">!</div>
+
+            <h3
+                id="deleteConfirmTitle"
+                class="delete-confirm-title">
+                تأكيد حذف الحصة
+            </h3>
+
+            <p class="delete-confirm-description">
+                هل أنت متأكد من رغبتك في حذف هذه الحصة؟
+            </p>
+
+            <div class="delete-confirm-details">
+                <p>المادة: <strong id="deleteConfirmSubject"></strong></p>
+                <p>اليوم: <strong id="deleteConfirmDay"></strong></p>
+                <p>رقم الحصة: <strong id="deleteConfirmPeriod"></strong></p>
+            </div>
+
+            <p class="delete-confirm-note">
+                سيتم حذف الحصة من الجدول الحالي، ولن يُثبّت الحذف
+                في قاعدة البيانات إلا بعد الضغط على «حفظ التغييرات».
+            </p>
+
+            <div class="delete-confirm-actions">
+                <button
+                    type="button"
+                    class="delete-confirm-cancel"
+                    id="cancelDeleteConfirmButton">
+                    إلغاء
+                </button>
+
+                <button
+                    type="button"
+                    class="delete-confirm-submit"
+                    id="acceptDeleteConfirmButton">
+                    تأكيد الحذف
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    $("cancelDeleteConfirmButton").addEventListener(
+        "click",
+        closeDeleteConfirmModal
+    );
+
+    $("acceptDeleteConfirmButton").addEventListener("click", () => {
+        if (isBusy) return;
+
+        const action = pendingDeleteAction;
+
+        closeDeleteConfirmModal();
+
+        if (typeof action === "function") {
+            action();
+        }
+    });
+
+    modal.addEventListener("click", event => {
+        if (event.target === modal) {
+            closeDeleteConfirmModal();
+        }
+    });
+}
+
+function openDeleteConfirmModal(lesson, onConfirm) {
+    if (isBusy || !lesson) return;
+
+    ensureDeleteConfirmModal();
+
+    const dayName =
+        DAYS.find(day => day.id === lesson.day)?.name || lesson.day;
+
+    $("deleteConfirmSubject").textContent = lesson.subject || "—";
+    $("deleteConfirmDay").textContent = dayName || "—";
+    $("deleteConfirmPeriod").textContent = lesson.period || "—";
+
+    pendingDeleteAction = onConfirm;
+
+    $("deleteConfirmModal").hidden = false;
+
+    $("acceptDeleteConfirmButton").focus();
+}
+
+function closeDeleteConfirmModal() {
+    const modal = $("deleteConfirmModal");
+
+    if (modal) {
+        modal.hidden = true;
+    }
+
+    pendingDeleteAction = null;
+}
+
+/* =========================================================
+   تنفيذ الحذف محليًا بعد تأكيد المستخدم
+   ========================================================= */
+
+function deleteLessonLocally(id) {
     if (isBusy) return;
 
     const lesson = lessons.find(item =>
@@ -1099,16 +1361,6 @@ function deleteLessonFromCard(id) {
 
     const dayName =
         DAYS.find(day => day.id === lesson.day)?.name || lesson.day;
-
-    const confirmed = confirm(
-        `هل أنت متأكد من حذف هذه الحصة؟\n\n` +
-        `المادة: ${lesson.subject}\n` +
-        `اليوم: ${dayName}\n` +
-        `رقم الحصة: ${lesson.period}\n\n` +
-        `سيتم تثبيت الحذف في قاعدة البيانات عند الضغط على «حفظ التغييرات».`
-    );
-
-    if (!confirmed) return;
 
     lessons = lessons.filter(item =>
         String(item.id) !== String(id)
@@ -1124,6 +1376,27 @@ function deleteLessonFromCard(id) {
     showToast(
         `تم حذف حصة ${lesson.subject} من ${dayName}. اضغط حفظ التغييرات لتثبيت الحذف.`
     );
+}
+
+/* =========================================================
+   حذف الحصة مباشرة من بطاقة الجدول
+   ========================================================= */
+
+function deleteLessonFromCard(id) {
+    if (isBusy) return;
+
+    const lesson = lessons.find(item =>
+        String(item.id) === String(id)
+    );
+
+    if (!lesson) {
+        showToast("تعذر العثور على الحصة المطلوبة.");
+        return;
+    }
+
+    openDeleteConfirmModal(lesson, () => {
+        deleteLessonLocally(id);
+    });
 }
 
 /* =========================================================
@@ -1270,7 +1543,7 @@ function handleLessonSubmit(event) {
    حذف الحصة من نافذة التعديل
    ========================================================= */
 
-async function deleteCurrentLesson() {
+function deleteCurrentLesson() {
     if (isBusy) return;
 
     const id = $("lessonId").value;
@@ -1278,30 +1551,16 @@ async function deleteCurrentLesson() {
     if (!id) return;
 
     const lesson = lessons.find(item => item.id === id);
-    if (!lesson) return;
 
-    const dayName =
-        DAYS.find(day => day.id === lesson.day)?.name || lesson.day;
+    if (!lesson) {
+        showToast("تعذر العثور على الحصة المطلوبة.");
+        return;
+    }
 
-    const confirmed = confirm(
-        `هل تريد حذف حصة ${lesson.subject}؟\n` +
-        `اليوم: ${dayName}\n` +
-        `رقم الحصة: ${lesson.period}`
-    );
-
-    if (!confirmed) return;
-
-    lessons = lessons.filter(item => item.id !== id);
-
-    closeLessonModal();
-    setStatus(false);
-    renderSchedule();
-    updateSelectedClassLabel();
-
-    $("saveMessage").textContent =
-        "تم حذف الحصة محليًا. اضغط حفظ التغييرات لتثبيت الحذف.";
-
-    showToast("تم حذف الحصة من الجدول الحالي. احفظ التغييرات لتأكيد الحذف.");
+    openDeleteConfirmModal(lesson, () => {
+        deleteLessonLocally(id);
+        closeLessonModal();
+    });
 }
 
 /* =========================================================
@@ -1590,6 +1849,15 @@ function bindEvents() {
     document.addEventListener("keydown", event => {
         if (
             event.key === "Escape" &&
+            $("deleteConfirmModal") &&
+            !$("deleteConfirmModal").hidden
+        ) {
+            closeDeleteConfirmModal();
+            return;
+        }
+
+        if (
+            event.key === "Escape" &&
             !$("lessonModal").hidden
         ) {
             closeLessonModal();
@@ -1623,4 +1891,5 @@ function bindEvents() {
 
 bindEvents();
 ensureDeleteLessonButton();
+ensureDeleteConfirmModal();
 initializePage();

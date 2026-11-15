@@ -1,0 +1,568 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-auth-scope="school_admin">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#5A1825">
+
+    <title>الإعلانات والإشعارات | إيلابرات ILABRAT</title>
+
+    <link rel="icon" type="image/png" href="assets/images/logo.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/school-announcements.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+
+    <!-- تنسيق حقلي نطاق الإعلان والفئة المستهدفة -->
+    <style>
+        .form-field.announcement-options {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+            gap: 12px;
+            align-items: start;
+            margin-bottom: 2px;
+        }
+
+        .announcement-options .compact-field {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .announcement-options label {
+            margin-bottom: 0;
+            font-size: 13px;
+        }
+
+        .announcement-options select {
+            width: 100%;
+            min-width: 0;
+            height: 42px;
+            padding: 7px 12px;
+            font-size: 13px;
+        }
+
+        .announcement-options small {
+            font-size: 11px;
+            line-height: 1.6;
+            margin-top: 1px;
+        }
+
+        @media (max-width: 600px) {
+            .form-field.announcement-options {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app-shell">
+
+    <!-- القائمة الجانبية -->
+    <aside class="sidebar">
+
+        <div class="sidebar-brand">
+            <div class="brand-mark">I</div>
+
+            <div>
+                <div class="brand-name">ILABRAT</div>
+                <div class="brand-subtitle">SCHOOL ADMIN</div>
+            </div>
+        </div>
+
+        <div class="sidebar-school">
+            <span class="sidebar-school-label">المدرسة</span>
+            <strong id="sidebarSchoolName">جاري التحميل...</strong>
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <div class="nav-section-title">القائمة الرئيسية</div>
+
+            <a href="admin-timetable.html" class="nav-item">
+                <span class="nav-icon">⌂</span>
+                <span>الرئيسية</span>
+            </a>
+
+            <a href="teacher-registration.html" class="nav-item">
+                <span class="nav-icon">♙</span>
+                <span>إضافة معلم</span>
+            </a>
+
+            <a href="student-accounts.html" class="nav-item">
+                <span class="nav-icon">♧</span>
+                <span>إضافة طالب</span>
+            </a>
+
+            <a href="teacher-accounts.html" class="nav-item">
+                <span class="nav-icon">♧</span>
+                <span>حسابات المعلمين</span>
+            </a>
+
+            <a href="student-management.html" class="nav-item">
+                <span class="nav-icon">♧</span>
+                <span>حسابات الطلاب</span>
+            </a>
+
+            <a href="admin-timetable.html" class="nav-item">
+                <span class="nav-icon">▦</span>
+                <span>إدارة الجدول</span>
+            </a>
+
+            <a href="admin-view-timetables.html" class="nav-item">
+                <span class="nav-icon">▤</span>
+                <span>عرض الجداول</span>
+            </a>
+
+            <a href="school-announcements.html" class="nav-item active">
+                <span class="nav-icon">✦</span>
+                <span>الإعلانات والإشعارات</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <div class="sidebar-user">
+
+                <div class="user-avatar" id="adminAvatar">م</div>
+
+                <div class="user-info">
+                    <strong id="adminDisplayName">مدير المدرسة</strong>
+                    <span>مدير المدرسة</span>
+                </div>
+
+            </div>
+
+            <a href="index.html" class="logout-link">
+                <span>↪</span>
+                تسجيل الخروج
+            </a>
+
+        </div>
+
+    </aside>
+
+    <!-- المحتوى الرئيسي -->
+    <main class="main-area">
+
+        <header class="topbar">
+
+            <div>
+                <div class="topbar-title">الإعلانات والإشعارات</div>
+
+                <div class="topbar-subtitle">
+                    إدارة إعلانات المدرسة للطلاب والمعلمين
+                </div>
+            </div>
+
+            <div class="topbar-user">
+                <span class="topbar-user-dot"></span>
+                <span id="topbarAdminName">مدير المدرسة</span>
+            </div>
+
+        </header>
+
+        <div class="page-content">
+
+            <!-- الترحيب -->
+            <section class="welcome-panel">
+
+                <div>
+                    <span class="welcome-eyebrow">
+                        ILABRAT · COMMUNICATION
+                    </span>
+
+                    <h1>الإعلانات والإشعارات</h1>
+
+                    <p>
+                        انشر أخبار المدرسة وتنبيهاتها، وحدد الفئة المستهدفة
+                        والشعبة التي تريد إيصال الإعلان إليها.
+                    </p>
+                </div>
+
+                <div class="welcome-icon">✦</div>
+
+            </section>
+
+            <!-- رسائل الصفحة -->
+            <div id="pageAlert" class="page-alert" hidden></div>
+
+            <!-- الإحصائيات -->
+            <section class="stats-grid">
+
+                <article class="stat-card">
+
+                    <div class="stat-icon">✦</div>
+
+                    <div>
+                        <span>إجمالي الإعلانات</span>
+                        <strong id="totalAnnouncements">0</strong>
+                    </div>
+
+                </article>
+
+                <article class="stat-card">
+
+                    <div class="stat-icon">◷</div>
+
+                    <div>
+                        <span>إعلانات نشطة</span>
+                        <strong id="activeAnnouncements">0</strong>
+                    </div>
+
+                </article>
+
+                <article class="stat-card">
+
+                    <div class="stat-icon">▧</div>
+
+                    <div>
+                        <span>إعلانات منتهية</span>
+                        <strong id="expiredAnnouncements">0</strong>
+                    </div>
+
+                </article>
+
+            </section>
+
+            <!-- إنشاء إعلان -->
+            <section class="content-card composer-card">
+
+                <div class="section-heading">
+
+                    <div>
+                        <span class="section-kicker">
+                            NEW ANNOUNCEMENT
+                        </span>
+
+                        <h2 id="formTitle">إنشاء إعلان جديد</h2>
+
+                        <p>اكتب الإعلان وحدد من سيشاهده.</p>
+                    </div>
+
+                    <span class="heading-symbol">✧</span>
+
+                </div>
+
+                <form id="announcementForm" novalidate>
+
+                    <input type="hidden" id="announcementId">
+
+                    <div class="form-grid">
+
+                        <!-- نطاق الإعلان والفئة المستهدفة -->
+                        <div class="form-field announcement-options">
+
+                            <div class="compact-field">
+
+                                <label for="classSelect">
+                                    نطاق الإعلان
+                                </label>
+
+                                <select id="classSelect">
+                                    <option value="">جميع شعب المدرسة</option>
+                                </select>
+
+                                <small>
+                                    اترك الاختيار على جميع شعب المدرسة لنشر الإعلان للجميع.
+                                </small>
+
+                            </div>
+
+                            <div class="compact-field">
+
+                                <label for="audienceSelect">
+                                    الفئة المستهدفة
+                                </label>
+
+                                <select id="audienceSelect" required>
+
+                                    <option value="both">
+                                        الطلاب والمعلمون
+                                    </option>
+
+                                    <option value="students">
+                                        الطلاب فقط
+                                    </option>
+
+                                    <option value="teachers">
+                                        المعلمون فقط
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                        </div>
+
+                        <!-- نص الإعلان -->
+                        <div class="form-field full-width">
+
+                            <label for="announcementContent">
+                                نص الإعلان
+                            </label>
+
+                            <textarea
+                                id="announcementContent"
+                                rows="5"
+                                maxlength="5000"
+                                placeholder="اكتب الإعلان أو التنبيه هنا..."
+                            ></textarea>
+
+                            <div class="field-footer">
+
+                                <small>
+                                    يمكنك نشر إعلان نصي أو إرفاق صورة أو الجمع بينهما.
+                                </small>
+
+                                <span id="contentCounter">
+                                    0 / 5000
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                        <!-- صورة الإعلان -->
+                        <div class="form-field full-width">
+
+                            <label for="announcementImages">
+                                صورة الإعلان
+                            </label>
+
+                            <div class="upload-box" id="uploadBox">
+
+                                <div class="upload-icon">▧</div>
+
+                                <strong>اختر صورة الإعلان</strong>
+
+                                <span>
+                                    JPG أو PNG أو WEBP · الحد الأقصى 10 MB
+                                </span>
+
+                                <input
+                                    type="file"
+                                    id="announcementImages"
+                                    accept="image/jpeg,image/png,image/webp"
+                                >
+
+                            </div>
+
+                            <div
+                                id="newImagesPreview"
+                                class="images-preview"
+                            ></div>
+
+                            <div
+                                id="existingImagesPreview"
+                                class="images-preview"
+                            ></div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- مدة الإعلان -->
+                    <div class="expiry-note">
+
+                        <span>◷</span>
+
+                        <span>
+                            مدة ظهور الإعلان 6 أيام من تاريخ النشر، ثم يصبح منتهيًا.
+                        </span>
+
+                    </div>
+
+                    <!-- الأزرار -->
+                    <div class="form-actions">
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                            id="saveAnnouncementBtn"
+                        >
+
+                            <span>✦</span>
+
+                            <span id="saveButtonText">
+                                نشر الإعلان
+                            </span>
+
+                        </button>
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="cancelEditBtn"
+                            hidden
+                        >
+                            إلغاء التعديل
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </section>
+
+            <!-- قائمة الإعلانات -->
+            <section class="content-card announcements-card">
+
+                <div class="section-heading list-heading">
+
+                    <div>
+                        <span class="section-kicker">
+                            ANNOUNCEMENTS ARCHIVE
+                        </span>
+
+                        <h2>إعلانات المدرسة</h2>
+
+                        <p>
+                            يمكنك مراجعة الإعلانات الحالية والمنتهية وتعديلها.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn btn-refresh"
+                        id="refreshBtn"
+                    >
+                        ↻ تحديث
+                    </button>
+
+                </div>
+
+                <!-- فلاتر القائمة -->
+                <div class="list-filters">
+
+                    <div class="form-field filter-field">
+
+                        <label for="filterStatus">
+                            حالة الإعلان
+                        </label>
+
+                        <select id="filterStatus">
+
+                            <option value="all">الكل</option>
+                            <option value="active">نشطة</option>
+                            <option value="expired">منتهية</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="form-field filter-field">
+
+                        <label for="filterAudience">
+                            الفئة المستهدفة
+                        </label>
+
+                        <select id="filterAudience">
+
+                            <option value="all">الكل</option>
+                            <option value="students">الطلاب</option>
+                            <option value="teachers">المعلمون</option>
+                            <option value="both">الطلاب والمعلمون</option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+                <!-- الإعلانات -->
+                <div
+                    id="announcementsList"
+                    class="announcements-list"
+                >
+
+                    <div class="loading-state">
+
+                        <span class="loading-spinner"></span>
+
+                        <p>جاري تحميل الإعلانات...</p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+</div>
+
+<!-- نافذة تأكيد الحذف -->
+<div class="modal-overlay" id="deleteModal" hidden>
+
+    <div
+        class="modal-card confirm-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="deleteModalTitle"
+    >
+
+        <div class="modal-icon danger-icon">!</div>
+
+        <h3 id="deleteModalTitle">
+            تأكيد حذف الإعلان
+        </h3>
+
+        <p>
+            هل أنت متأكد من حذف هذا الإعلان وجميع صوره؟
+            لا يمكن التراجع عن هذه العملية.
+        </p>
+
+        <div class="modal-actions">
+
+            <button
+                type="button"
+                class="btn btn-danger"
+                id="confirmDeleteBtn"
+            >
+                نعم، احذف الإعلان
+            </button>
+
+            <button
+                type="button"
+                class="btn btn-secondary"
+                id="cancelDeleteBtn"
+            >
+                إلغاء
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- مؤشر التحميل -->
+<div id="globalLoader" class="global-loader" hidden>
+
+    <span class="loading-spinner"></span>
+
+    <p>يرجى الانتظار...</p>
+
+</div>
+
+<!-- تحميل JavaScript مرة واحدة فقط -->
+<script src="js/school-announcements.js"></script>
+
+</body>
+</html>

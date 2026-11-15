@@ -1,11 +1,10 @@
 
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" data-auth-scope="teacher">
-    <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#5A1825">
-
     <title>لوحة المعلم | إيلابرات ILABRAT</title>
 
     <link rel="icon" type="image/png" href="assets/ilabrat-logo.png">
@@ -52,7 +51,6 @@
                 <span>جدولي الدراسي</span>
             </button>
 
-            <!-- الجدول الأسبوعي الجديد -->
             <button type="button" class="teacher-nav-link" data-section="weekly">
                 <span class="nav-symbol">▦</span>
                 <span>الجدول الأسبوعي</span>
@@ -66,6 +64,13 @@
             <button type="button" class="teacher-nav-link" data-section="assignments">
                 <span class="nav-symbol">♧</span>
                 <span>الشعب المكلّف بها</span>
+            </button>
+
+            <!-- غرف الأسئلة -->
+            <button type="button" class="teacher-nav-link" data-section="chat">
+                <span class="nav-symbol">✉</span>
+                <span>غرف أسئلة الطلاب</span>
+                <span class="nav-count" id="teacherChatBadge" hidden>0</span>
             </button>
 
             <button type="button" class="teacher-nav-link" data-section="announcements">
@@ -124,7 +129,7 @@
 
             <div class="page-message" id="pageMessage" role="status" aria-live="polite" hidden></div>
 
-            <!-- القسم الأول: الجدول اليومي -->
+            <!-- الجدول اليومي -->
             <section class="teacher-section active" id="section-schedule">
 
                 <div class="welcome-panel">
@@ -161,6 +166,14 @@
                         <div>
                             <span>المرفقات</span>
                             <strong id="attachmentCount">—</strong>
+                        </div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-icon">▤</div>
+                        <div>
+                            <span>الإعلانات غير المشاهدة</span>
+                            <strong id="unreadAnnouncementCount">0</strong>
                         </div>
                     </article>
 
@@ -210,7 +223,7 @@
 
             </section>
 
-            <!-- القسم الجديد: الجدول الأسبوعي -->
+            <!-- الجدول الأسبوعي -->
             <section class="teacher-section" id="section-weekly">
 
                 <div class="section-intro">
@@ -243,7 +256,7 @@
 
             </section>
 
-            <!-- القسم الثاني: إرسال الواجبات -->
+            <!-- إرسال الواجبات -->
             <section class="teacher-section" id="section-homework">
 
                 <div class="section-intro">
@@ -336,7 +349,7 @@
 
             </section>
 
-            <!-- القسم الثالث: الشعب والتكليفات -->
+            <!-- الشعب والتكليفات -->
             <section class="teacher-section" id="section-assignments">
 
                 <div class="section-intro">
@@ -379,7 +392,127 @@
 
             </section>
 
-            <!-- القسم الرابع: الإعلانات والتنبيهات -->
+            <!-- غرف أسئلة الطلاب -->
+            <section class="teacher-section" id="section-chat">
+
+                <div class="section-intro">
+                    <span class="section-eyebrow">التواصل مع الطلاب</span>
+                    <h2>غرف أسئلة الطلاب</h2>
+                    <p>افتح غرفة للمادة والشعبة المكلّف بهما، وتابع أسئلة الطلاب وأجب عنها.</p>
+                </div>
+
+                <!-- فتح غرفة -->
+                <div class="content-panel teacher-chat-open-panel">
+
+                    <div class="panel-heading">
+                        <div>
+                            <h2>فتح غرفة أسئلة</h2>
+                            <p>يمكنك فتح أكثر من غرفة لمواد أو شعب مختلفة حسب تكليفاتك.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="form-field">
+                            <label for="teacherChatClass">الشعبة</label>
+                            <select id="teacherChatClass">
+                                <option value="">جارٍ تحميل تكليفاتك...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="teacherChatSubject">المادة</label>
+                            <select id="teacherChatSubject" disabled>
+                                <option value="">اختر الشعبة أولاً</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="primary-button" id="openTeacherChatRoomButton" disabled>
+                            فتح الغرفة
+                        </button>
+
+                        <button type="button" class="outline-button" id="refreshTeacherChatButton">
+                            ↻ تحديث الغرف
+                        </button>
+                    </div>
+
+                    <div class="form-message" id="teacherChatActionMessage" role="status" aria-live="polite"></div>
+
+                </div>
+
+                <!-- قائمة الغرف -->
+                <div class="content-panel">
+
+                    <div class="panel-heading">
+                        <div>
+                            <h2>غرف الأسئلة</h2>
+                            <p>الغرف الحالية وسجل الغرف السابقة.</p>
+                        </div>
+                    </div>
+
+                    <div id="teacherChatRoomsList" class="teacher-chat-rooms-list">
+                        <div class="loading-state">
+                            <span class="loading-spinner"></span>
+                            <p>جارٍ تحميل غرف الأسئلة...</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- المحادثة -->
+                <div class="content-panel teacher-chat-conversation-panel" id="teacherChatConversationPanel" hidden>
+
+                    <div class="panel-heading teacher-chat-heading">
+                        <div>
+                            <span class="section-eyebrow">المحادثة</span>
+                            <h2 id="teacherChatRoomTitle">غرفة الأسئلة</h2>
+                            <p id="teacherChatRoomStatus">اختر غرفة لعرض المحادثة.</p>
+                        </div>
+
+                        <button type="button" class="outline-button" id="closeTeacherChatRoomButton" hidden>
+                            إغلاق الغرفة
+                        </button>
+                    </div>
+
+                    <div id="teacherChatMessages" class="teacher-chat-messages" aria-live="polite">
+                        <div class="empty-state">
+                            <div class="empty-icon">✉</div>
+                            <h3>لا توجد محادثة محددة</h3>
+                            <p>اختر غرفة من القائمة لعرض الرسائل.</p>
+                        </div>
+                    </div>
+
+                    <form id="teacherChatMessageForm" class="teacher-chat-message-form">
+
+                        <div class="form-field">
+                            <label for="teacherChatMessageInput">اكتب إجابتك</label>
+                            <textarea
+                                id="teacherChatMessageInput"
+                                rows="3"
+                                maxlength="5000"
+                                placeholder="اكتب إجابتك عن سؤال الطالب..."
+                                disabled
+                            ></textarea>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="primary-button" id="sendTeacherChatMessageButton" disabled>
+                                إرسال الإجابة
+                            </button>
+                        </div>
+
+                        <div class="form-message" id="teacherChatMessageStatus" role="status" aria-live="polite"></div>
+
+                    </form>
+
+                </div>
+
+            </section>
+
+            <!-- الإعلانات والتنبيهات -->
             <section class="teacher-section" id="section-announcements">
 
                 <div class="section-intro">
@@ -411,7 +544,7 @@
 
             </section>
 
-            <!-- القسم الخامس: حساب المعلم -->
+            <!-- حساب المعلم -->
             <section class="teacher-section" id="section-profile">
 
                 <div class="section-intro">

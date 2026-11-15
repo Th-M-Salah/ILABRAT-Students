@@ -5,9 +5,13 @@
    ILABRAT TEACHER PORTAL
    Supabase + homework-handler
    Teacher-specific authentication session
+   School announcements: school-announcements-handler
+   Teacher chat: teacher-chat-handler
    ========================================================= */
 
 const HOMEWORK_FUNCTION = "homework-handler";
+const ANNOUNCEMENTS_FUNCTION = "school-announcements-handler";
+const TEACHER_CHAT_FUNCTION = "teacher-chat-handler";
 
 const TEACHER_DAYS = [
     { id: "sun", name: "الأحد", values: ["sun", "sunday", "الأحد", "الاحد", "0"] },
@@ -34,6 +38,22 @@ const state = {
     schedule: [],
     assignments: [],
     homeworkPosts: [],
+
+    // إعلانات المدرسة منفصلة عن واجبات المعلم.
+    announcements: [],
+    announcementsError: "",
+
+    // منع إرسال طلب مشاهدة مكرر للإعلان نفسه.
+    pendingAnnouncementReads: new Set(),
+
+    // غرف أسئلة الطلاب.
+    teacherChatRooms: [],
+    selectedTeacherChatRoom: null,
+    teacherChatMessages: [],
+    isLoadingTeacherChat: false,
+    isOpeningTeacherChat: false,
+    isClosingTeacherChat: false,
+    isSendingTeacherChatMessage: false,
 
     selectedDay: getTodayDayId(),
 
@@ -72,6 +92,9 @@ const elements = {
     assignmentCount: $("assignmentCount"),
     attachmentCount: $("attachmentCount"),
 
+    // عدد إعلانات المدرسة غير المشاهدة.
+    unreadAnnouncementCount: $("unreadAnnouncementCount"),
+
     dayTabs: [...document.querySelectorAll(".day-tab")],
     selectedDayTitle: $("selectedDayTitle"),
     selectedDayDescription: $("selectedDayDescription"),
@@ -105,6 +128,24 @@ const elements = {
     announcementsList: $("teacherAnnouncementsList"),
     announcementBadge: $("announcementBadge"),
     refreshAnnouncementsButton: $("refreshAnnouncementsButton"),
+
+    // غرف أسئلة الطلاب.
+    teacherChatBadge: $("teacherChatBadge"),
+    teacherChatClass: $("teacherChatClass"),
+    teacherChatSubject: $("teacherChatSubject"),
+    openTeacherChatRoomButton: $("openTeacherChatRoomButton"),
+    refreshTeacherChatButton: $("refreshTeacherChatButton"),
+    teacherChatActionMessage: $("teacherChatActionMessage"),
+    teacherChatRoomsList: $("teacherChatRoomsList"),
+    teacherChatConversationPanel: $("teacherChatConversationPanel"),
+    teacherChatRoomTitle: $("teacherChatRoomTitle"),
+    teacherChatRoomStatus: $("teacherChatRoomStatus"),
+    closeTeacherChatRoomButton: $("closeTeacherChatRoomButton"),
+    teacherChatMessages: $("teacherChatMessages"),
+    teacherChatMessageForm: $("teacherChatMessageForm"),
+    teacherChatMessageInput: $("teacherChatMessageInput"),
+    sendTeacherChatMessageButton: $("sendTeacherChatMessageButton"),
+    teacherChatMessageStatus: $("teacherChatMessageStatus"),
 
     profileAvatar: $("profileAvatar"),
     profileFullName: $("profileFullName"),
@@ -407,7 +448,7 @@ async function readFunctionError(error) {
 }
 
 /* =========================================================
-   EDGE FUNCTION REQUEST
+   EDGE FUNCTION REQUEST — HOMEWORK
    ========================================================= */
 
 async function callHomeworkHandler(action, payload = {}) {
@@ -509,6 +550,106 @@ async function callHomeworkHandlerWithFiles(
     if (!data || data.success !== true) {
         throw new Error(
             data?.message || "لم تنجح العملية المطلوبة."
+        );
+    }
+
+    return data;
+}
+
+/* =========================================================
+   EDGE FUNCTION REQUEST — SCHOOL ANNOUNCEMENTS
+   ========================================================= */
+
+async function callAnnouncementsHandler(action, payload = {}) {
+    if (!state.supabase) {
+        throw new Error("اتصال قاعدة البيانات غير متاح.");
+    }
+
+    const { data, error } = await state.supabase.functions.invoke(
+        ANNOUNCEMENTS_FUNCTION,
+        {
+            body: {
+                action,
+                ...payload
+            }
+        }
+    );
+
+    if (error) {
+        const serverMessage = await readFunctionError(error);
+
+        console.error("SCHOOL ANNOUNCEMENTS HANDLER ERROR:", {
+            action,
+            status: error?.context?.status,
+            serverMessage,
+            error
+        });
+
+        throw new Error(
+            serverMessage ||
+            getErrorMessage(error, "تعذر الاتصال بخدمة إعلانات المدرسة.")
+        );
+    }
+
+    if (!data || data.success !== true) {
+        console.error("SCHOOL ANNOUNCEMENTS INVALID RESPONSE:", {
+            action,
+            data
+        });
+
+        throw new Error(
+            data?.error ||
+            data?.message ||
+            "لم تنجح عملية إعلانات المدرسة."
+        );
+    }
+
+    return data;
+}
+
+/* =========================================================
+   EDGE FUNCTION REQUEST — TEACHER CHAT
+   ========================================================= */
+
+async function callTeacherChatHandler(action, payload = {}) {
+    if (!state.supabase) {
+        throw new Error("اتصال قاعدة البيانات غير متاح.");
+    }
+
+    const { data, error } = await state.supabase.functions.invoke(
+        TEACHER_CHAT_FUNCTION,
+        {
+            body: {
+                action,
+                ...payload
+            }
+        }
+    );
+
+    if (error) {
+        const serverMessage = await readFunctionError(error);
+
+        console.error("TEACHER CHAT HANDLER ERROR:", {
+            action,
+            status: error?.context?.status,
+            serverMessage,
+            error
+        });
+
+        throw new Error(
+            serverMessage ||
+            getErrorMessage(error, "تعذر الاتصال بخدمة غرف الأسئلة.")
+        );
+    }
+
+    if (!data || data.success !== true) {
+        console.error("TEACHER CHAT INVALID RESPONSE:", {
+            action,
+            data
+        });
+
+        throw new Error(
+            data?.message || "لم تنجح عملية غرف الأسئلة."
         );
     }
 
@@ -682,6 +823,15 @@ function openSection(sectionName) {
         renderWeeklySchedule();
     }
 
+    if (sectionName === "announcements") {
+        renderTeacherAnnouncements();
+    }
+
+    if (sectionName === "chat") {
+        populateTeacherChatOptions();
+        loadTeacherChatRooms();
+    }
+
     if (sectionName === "profile") {
         renderProfile();
     }
@@ -752,6 +902,7 @@ async function loadTeacherSchedule() {
         renderWeeklySchedule();
         renderTeacherAssignments();
         populateHomeworkOptions();
+        populateTeacherChatOptions();
         updateStatistics();
 
         showPageMessage("", "info");
@@ -774,6 +925,7 @@ async function loadTeacherSchedule() {
         renderWeeklySchedule();
         renderTeacherAssignments();
         populateHomeworkOptions();
+        populateTeacherChatOptions();
         updateStatistics();
 
         showPageMessage(
@@ -2274,33 +2426,1309 @@ function updateStatistics() {
     );
 
     setText("attachmentCount", attachmentCount);
+
+    // عدد إعلانات المدرسة التي لم يشاهدها المعلم بعد.
+    setText(
+        "unreadAnnouncementCount",
+        getUnreadAnnouncementCount()
+    );
 }
 
 /* =========================================================
-   ANNOUNCEMENTS
+   TEACHER CHAT — ASSIGNMENT OPTIONS
    ========================================================= */
 
-function loadAnnouncementsPlaceholder() {
-    /*
-     * لا نخلط واجبات المعلم بإعلانات إدارة المدرسة.
-     * تبقى الإعلانات مستقلة حتى ربط مصدرها المخصص.
-     */
+function populateTeacherChatOptions() {
+    if (!elements.teacherChatClass ||
+        !elements.teacherChatSubject) {
+        return;
+    }
 
-    showEmpty(
-        elements.announcementsList,
-        "لا يوجد مصدر إعلانات مربوط حتى الآن",
-        "ستظهر إعلانات إدارة المدرسة هنا بعد تحديد جدول الإعلانات وصلاحيات قراءته."
+    const previousClassId = elements.teacherChatClass.value;
+    const previousSubject = elements.teacherChatSubject.value;
+
+    const classes = new Map();
+
+    state.assignments.forEach(item => {
+        const classId = Number(item.class_id);
+
+        if (!Number.isSafeInteger(classId) || classId <= 0) {
+            return;
+        }
+
+        if (!classes.has(String(classId))) {
+            classes.set(String(classId), {
+                id: classId,
+                label: classLabel(item.class)
+            });
+        }
+    });
+
+    elements.teacherChatClass.innerHTML = `
+        <option value="">اختر الشعبة</option>
+
+        ${[...classes.values()].map(item => `
+            <option value="${escapeHTML(item.id)}">
+                ${escapeHTML(item.label)}
+            </option>
+        `).join("")}
+    `;
+
+    if (previousClassId && classes.has(previousClassId)) {
+        elements.teacherChatClass.value = previousClassId;
+    }
+
+    updateTeacherChatSubjects(previousSubject);
+}
+
+function updateTeacherChatSubjects(preferredSubject = "") {
+    if (!elements.teacherChatSubject) return;
+
+    const classId = Number(elements.teacherChatClass?.value);
+
+    if (!classId) {
+        elements.teacherChatSubject.innerHTML =
+            '<option value="">اختر الشعبة أولاً</option>';
+
+        elements.teacherChatSubject.disabled = true;
+
+        if (elements.openTeacherChatRoomButton) {
+            elements.openTeacherChatRoomButton.disabled = true;
+        }
+
+        return;
+    }
+
+    const subjects = [...new Set(
+        state.assignments
+            .filter(item => Number(item.class_id) === classId)
+            .map(item => item.subject)
+            .filter(Boolean)
+    )];
+
+    elements.teacherChatSubject.innerHTML = `
+        <option value="">اختر المادة</option>
+
+        ${subjects.map(subject => `
+            <option value="${escapeHTML(subject)}">
+                ${escapeHTML(subject)}
+            </option>
+        `).join("")}
+    `;
+
+    elements.teacherChatSubject.disabled = subjects.length === 0;
+
+    if (preferredSubject && subjects.includes(preferredSubject)) {
+        elements.teacherChatSubject.value = preferredSubject;
+    }
+
+    updateTeacherChatOpenButton();
+}
+
+function updateTeacherChatOpenButton() {
+    if (!elements.openTeacherChatRoomButton) return;
+
+    const classId = Number(elements.teacherChatClass?.value);
+    const subject = elements.teacherChatSubject?.value || "";
+
+    const permitted = state.assignments.some(item =>
+        Number(item.class_id) === classId &&
+        item.subject === subject
     );
 
-    if (elements.announcementBadge) {
-        elements.announcementBadge.hidden = true;
+    elements.openTeacherChatRoomButton.disabled =
+        !permitted || state.isOpeningTeacherChat;
+}
+
+function showTeacherChatActionMessage(message, type = "error") {
+    if (!elements.teacherChatActionMessage) return;
+
+    elements.teacherChatActionMessage.textContent = message;
+    elements.teacherChatActionMessage.className =
+        `form-message ${type === "success" ? "success" : ""}`;
+
+    elements.teacherChatActionMessage.hidden = !message;
+}
+
+function showTeacherChatMessageStatus(message, type = "error") {
+    if (!elements.teacherChatMessageStatus) return;
+
+    elements.teacherChatMessageStatus.textContent = message;
+    elements.teacherChatMessageStatus.className =
+        `form-message ${type === "success" ? "success" : ""}`;
+
+    elements.teacherChatMessageStatus.hidden = !message;
+}
+
+function findTeacherChatAssignment(classId, subject) {
+    return state.assignments.find(item =>
+        Number(item.class_id) === Number(classId) &&
+        item.subject === subject
+    ) || null;
+}
+
+function getTeacherChatRoomClassLabel(room) {
+    const assignment = findTeacherChatAssignment(
+        room.class_id,
+        room.subject
+    );
+
+    if (assignment?.class) {
+        return classLabel(assignment.class);
     }
+
+    if (room.class) {
+        return classLabel(room.class);
+    }
+
+    return `الشعبة رقم ${room.class_id ?? "—"}`;
+}
+
+function getTeacherChatRoomStatus(room) {
+    return room?.status === "open" ? "مفتوحة" : "مغلقة";
+}
+
+function formatDuration(seconds) {
+    const total = Math.max(0, Number(seconds) || 0);
+
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const remainingSeconds = total % 60;
+
+    if (hours > 0) {
+        return `${hours} ساعة و${minutes} دقيقة`;
+    }
+
+    if (minutes > 0) {
+        return `${minutes} دقيقة`;
+    }
+
+    return `${remainingSeconds} ثانية`;
+}
+
+function getTeacherChatRoomDuration(room) {
+    if (room?.duration_seconds !== null &&
+        room?.duration_seconds !== undefined) {
+        return formatDuration(room.duration_seconds);
+    }
+
+    if (room?.status === "open" && room?.opened_at) {
+        const elapsed = Math.floor(
+            (Date.now() - new Date(room.opened_at).getTime()) / 1000
+        );
+
+        return formatDuration(elapsed);
+    }
+
+    return "—";
+}
+
+function updateTeacherChatBadge() {
+    if (!elements.teacherChatBadge) return;
+
+    const openCount = state.teacherChatRooms.filter(room =>
+        room.status === "open"
+    ).length;
+
+    elements.teacherChatBadge.textContent = String(openCount);
+    elements.teacherChatBadge.hidden = openCount === 0;
+}
+
+/* =========================================================
+   TEACHER CHAT — ROOMS LIST
+   ========================================================= */
+
+async function loadTeacherChatRooms(options = {}) {
+    if (!elements.teacherChatRoomsList) return;
+
+    const preserveSelection = options.preserveSelection !== false;
+    const selectedRoomId = preserveSelection
+        ? state.selectedTeacherChatRoom?.id
+        : null;
+
+    if (elements.refreshTeacherChatButton) {
+        elements.refreshTeacherChatButton.disabled = true;
+    }
+
+    setLoading(
+        elements.teacherChatRoomsList,
+        "جارٍ تحميل غرف الأسئلة..."
+    );
+
+    try {
+        const result = await callTeacherChatHandler(
+            "teacher_list_rooms"
+        );
+
+        state.teacherChatRooms = Array.isArray(result.rooms)
+            ? result.rooms
+            : [];
+
+        renderTeacherChatRooms();
+        updateTeacherChatBadge();
+
+        if (selectedRoomId) {
+            const updatedRoom = state.teacherChatRooms.find(room =>
+                String(room.id) === String(selectedRoomId)
+            );
+
+            if (updatedRoom) {
+                state.selectedTeacherChatRoom = updatedRoom;
+                renderTeacherChatConversationHeader();
+            } else {
+                state.selectedTeacherChatRoom = null;
+                state.teacherChatMessages = [];
+
+                if (elements.teacherChatConversationPanel) {
+                    elements.teacherChatConversationPanel.hidden = true;
+                }
+            }
+        }
+
+    } catch (error) {
+        console.error("LOAD TEACHER CHAT ROOMS ERROR:", error);
+
+        showEmpty(
+            elements.teacherChatRoomsList,
+            "تعذر تحميل غرف الأسئلة",
+            getErrorMessage(
+                error,
+                "تعذر جلب قائمة غرف الأسئلة."
+            )
+        );
+
+    } finally {
+        if (elements.refreshTeacherChatButton) {
+            elements.refreshTeacherChatButton.disabled = false;
+        }
+    }
+}
+
+function renderTeacherChatRooms() {
+    if (!elements.teacherChatRoomsList) return;
+
+    if (!state.teacherChatRooms.length) {
+        showEmpty(
+            elements.teacherChatRoomsList,
+            "لا توجد غرف أسئلة بعد",
+            "يمكنك فتح غرفة جديدة للشعبة والمادة المسندتين إليك."
+        );
+
+        updateTeacherChatBadge();
+        return;
+    }
+
+    const sortedRooms = [...state.teacherChatRooms].sort((a, b) => {
+        const aTime = new Date(
+            a.opened_at || a.created_at || 0
+        ).getTime();
+
+        const bTime = new Date(
+            b.opened_at || b.created_at || 0
+        ).getTime();
+
+        return bTime - aTime;
+    });
+
+    elements.teacherChatRoomsList.innerHTML =
+        sortedRooms.map(room => {
+            const isOpen = room.status === "open";
+
+            const isSelected =
+                String(state.selectedTeacherChatRoom?.id) ===
+                String(room.id);
+
+            return `
+                <article
+                    class="teacher-chat-room-card ${isOpen ? "is-open" : "is-closed"} ${isSelected ? "selected" : ""}"
+                    data-room-id="${escapeHTML(room.id)}">
+
+                    <div class="teacher-chat-room-card-heading">
+
+                        <div>
+                            <h3>${escapeHTML(room.subject || "مادة غير محددة")}</h3>
+
+                            <p>
+                                ${escapeHTML(getTeacherChatRoomClassLabel(room))}
+                            </p>
+                        </div>
+
+                        <span class="teacher-chat-room-status ${isOpen ? "open" : "closed"}">
+                            ${isOpen ? "مفتوحة" : "مغلقة"}
+                        </span>
+
+                    </div>
+
+                    <div class="teacher-chat-room-meta">
+
+                        <span>
+                            <strong>وقت الفتح:</strong>
+                            ${escapeHTML(formatDateTime(room.opened_at))}
+                        </span>
+
+                        <span>
+                            <strong>وقت الإغلاق:</strong>
+                            ${escapeHTML(formatDateTime(room.closed_at))}
+                        </span>
+
+                        <span>
+                            <strong>المدة:</strong>
+                            ${escapeHTML(getTeacherChatRoomDuration(room))}
+                        </span>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="secondary-button teacher-chat-view-button"
+                        data-action="view-chat-room"
+                        data-room-id="${escapeHTML(room.id)}">
+                        عرض المحادثة
+                    </button>
+
+                </article>
+            `;
+        }).join("");
+
+    updateTeacherChatBadge();
+}
+
+/* =========================================================
+   TEACHER CHAT — OPEN ROOM
+   ========================================================= */
+
+async function openTeacherChatRoom() {
+    if (state.isOpeningTeacherChat) return;
+
+    const classId = Number(elements.teacherChatClass?.value);
+    const subject = (
+        elements.teacherChatSubject?.value || ""
+    ).trim();
+
+    if (!Number.isSafeInteger(classId) || classId <= 0) {
+        showTeacherChatActionMessage("يرجى اختيار الشعبة.");
+        return;
+    }
+
+    if (!subject) {
+        showTeacherChatActionMessage("يرجى اختيار المادة.");
+        return;
+    }
+
+    const permitted = findTeacherChatAssignment(classId, subject);
+
+    if (!permitted) {
+        showTeacherChatActionMessage(
+            "هذه الشعبة أو المادة ليست ضمن تكليفات حسابك."
+        );
+
+        return;
+    }
+
+    state.isOpeningTeacherChat = true;
+    updateTeacherChatOpenButton();
+
+    if (elements.openTeacherChatRoomButton) {
+        elements.openTeacherChatRoomButton.textContent = "جارٍ فتح الغرفة...";
+    }
+
+    try {
+        const result = await callTeacherChatHandler(
+            "teacher_open_room",
+            {
+                class_id: classId,
+                subject
+            }
+        );
+
+        if (!result.room?.id) {
+            throw new Error("لم يُرجع النظام بيانات الغرفة الجديدة.");
+        }
+
+        showTeacherChatActionMessage(
+            result.message || "تم فتح غرفة الأسئلة بنجاح.",
+            "success"
+        );
+
+        await loadTeacherChatRooms({
+            preserveSelection: false
+        });
+
+        const room = state.teacherChatRooms.find(item =>
+            String(item.id) === String(result.room.id)
+        ) || result.room;
+
+        await selectTeacherChatRoom(room);
+
+    } catch (error) {
+        console.error("OPEN TEACHER CHAT ROOM ERROR:", error);
+
+        showTeacherChatActionMessage(
+            getErrorMessage(error, "تعذر فتح غرفة الأسئلة.")
+        );
+
+    } finally {
+        state.isOpeningTeacherChat = false;
+
+        if (elements.openTeacherChatRoomButton) {
+            elements.openTeacherChatRoomButton.textContent = "فتح الغرفة";
+        }
+
+        updateTeacherChatOpenButton();
+    }
+}
+
+/* =========================================================
+   TEACHER CHAT — SELECT ROOM AND LOAD MESSAGES
+   ========================================================= */
+
+async function selectTeacherChatRoom(room) {
+    if (!room?.id) return;
+
+    state.selectedTeacherChatRoom = room;
+    state.teacherChatMessages = [];
+
+    if (elements.teacherChatConversationPanel) {
+        elements.teacherChatConversationPanel.hidden = false;
+    }
+
+    renderTeacherChatRooms();
+    renderTeacherChatConversationHeader();
+
+    await loadTeacherChatMessages(room.id);
+}
+
+function renderTeacherChatConversationHeader() {
+    const room = state.selectedTeacherChatRoom;
+
+    if (!room) return;
+
+    setText(
+        "teacherChatRoomTitle",
+        `${room.subject || "غرفة الأسئلة"} — ${getTeacherChatRoomClassLabel(room)}`
+    );
+
+    const status = room.status === "open"
+        ? "الغرفة مفتوحة ويمكنك استقبال الأسئلة وإرسال الإجابات."
+        : "الغرفة مغلقة. يمكنك قراءة المحادثة السابقة فقط.";
+
+    const details = [
+        `الحالة: ${getTeacherChatRoomStatus(room)}`,
+        `وقت الفتح: ${formatDateTime(room.opened_at)}`,
+        `وقت الإغلاق: ${formatDateTime(room.closed_at)}`,
+        `المدة: ${getTeacherChatRoomDuration(room)}`
+    ].join(" · ");
+
+    setText(
+        "teacherChatRoomStatus",
+        `${status} ${details}`
+    );
+
+    const isOpen = room.status === "open";
+
+    if (elements.closeTeacherChatRoomButton) {
+        elements.closeTeacherChatRoomButton.hidden = !isOpen;
+        elements.closeTeacherChatRoomButton.disabled =
+            state.isClosingTeacherChat;
+        elements.closeTeacherChatRoomButton.textContent =
+            state.isClosingTeacherChat
+                ? "جارٍ الإغلاق..."
+                : "إغلاق الغرفة";
+    }
+
+    if (elements.teacherChatMessageInput) {
+        elements.teacherChatMessageInput.disabled =
+            !isOpen || state.isSendingTeacherChatMessage;
+
+        elements.teacherChatMessageInput.placeholder = isOpen
+            ? "اكتب إجابتك عن سؤال الطالب..."
+            : "الغرفة مغلقة. المحادثة للقراءة فقط.";
+    }
+
+    if (elements.sendTeacherChatMessageButton) {
+        elements.sendTeacherChatMessageButton.disabled =
+            !isOpen || state.isSendingTeacherChatMessage;
+    }
+}
+
+async function loadTeacherChatMessages(roomId) {
+    if (!roomId || !elements.teacherChatMessages) return;
+
+    state.isLoadingTeacherChat = true;
+
+    setLoading(
+        elements.teacherChatMessages,
+        "جارٍ تحميل المحادثة السابقة..."
+    );
+
+    try {
+        const result = await callTeacherChatHandler(
+            "get_room_messages",
+            {
+                room_id: roomId
+            }
+        );
+
+        state.teacherChatMessages = Array.isArray(result.messages)
+            ? result.messages
+            : [];
+
+        if (result.room) {
+            state.selectedTeacherChatRoom = {
+                ...state.selectedTeacherChatRoom,
+                ...result.room
+            };
+        }
+
+        renderTeacherChatMessages();
+        renderTeacherChatConversationHeader();
+
+    } catch (error) {
+        console.error("LOAD TEACHER CHAT MESSAGES ERROR:", error);
+
+        showEmpty(
+            elements.teacherChatMessages,
+            "تعذر تحميل المحادثة",
+            getErrorMessage(error, "حدث خطأ أثناء تحميل رسائل الغرفة.")
+        );
+
+    } finally {
+        state.isLoadingTeacherChat = false;
+    }
+}
+
+/* =========================================================
+   TEACHER CHAT — RENDER MESSAGES
+   ========================================================= */
+
+function renderTeacherChatMessages() {
+    if (!elements.teacherChatMessages) return;
+
+    if (!state.teacherChatMessages.length) {
+        showEmpty(
+            elements.teacherChatMessages,
+            "لا توجد رسائل في هذه الغرفة",
+            "ستظهر أسئلة الطلاب هنا عند إرسالها."
+        );
+
+        return;
+    }
+
+    const messages = [...state.teacherChatMessages].sort((a, b) => {
+        const first = new Date(a.created_at || 0).getTime();
+        const second = new Date(b.created_at || 0).getTime();
+
+        return first - second;
+    });
+
+    elements.teacherChatMessages.innerHTML =
+        messages.map(renderTeacherChatMessage).join("");
+
+    elements.teacherChatMessages.scrollTop =
+        elements.teacherChatMessages.scrollHeight;
+}
+
+function renderTeacherChatMessage(message) {
+    const isTeacher = message.sender_role === "teacher";
+
+    const senderName = message.sender_name ||
+        (isTeacher ? state.profile?.full_name : "طالب");
+
+    return `
+        <article class="teacher-chat-message ${isTeacher ? "teacher-message" : "student-message"}">
+
+            <div class="teacher-chat-message-header">
+                <strong>${escapeHTML(senderName || (isTeacher ? "المعلم" : "الطالب"))}</strong>
+
+                <span>
+                    ${isTeacher ? "إجابة المعلم" : "سؤال الطالب"}
+                </span>
+            </div>
+
+            <div class="teacher-chat-message-content">
+                ${escapeHTML(message.message || "").replace(/\n/g, "<br>")}
+            </div>
+
+            <div class="teacher-chat-message-time">
+                ${escapeHTML(formatDateTime(message.created_at))}
+            </div>
+
+        </article>
+    `;
+}
+
+/* =========================================================
+   TEACHER CHAT — CLOSE ROOM
+   ========================================================= */
+
+async function closeTeacherChatRoom() {
+    if (state.isClosingTeacherChat) return;
+
+    const room = state.selectedTeacherChatRoom;
+
+    if (!room?.id || room.status !== "open") {
+        return;
+    }
+
+    const confirmed = window.confirm(
+        "هل تريد إغلاق غرفة الأسئلة؟\nبعد الإغلاق ستبقى المحادثة متاحة للقراءة فقط، ولن يمكن إرسال رسائل جديدة."
+    );
+
+    if (!confirmed) return;
+
+    state.isClosingTeacherChat = true;
+
+    renderTeacherChatConversationHeader();
+
+    try {
+        const result = await callTeacherChatHandler(
+            "teacher_close_room",
+            {
+                room_id: room.id
+            }
+        );
+
+        if (result.room) {
+            state.selectedTeacherChatRoom = {
+                ...room,
+                ...result.room
+            };
+        } else {
+            state.selectedTeacherChatRoom = {
+                ...room,
+                status: "closed",
+                closed_at: new Date().toISOString(),
+                duration_seconds: result.duration_seconds ??
+                    room.duration_seconds
+            };
+        }
+
+        showTeacherChatActionMessage(
+            result.message || "تم إغلاق الغرفة بنجاح.",
+            "success"
+        );
+
+        showTeacherChatMessageStatus(
+            "أُغلقت الغرفة. أصبحت المحادثة للقراءة فقط.",
+            "success"
+        );
+
+        await loadTeacherChatRooms();
+
+        await loadTeacherChatMessages(
+            state.selectedTeacherChatRoom.id
+        );
+
+    } catch (error) {
+        console.error("CLOSE TEACHER CHAT ROOM ERROR:", error);
+
+        showTeacherChatActionMessage(
+            getErrorMessage(error, "تعذر إغلاق غرفة الأسئلة.")
+        );
+
+    } finally {
+        state.isClosingTeacherChat = false;
+        renderTeacherChatConversationHeader();
+    }
+}
+
+/* =========================================================
+   TEACHER CHAT — SEND MESSAGE
+   ========================================================= */
+
+async function sendTeacherChatMessage(event) {
+    event.preventDefault();
+
+    if (state.isSendingTeacherChatMessage) return;
+
+    const room = state.selectedTeacherChatRoom;
+
+    if (!room?.id) {
+        showTeacherChatMessageStatus("يرجى اختيار غرفة أولاً.");
+        return;
+    }
+
+    if (room.status !== "open") {
+        showTeacherChatMessageStatus(
+            "الغرفة مغلقة. لا يمكن إرسال رسائل جديدة."
+        );
+
+        return;
+    }
+
+    const message = (
+        elements.teacherChatMessageInput?.value || ""
+    ).trim();
+
+    if (!message) {
+        showTeacherChatMessageStatus("يرجى كتابة الإجابة أولاً.");
+        return;
+    }
+
+    if (message.length > 5000) {
+        showTeacherChatMessageStatus(
+            "الحد الأقصى لطول الرسالة هو 5000 حرف."
+        );
+
+        return;
+    }
+
+    state.isSendingTeacherChatMessage = true;
+    renderTeacherChatConversationHeader();
+
+    if (elements.sendTeacherChatMessageButton) {
+        elements.sendTeacherChatMessageButton.textContent = "جارٍ الإرسال...";
+    }
+
+    try {
+        await callTeacherChatHandler(
+            "send_message",
+            {
+                room_id: room.id,
+                message
+            }
+        );
+
+        if (elements.teacherChatMessageInput) {
+            elements.teacherChatMessageInput.value = "";
+        }
+
+        showTeacherChatMessageStatus(
+            "تم إرسال الإجابة بنجاح.",
+            "success"
+        );
+
+        await loadTeacherChatMessages(room.id);
+        await loadTeacherChatRooms();
+
+    } catch (error) {
+        console.error("SEND TEACHER CHAT MESSAGE ERROR:", error);
+
+        showTeacherChatMessageStatus(
+            getErrorMessage(error, "تعذر إرسال الإجابة.")
+        );
+
+    } finally {
+        state.isSendingTeacherChatMessage = false;
+
+        if (elements.sendTeacherChatMessageButton) {
+            elements.sendTeacherChatMessageButton.textContent = "إرسال الإجابة";
+        }
+
+        renderTeacherChatConversationHeader();
+    }
+}
+
+/* =========================================================
+   TEACHER CHAT — EVENTS
+   ========================================================= */
+
+function bindTeacherChatEvents() {
+    elements.teacherChatClass?.addEventListener(
+        "change",
+        () => {
+            updateTeacherChatSubjects();
+            showTeacherChatActionMessage("");
+        }
+    );
+
+    elements.teacherChatSubject?.addEventListener(
+        "change",
+        () => {
+            updateTeacherChatOpenButton();
+            showTeacherChatActionMessage("");
+        }
+    );
+
+    elements.openTeacherChatRoomButton?.addEventListener(
+        "click",
+        openTeacherChatRoom
+    );
+
+    elements.refreshTeacherChatButton?.addEventListener(
+        "click",
+        () => loadTeacherChatRooms()
+    );
+
+    elements.teacherChatRoomsList?.addEventListener(
+        "click",
+        async event => {
+            const button = event.target.closest(
+                '[data-action="view-chat-room"]'
+            );
+
+            if (!button) return;
+
+            const roomId = button.dataset.roomId;
+
+            const room = state.teacherChatRooms.find(item =>
+                String(item.id) === String(roomId)
+            );
+
+            if (!room) {
+                showTeacherChatActionMessage(
+                    "تعذر العثور على الغرفة المطلوبة."
+                );
+
+                return;
+            }
+
+            await selectTeacherChatRoom(room);
+        }
+    );
+
+    elements.closeTeacherChatRoomButton?.addEventListener(
+        "click",
+        closeTeacherChatRoom
+    );
+
+    elements.teacherChatMessageForm?.addEventListener(
+        "submit",
+        sendTeacherChatMessage
+    );
+
+    elements.teacherChatMessageInput?.addEventListener(
+        "input",
+        () => {
+            if (
+                elements.teacherChatMessageInput.value.length > 5000
+            ) {
+                elements.teacherChatMessageInput.value =
+                    elements.teacherChatMessageInput.value.slice(0, 5000);
+            }
+        }
+    );
+}
+
+/* =========================================================
+   SCHOOL ANNOUNCEMENTS
+   ========================================================= */
+
+function safeAnnouncementImageUrl(value) {
+    if (!value) return "";
+
+    try {
+        const url = new URL(String(value), window.location.origin);
+
+        if (!["https:", "http:"].includes(url.protocol)) {
+            return "";
+        }
+
+        return url.href;
+    } catch {
+        return "";
+    }
+}
+
+/*
+ * حساب عدد الإعلانات غير المشاهدة.
+ * حالة is_read تأتي من قاعدة البيانات عبر المعالج المستقل.
+ */
+function getUnreadAnnouncementCount() {
+    return state.announcements.filter(announcement =>
+        announcement.is_read !== true
+    ).length;
+}
+
+/*
+ * تحديث:
+ * 1- عداد الإعلانات غير المشاهدة في الإحصائيات.
+ * 2- الشارة الموجودة بجانب تبويب الإعلانات.
+ */
+function updateAnnouncementUnreadUI() {
+    const unreadCount = getUnreadAnnouncementCount();
+
+    if (elements.unreadAnnouncementCount) {
+        elements.unreadAnnouncementCount.textContent =
+            String(unreadCount);
+    }
+
+    if (elements.announcementBadge) {
+        elements.announcementBadge.textContent =
+            String(unreadCount);
+
+        elements.announcementBadge.hidden =
+            unreadCount === 0;
+    }
+
+    updateStatistics();
+}
+
+function getAnnouncementAttachments(announcement) {
+    const attachments = Array.isArray(announcement.attachments)
+        ? announcement.attachments
+        : [];
+
+    const result = [];
+
+    attachments.forEach(attachment => {
+        /*
+         * المعالج الحالي يعيد url للمرفقات.
+         * أضفنا signed_url كخيار احتياطي إذا كان موجوداً.
+         */
+        const rawUrl =
+            attachment?.url ||
+            attachment?.signed_url ||
+            "";
+
+        const url = safeAnnouncementImageUrl(rawUrl);
+
+        if (url) {
+            result.push({
+                id: attachment.id,
+                url,
+                file_name: attachment.file_name || "مرفق من المدرسة"
+            });
+        }
+    });
+
+    const legacyImage = safeAnnouncementImageUrl(
+        announcement.image_url
+    );
+
+    if (
+        legacyImage &&
+        !result.some(item => item.url === legacyImage)
+    ) {
+        result.push({
+            id: null,
+            url: legacyImage,
+            file_name: "مرفق من المدرسة"
+        });
+    }
+
+    return result;
+}
+
+function renderAnnouncementAttachments(announcement) {
+    const attachments = getAnnouncementAttachments(announcement);
+
+    if (!attachments.length) return "";
+
+    return `
+        <div class="homework-attachments announcement-attachments">
+            ${attachments.map((attachment, index) => `
+                <button
+                    type="button"
+                    class="homework-attachment announcement-image"
+                    data-action="preview-announcement-image"
+                    data-announcement-id="${escapeHTML(announcement.id)}"
+                    data-image-url="${escapeHTML(attachment.url)}"
+                    data-image-name="${escapeHTML(attachment.file_name)}"
+                    title="عرض صورة الإعلان">
+
+                    <img
+                        src="${escapeHTML(attachment.url)}"
+                        alt="${escapeHTML(attachment.file_name)}"
+                        loading="lazy">
+
+                    <span>
+                        ${escapeHTML(attachment.file_name)}
+                    </span>
+                </button>
+            `).join("")}
+        </div>
+    `;
+}
+
+function renderTeacherAnnouncement(announcement) {
+    const createdAt = formatDateTime(announcement.created_at);
+    const isRead = announcement.is_read === true;
+
+    return `
+        <article
+            class="teacher-homework-card school-announcement-card ${isRead ? "read" : "unread"}"
+            data-announcement-id="${escapeHTML(announcement.id)}"
+            tabindex="0"
+            role="button"
+            aria-label="${isRead ? "إعلان تمت مشاهدته" : "إعلان جديد غير مشاهد"}">
+
+            <div class="teacher-homework-header">
+
+                <div class="teacher-homework-heading">
+                    <span class="homework-type-label">
+                        إعلان إدارة المدرسة
+                    </span>
+
+                    <h3>إعلان المدرسة</h3>
+
+                    <p>
+                        <span>تاريخ النشر:</span>
+                        ${escapeHTML(createdAt)}
+                    </p>
+
+                    ${
+                        isRead
+                            ? `
+                                <span class="announcement-read-label">
+                                    ✓ تمت المشاهدة
+                                </span>
+                            `
+                            : `
+                                <span class="announcement-new">
+                                    جديد
+                                </span>
+                            `
+                    }
+                </div>
+
+            </div>
+
+            ${announcement.content ? `
+                <div class="teacher-homework-content">
+                    ${escapeHTML(announcement.content).replace(/\n/g, "<br>")}
+                </div>
+            ` : ""}
+
+            ${renderAnnouncementAttachments(announcement)}
+
+            <div class="teacher-homework-footer">
+                <span>
+                    <strong>الجهة:</strong>
+                    إدارة المدرسة
+                </span>
+
+                <span>
+                    <strong>ينتهي في:</strong>
+                    ${escapeHTML(formatDateTime(announcement.expires_at))}
+                </span>
+            </div>
+
+        </article>
+    `;
+}
+
+function renderTeacherAnnouncements() {
+    if (!elements.announcementsList) {
+        updateAnnouncementUnreadUI();
+        return;
+    }
+
+    if (state.announcementsError) {
+        showEmpty(
+            elements.announcementsList,
+            "تعذر تحميل إعلانات المدرسة",
+            state.announcementsError
+        );
+
+        updateAnnouncementUnreadUI();
+        return;
+    }
+
+    if (!state.announcements.length) {
+        showEmpty(
+            elements.announcementsList,
+            "لا توجد إعلانات حالياً",
+            "ستظهر هنا إعلانات إدارة المدرسة الموجهة للمعلمين."
+        );
+
+        updateAnnouncementUnreadUI();
+        return;
+    }
+
+    elements.announcementsList.innerHTML =
+        state.announcements.map(renderTeacherAnnouncement).join("");
+
+    updateAnnouncementUnreadUI();
+}
+
+/*
+ * تسجيل مشاهدة الإعلان في قاعدة البيانات.
+ *
+ * لا نغير حالة الإعلان محلياً إلا بعد نجاح mark_read.
+ * لذلك تبقى حالة المشاهدة محفوظة عند تسجيل الخروج والدخول.
+ */
+async function markTeacherAnnouncementRead(announcementId) {
+    const id = Number(announcementId);
+
+    if (!Number.isSafeInteger(id) || id <= 0) {
+        return false;
+    }
+
+    const announcement = state.announcements.find(item =>
+        Number(item.id) === id
+    );
+
+    if (!announcement) {
+        return false;
+    }
+
+    if (announcement.is_read === true) {
+        return true;
+    }
+
+    if (state.pendingAnnouncementReads.has(id)) {
+        return false;
+    }
+
+    state.pendingAnnouncementReads.add(id);
+
+    try {
+        const result = await callAnnouncementsHandler(
+            "mark_read",
+            {
+                announcement_id: id
+            }
+        );
+
+        if (result.is_read !== true) {
+            throw new Error(
+                result.message || "لم يتم تأكيد تسجيل مشاهدة الإعلان."
+            );
+        }
+
+        announcement.is_read = true;
+
+        renderTeacherAnnouncements();
+
+        return true;
+
+    } catch (error) {
+        console.error(
+            "MARK ANNOUNCEMENT AS READ ERROR:",
+            {
+                announcementId: id,
+                error
+            }
+        );
+
+        showPageMessage(
+            "تعذر تسجيل مشاهدة الإعلان. حاول مرة أخرى.",
+            "error"
+        );
+
+        return false;
+
+    } finally {
+        state.pendingAnnouncementReads.delete(id);
+    }
+}
+
+async function loadTeacherAnnouncements() {
+    if (!elements.announcementsList) {
+        updateAnnouncementUnreadUI();
+        return;
+    }
+
+    if (elements.refreshAnnouncementsButton) {
+        elements.refreshAnnouncementsButton.disabled = true;
+    }
+
+    state.announcementsError = "";
+
+    setLoading(
+        elements.announcementsList,
+        "جارٍ تحميل إعلانات إدارة المدرسة..."
+    );
+
+    try {
+        // هذه الخدمة مستقلة تماماً عن homework-handler.
+        // المعالج يعيد announcements مع is_read لكل إعلان.
+        const result = await callAnnouncementsHandler(
+            "teacher_announcements"
+        );
+
+        state.announcements = Array.isArray(result.announcements)
+            ? result.announcements
+            : [];
+
+        renderTeacherAnnouncements();
+
+    } catch (error) {
+        console.error("LOAD TEACHER ANNOUNCEMENTS ERROR:", error);
+
+        state.announcements = [];
+
+        state.announcementsError = getErrorMessage(
+            error,
+            "تعذر تحميل إعلانات إدارة المدرسة."
+        );
+
+        renderTeacherAnnouncements();
+
+    } finally {
+        if (elements.refreshAnnouncementsButton) {
+            elements.refreshAnnouncementsButton.disabled = false;
+        }
+    }
+}
+
+/*
+ * الضغط على الإعلان:
+ * - إذا ضغط المعلم على صورة، نفتح الصورة.
+ * - نسجل مشاهدة الإعلان في الحالتين.
+ * - لا نمنع فتح الصورة إذا تعذر تسجيل المشاهدة.
+ */
+async function handleTeacherAnnouncementsClick(event) {
+    const imageButton = event.target.closest(
+        '[data-action="preview-announcement-image"]'
+    );
+
+    const announcementCard = event.target.closest(
+        "[data-announcement-id]"
+    );
+
+    if (!announcementCard) return;
+
+    const announcementId =
+        announcementCard.dataset.announcementId;
+
+    if (imageButton) {
+        openImageModal(
+            imageButton.dataset.imageUrl,
+            imageButton.dataset.imageName || "صورة الإعلان"
+        );
+    }
+
+    await markTeacherAnnouncementRead(announcementId);
+}
+
+/*
+ * دعم لوحة المفاتيح:
+ * Enter أو Space يسجل مشاهدة الإعلان.
+ */
+function handleTeacherAnnouncementsKeydown(event) {
+    if (
+        event.key !== "Enter" &&
+        event.key !== " "
+    ) {
+        return;
+    }
+
+    const card = event.target.closest(
+        ".school-announcement-card[data-announcement-id]"
+    );
+
+    if (!card) return;
+
+    // لا نتدخل في أزرار الصور أو أي عنصر تفاعلي داخل البطاقة.
+    if (
+        event.target.closest("button, a, input, select, textarea")
+    ) {
+        return;
+    }
+
+    event.preventDefault();
+
+    markTeacherAnnouncementRead(
+        card.dataset.announcementId
+    );
 }
 
 function bindAnnouncementEvents() {
     elements.refreshAnnouncementsButton?.addEventListener(
         "click",
-        loadAnnouncementsPlaceholder
+        loadTeacherAnnouncements
+    );
+
+    elements.announcementsList?.addEventListener(
+        "click",
+        handleTeacherAnnouncementsClick
+    );
+
+    elements.announcementsList?.addEventListener(
+        "keydown",
+        handleTeacherAnnouncementsKeydown
     );
 }
 
@@ -2366,6 +3794,7 @@ async function initializeTeacherPage() {
     bindTeacherPostsEvents();
     bindModalEvents();
     bindAnnouncementEvents();
+    bindTeacherChatEvents();
 
     elements.logoutButton?.addEventListener(
         "click",
@@ -2408,9 +3837,17 @@ async function initializeTeacherPage() {
 
         await loadTeacherSchedule();
 
+        // الواجبات تبقى مرتبطة بالمعالج القديم.
         await loadTeacherPosts();
 
-        loadAnnouncementsPlaceholder();
+        // إعلانات إدارة المدرسة تُحمّل من المعالج المستقل.
+        await loadTeacherAnnouncements();
+
+        // تحميل غرف الأسئلة من المعالج المستقل.
+        populateTeacherChatOptions();
+
+        // لا نحمّل غرف الأسئلة إلا عند فتح تبويبها.
+        updateTeacherChatBadge();
 
     } catch (error) {
         console.error(

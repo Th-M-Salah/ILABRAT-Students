@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="ar" dir="rtl" data-auth-scope="student">
 
 <head>
@@ -70,6 +69,12 @@
             <button type="button" class="student-tab" data-view="weekly" aria-selected="false">
                 <span class="tab-icon">▤</span>
                 <span>الجدول الأسبوعي</span>
+            </button>
+
+            <button type="button" class="student-tab" data-view="chat" aria-selected="false">
+                <span class="tab-icon">✉</span>
+                <span>غرف الأسئلة</span>
+                <span id="chatOpenCount" class="tab-count" hidden>0</span>
             </button>
 
             <button type="button" class="student-tab" data-view="announcements" aria-selected="false">
@@ -149,7 +154,7 @@
             </footer>
         </section>
 
-        <!-- الجدول الأسبوعي الموحد -->
+        <!-- الجدول الأسبوعي -->
         <section id="weeklyView" class="view-panel" hidden>
             <div class="section-heading">
                 <div>
@@ -183,6 +188,95 @@
             </p>
         </section>
 
+        <!-- غرف الأسئلة -->
+        <section id="chatView" class="view-panel" hidden>
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">تواصل مع معلميك</p>
+                    <h2>غرف الأسئلة</h2>
+                    <p class="section-subtitle">
+                        اطرح أسئلتك على معلم المادة وتابع ردوده
+                    </p>
+                </div>
+                <span class="heading-icon">✉</span>
+            </div>
+
+            <div class="chat-information-note">
+                <span>ⓘ</span>
+                تظهر هنا غرف الأسئلة الخاصة بمعلمي شعبتك. يمكنك إرسال الأسئلة في الغرف المفتوحة وقراءة المحادثات السابقة بعد إغلاقها.
+            </div>
+
+            <div class="student-chat-layout">
+
+                <aside class="student-chat-rooms-panel">
+                    <div class="student-chat-panel-heading">
+                        <div>
+                            <h3>غرف معلميك</h3>
+                            <p>الغرف المفتوحة والمغلقة</p>
+                        </div>
+
+                        <button
+                            type="button"
+                            id="refreshStudentChatRooms"
+                            class="student-chat-refresh"
+                            title="تحديث الغرف"
+                            aria-label="تحديث الغرف">
+                            ↻
+                        </button>
+                    </div>
+
+                    <div id="studentChatRoomsList" class="student-chat-rooms-list">
+                        <div class="loading-state">جارٍ تحميل غرف الأسئلة...</div>
+                    </div>
+                </aside>
+
+                <section class="student-chat-conversation">
+                    <div class="student-chat-conversation-header">
+                        <div>
+                            <h3 id="studentChatRoomTitle">اختر غرفة أسئلة</h3>
+                            <p id="studentChatRoomMeta">
+                                اختر إحدى الغرف لعرض المحادثة
+                            </p>
+                        </div>
+
+                        <span id="studentChatRoomStatus" class="student-chat-status">
+                            غير محددة
+                        </span>
+                    </div>
+
+                    <div
+                        id="studentChatMessages"
+                        class="student-chat-messages"
+                        aria-live="polite">
+                        <div class="student-chat-placeholder">
+                            <span>✉</span>
+                            <strong>محادثاتك الدراسية</strong>
+                            <p>اختر غرفة من القائمة لعرض رسائلك مع المعلم.</p>
+                        </div>
+                    </div>
+
+                    <form id="studentChatMessageForm" class="student-chat-composer">
+                        <textarea
+                            id="studentChatMessageInput"
+                            rows="2"
+                            maxlength="3000"
+                            placeholder="اكتب سؤالك للمعلم..."
+                            disabled></textarea>
+
+                        <button
+                            type="submit"
+                            id="studentChatSendButton"
+                            disabled>
+                            إرسال السؤال
+                        </button>
+                    </form>
+
+                    <p id="studentChatFormMessage" class="student-chat-form-message" role="status"></p>
+                </section>
+
+            </div>
+        </section>
+
         <!-- الإعلانات -->
         <section id="announcementsView" class="view-panel" hidden>
             <div class="section-heading">
@@ -214,8 +308,7 @@
         type="button"
         id="closeImageViewer"
         class="close-image-viewer"
-        aria-label="إغلاق"
-    >×</button>
+        aria-label="إغلاق">×</button>
     <img id="viewerImage" src="" alt="مرفق من المعلم">
     <p id="viewerCaption"></p>
 </dialog>

@@ -1,4 +1,3 @@
-
 "use strict";
 
 /* =========================================================
@@ -220,7 +219,7 @@
 
     /* -------------------- WEEKLY DESIGN STYLES -------------------- */
 
-   
+    
 function injectWeeklyStyles() {
     if ($("ilabratWeeklyDesignStyles")) return;
 
@@ -387,6 +386,7 @@ function injectWeeklyStyles() {
 
     document.head.appendChild(style);
 }
+
 
     /* -------------------- LOAD STUDENT -------------------- */
 
@@ -727,7 +727,7 @@ function injectWeeklyStyles() {
 
     /* -------------------- WEEKLY VIEW -------------------- */
 
-   
+    
 function renderWeekly() {
     if (!elements.weeklyContainer) {
         console.error(
@@ -896,6 +896,7 @@ function renderWeekly() {
         </table>
     `;
 }
+
 
     /* -------------------- SCHOOL ANNOUNCEMENTS -------------------- */
 

@@ -20,6 +20,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="js/student-management.js" defer></script>
 </head>
 
@@ -153,9 +154,20 @@
                     </p>
                 </div>
 
-                <a href="student-accounts.html" class="btn btn-primary">
-                    + إضافة طالب
-                </a>
+               <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+
+    <button
+        type="button"
+        class="btn btn-outline"
+        id="exportStudentsExcelButton">
+        ⇩ تصدير Excel
+    </button>
+
+    <a href="student-accounts.html" class="btn btn-primary">
+        + إضافة طالب
+    </a>
+
+</div>
 
             </section>
 

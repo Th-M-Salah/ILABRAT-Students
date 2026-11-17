@@ -1,7 +1,7 @@
 
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" data-auth-scope="school-admin">
-    <head>
+<html lang="ar" dir="rtl" data-auth-scope="school_admin">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#5A1825">
@@ -14,21 +14,26 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
+    <!-- التنسيق الأساسي والقائمة الجانبية -->
+    <link rel="stylesheet" href="css/admin-timetable.css">
+
+    <!-- تنسيقات صفحة حسابات المعلمين -->
     <link rel="stylesheet" href="css/teacher-accounts.css">
 </head>
 
 <body>
 
-<div class="app-layout">
+<div class="admin-layout">
 
-    <!-- القائمة الجانبية الموحدة لمدير المدرسة -->
+    <!-- القائمة الجانبية الموحدة -->
     <aside class="sidebar">
 
-        <a href="index.html" class="brand">
+        <a href="index.html" class="brand" aria-label="العودة إلى إيلابرات">
             <img
                 src="assets/ilabrat-logo.png"
                 alt="شعار إيلابرات"
-                class="brand-icon">
+                class="brand-icon"
+            >
 
             <span class="brand-text">
                 <strong>إيلابرات</strong>
@@ -36,9 +41,8 @@
             </span>
         </a>
 
-        <!-- بيانات المدرسة -->
-        <div class="school-context-card school-card">
-            <div class="school-context-icon school-icon">🏫</div>
+        <div class="school-context-card">
+            <div class="school-context-icon" aria-hidden="true">🏫</div>
 
             <div class="school-context-text">
                 <small>إدارة المدرسة</small>
@@ -46,11 +50,9 @@
             </div>
         </div>
 
-        <div class="sidebar-heading nav-heading">
-            القائمة الرئيسية
-        </div>
+        <div class="sidebar-heading">القائمة الرئيسية</div>
 
-        <nav class="sidebar-nav navigation" aria-label="القائمة الرئيسية">
+        <nav class="sidebar-nav" aria-label="القائمة الرئيسية">
 
             <a href="admin-timetable.html" class="nav-item">
                 <span class="nav-icon">⌂</span>
@@ -67,19 +69,15 @@
                 <span>إضافة طالب</span>
             </a>
 
-            <a
-                href="teacher-accounts.html"
-                class="nav-item active"
-                aria-current="page">
-
+            <a href="teacher-accounts.html" class="nav-item active" aria-current="page">
                 <span class="nav-icon">♙</span>
                 <span>حسابات المعلمين</span>
             </a>
-<a href="student-management.html" class="nav-item">
+
+            <a href="student-management.html" class="nav-item">
                 <span class="nav-icon">♙</span>
                 <span>حسابات الطلاب</span>
             </a>
-          
 
             <a href="admin-timetable.html" class="nav-item">
                 <span class="nav-icon">▦</span>
@@ -91,26 +89,35 @@
                 <span>عرض الجداول</span>
             </a>
 
-          
+            <a href="admin-classes.html" class="nav-item">
+                <span class="nav-icon">▤</span>
+                <span>إدارة الشعب</span>
+            </a>
 
-            <a href="index.html" class="nav-item" id="logoutLink">
+            <a href="school-announcements.html" class="nav-item">
+                <span class="nav-icon">✦</span>
+                <span>الإعلانات والإشعارات</span>
+            </a>
+
+            <a href="school-admin-chat-monitor.html" class="nav-item">
+                <span class="nav-icon">◉</span>
+                <span>مراقبة غرف الأسئلة</span>
+            </a>
+
+            <a href="index.html" id="logoutLink" class="nav-item">
                 <span class="nav-icon">↪</span>
-                <span>تسجيل الدخول</span>
+                <span>تسجيل الخروج</span>
             </a>
 
         </nav>
 
         <div class="sidebar-footer">
-
             <div class="footer-icon">i</div>
 
-            <div class="sidebar-footer-text">
+            <div>
                 <strong>إدارة أكثر سهولة</strong>
                 <p>نظّم جدول مدرستك من مكان واحد.</p>
             </div>
-
-            <span id="adminName" hidden>مدير المدرسة</span>
-
         </div>
 
     </aside>
@@ -119,468 +126,498 @@
     <!-- المحتوى الرئيسي -->
     <main class="main-content">
 
-        <!-- رأس الصفحة -->
+        <!-- الشريط العلوي -->
         <header class="topbar">
 
-            <div>
-                <div class="breadcrumb">
-                    الرئيسية / إدارة المدرسة / حسابات المعلمين
-                </div>
-
-                <h1>حسابات المعلمين</h1>
-
-                <p>
-                    إدارة حسابات المعلمين وبياناتهم داخل المدرسة.
-                </p>
+            <div class="breadcrumb">
+                <a href="index.html">الرئيسية</a>
+                <span>/</span>
+                <strong>إدارة حسابات المعلمين</strong>
             </div>
 
-            <button
-                class="primary-button"
-                id="refreshTeachers"
-                type="button">
-
-                <span>↻</span>
-                تحديث القائمة
-
-            </button>
+            <div class="admin-profile">
+                <span class="online-dot"></span>
+                <span id="adminDisplayName">الإدارة</span>
+                <div class="profile-avatar" id="adminAvatar">إ</div>
+            </div>
 
         </header>
 
 
-        <!-- بطاقة الترحيب -->
-        <section class="welcome-banner">
+        <!-- محتوى الصفحة -->
+        <section class="page-content">
 
-            <div>
-                <span class="banner-label">الكادر التدريسي</span>
-
-                <h2>إدارة حسابات المعلمين</h2>
-
-                <p>
-                    يمكنك الاطلاع على المعلمين وتعديل بياناتهم أو حذف حساباتهم.
-                </p>
-            </div>
-
-            <div class="banner-decoration">✦</div>
-
-        </section>
-
-
-        <!-- الإحصائيات -->
-        <section class="stats-grid">
-
-            <article class="stat-card">
-
-                <div class="stat-icon teachers-icon">♙</div>
+            <div class="page-heading">
 
                 <div>
-                    <span>إجمالي المعلمين</span>
-                    <strong id="totalTeachers">0</strong>
-                    <small>حسابات المعلمين في المدرسة</small>
-                </div>
-
-            </article>
-
-
-            <article class="stat-card">
-
-                <div class="stat-icon subjects-icon">▤</div>
-
-                <div>
-                    <span>المواد الدراسية</span>
-                    <strong id="totalSubjects">0</strong>
-                    <small>المواد المسندة للمعلمين</small>
-                </div>
-
-            </article>
-
-
-            <article class="stat-card">
-
-                <div class="stat-icon classes-icon">▦</div>
-
-                <div>
-                    <span>الشُعب المغطاة</span>
-                    <strong id="totalClasses">0</strong>
-                    <small>الشُعب المرتبطة بالمعلمين</small>
-                </div>
-
-            </article>
-
-        </section>
-
-
-        <!-- جدول المعلمين -->
-        <section class="content-panel">
-
-            <div class="panel-header">
-
-                <div>
-                    <h2>قائمة المعلمين</h2>
-
+                    <span class="page-eyebrow">إدارة الكادر التدريسي</span>
+                    <h1>حسابات المعلمين</h1>
                     <p>
-                        بيانات المعلمين المرتبطين بمدرستك.
+                        إدارة حسابات المعلمين وتكليفاتهم الدراسية ضمن مدرستك.
                     </p>
                 </div>
 
-                <div class="panel-header-actions">
+                <div class="page-heading-actions">
+                    <button
+                        type="button"
+                        class="primary-button"
+                        id="openCreateTeacherModal">
+                        + إنشاء حساب معلم
+                    </button>
+                </div>
+
+            </div>
+
+
+            <!-- رسالة الصفحة -->
+            <div id="pageMessage" class="form-message" role="status"></div>
+
+
+            <!-- الإحصائيات -->
+            <section class="stats-grid">
+
+                <article class="stat-card">
+                    <div class="stat-icon">♟</div>
+                    <div>
+                        <span>إجمالي المعلمين</span>
+                        <strong id="totalTeachers">0</strong>
+                    </div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-icon">▤</div>
+                    <div>
+                        <span>المواد الدراسية</span>
+                        <strong id="totalSubjects">0</strong>
+                    </div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-icon">▦</div>
+                    <div>
+                        <span>الشعب المرتبطة</span>
+                        <strong id="totalClasses">0</strong>
+                    </div>
+                </article>
+
+            </section>
+
+
+            <!-- قائمة المعلمين -->
+            <section class="content-card">
+
+                <div class="section-heading">
+
+                    <div>
+                        <h2>قائمة المعلمين</h2>
+                        <p>عرض وإدارة حسابات المعلمين المسجلين في المدرسة.</p>
+                    </div>
 
                     <button
+                        type="button"
                         class="secondary-button"
-                        id="clearSearch"
-                        type="button">
-
-                        إعادة ضبط البحث
-
+                        id="refreshTeachers">
+                        ↻ تحديث القائمة
                     </button>
 
                 </div>
 
-            </div>
 
+                <!-- البحث والتصفية -->
+                <div class="filters-bar">
 
-            <!-- البحث والتصفية -->
-            <div class="filters">
+                    <div class="search-box">
+                        <span>⌕</span>
 
-                <div class="search-box">
+                        <input
+                            type="search"
+                            id="teacherSearch"
+                            placeholder="ابحث باسم المعلم أو المادة أو الشعبة..."
+                            autocomplete="off">
+                    </div>
 
-                    <span>⌕</span>
+                    <select id="subjectFilter">
+                        <option value="">جميع المواد</option>
+                    </select>
 
-                    <input
-                        type="search"
-                        id="teacherSearch"
-                        placeholder="ابحث باسم المعلم أو المادة أو الصف..."
-                        aria-label="البحث عن معلم">
+                    <select id="stageFilter">
+                        <option value="">جميع المراحل</option>
+                        <option value="الابتدائية">الابتدائية</option>
+                        <option value="المتوسطة">المتوسطة</option>
+                        <option value="الإعدادية">الإعدادية</option>
+                    </select>
+
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        id="clearSearch">
+                        إعادة ضبط
+                    </button>
 
                 </div>
 
 
-                <select
-                    id="subjectFilter"
-                    aria-label="تصفية حسب المادة">
+                <!-- أدوات التصدير -->
+                <div class="table-toolbar">
 
-                    <option value="">جميع المواد</option>
+                    <div class="results-information">
+                        <span id="resultsCount">عدد المعلمين: 0 من 0</span>
+                    </div>
 
-                </select>
+                    <div class="export-dropdown" id="exportDropdown">
 
+                        <button
+                            type="button"
+                            class="secondary-button export-toggle"
+                            id="exportMenuToggle"
+                            aria-expanded="false"
+                            aria-controls="exportMenu">
+                            <span>⇩</span>
+                            تصدير البيانات
+                        </button>
 
-                <select
-                    id="stageFilter"
-                    aria-label="تصفية حسب المرحلة">
+                        <div
+                            class="export-menu"
+                            id="exportMenu"
+                            hidden>
 
-                    <option value="">جميع المراحل</option>
-                    <option value="ابتدائية">ابتدائية</option>
-                    <option value="متوسطة">متوسطة</option>
-                    <option value="إعدادية">إعدادية</option>
+                            <button
+                                type="button"
+                                id="exportExcel">
+                                <span>▦</span>
+                                تصدير Excel
+                            </button>
 
-                </select>
+                            <button
+                                type="button"
+                                id="exportCSV">
+                                <span>▤</span>
+                                تصدير CSV
+                            </button>
 
-            </div>
+                        </div>
 
+                    </div>
 
-            <!-- رسائل الصفحة -->
-            <p
-                id="pageMessage"
-                class="form-message"
-                role="status"
-                aria-live="polite">
-            </p>
-
-
-            <!-- الجدول -->
-            <div class="table-wrapper">
-
-                <table>
-
-                    <thead>
-                        <tr>
-                            <th>المعلم</th>
-                            <th>المواد</th>
-                            <th>المرحلة</th>
-                            <th>الشُعب المسندة</th>
-                            <th>حالة الحساب</th>
-                            <th>الإجراءات</th>
-                        </tr>
-                    </thead>
-
-                    <tbody id="teachersTableBody">
-
-                        <tr>
-                            <td colspan="6" class="empty-state">
-                                جارٍ تحميل حسابات المعلمين...
-                            </td>
-                        </tr>
-
-                    </tbody>
-
-                </table>
-
-            </div>
+                </div>
 
 
-            <div class="table-footer">
+                <!-- جدول المعلمين -->
+                <div class="table-responsive">
 
-                <span id="resultsCount">
-                    عدد المعلمين: 0
-                </span>
+                    <table class="data-table">
 
-                <span>
-                    إيلابرات لإدارة المدارس
-                </span>
+                        <thead>
+                            <tr>
+                                <th>المعلم</th>
+                                <th>المواد</th>
+                                <th>المراحل</th>
+                                <th>الشعب المسندة</th>
+                                <th>الحالة وكود الدخول</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
 
-            </div>
+                        <tbody id="teachersTableBody">
+                            <tr>
+                                <td colspan="6" class="empty-state">
+                                    جارٍ تحميل حسابات المعلمين...
+                                </td>
+                            </tr>
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
 
         </section>
-
-
-        <!-- تذييل الصفحة -->
-        <footer class="page-footer">
-
-            <span>© ILABRAT — إيلابرات</span>
-
-            <span>نظام إدارة المدرسة</span>
-
-        </footer>
 
     </main>
 
 </div>
 
 
-<!-- إشعار الصفحة -->
+<!-- نافذة إنشاء حساب معلم -->
 <div
-    class="toast"
-    id="toast"
-    role="status"
-    aria-live="polite">
+    class="modal-overlay"
+    id="createTeacherModal"
+    aria-hidden="true">
+
+    <div class="modal-box">
+
+        <div class="modal-header">
+
+            <div>
+                <h2>إنشاء حساب معلم</h2>
+                <p>أدخل بيانات المعلم والتكليفات الدراسية.</p>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                data-close-modal
+                aria-label="إغلاق">
+                ×
+            </button>
+
+        </div>
+
+        <form id="createTeacherForm">
+
+            <div class="modal-body">
+
+                <div id="createTeacherStatus" class="modal-status"></div>
+
+                <div class="form-field">
+                    <label for="newTeacherSchoolName">اسم المدرسة</label>
+                    <input
+                        type="text"
+                        id="newTeacherSchoolName"
+                        readonly
+                        required>
+                </div>
+
+                <div class="form-field">
+                    <label for="newTeacherName">الاسم الرباعي للمعلم *</label>
+                    <input
+                        type="text"
+                        id="newTeacherName"
+                        required
+                        maxlength="150"
+                        placeholder="أدخل الاسم الرباعي">
+                </div>
+
+                <div class="form-field">
+                    <label for="newTeacherPhone">رقم الهاتف *</label>
+                    <input
+                        type="tel"
+                        id="newTeacherPhone"
+                        required
+                        maxlength="30"
+                        placeholder="رقم هاتف المعلم">
+                </div>
+
+                <div class="assignments-heading">
+                    <strong>التكليفات الدراسية</strong>
+
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        id="addTeacherAssignmentButton">
+                        + إضافة تكليف
+                    </button>
+                </div>
+
+                <div id="teacherAssignmentsContainer"></div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="secondary-button"
+                    data-close-modal>
+                    إلغاء
+                </button>
+
+                <button type="submit" class="primary-button">
+                    إنشاء الحساب
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
 </div>
 
 
-<!-- نافذة تعديل بيانات المعلم -->
+<!-- نافذة تعديل المعلم -->
 <div
     class="modal-overlay"
     id="editTeacherModal"
     aria-hidden="true">
 
-    <section
-        class="teacher-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="editTeacherTitle">
+    <div class="modal-box">
 
-        <header class="modal-header">
+        <div class="modal-header">
 
             <div>
-                <h2 id="editTeacherTitle">تعديل بيانات المعلم</h2>
-                <p>تعديل اسم المعلم ورقم هاتفه.</p>
+                <h2>تعديل بيانات المعلم</h2>
+                <p>تحديث البيانات والتكليفات الدراسية.</p>
             </div>
 
             <button
-                class="modal-close"
                 type="button"
+                class="modal-close"
                 data-close-modal
                 aria-label="إغلاق">
-
                 ×
-
             </button>
-
-        </header>
-
-
-        <div class="modal-body">
-
-            <p class="modal-notice">
-                يمكنك تعديل الاسم ورقم الهاتف.
-                تعديل المواد والشُعب المسندة غير متاح حاليًا.
-            </p>
-
-
-            <form id="editTeacherForm">
-
-                <input
-                    type="hidden"
-                    id="editTeacherId"
-                    name="teacher_id">
-
-
-                <div class="modal-form-grid">
-
-                    <div class="form-field full-width">
-
-                        <label for="editTeacherName">
-                            اسم المعلم الكامل *
-                        </label>
-
-                        <input
-                            id="editTeacherName"
-                            name="full_name"
-                            type="text"
-                            required
-                            maxlength="150">
-
-                    </div>
-
-
-                    <div class="form-field full-width">
-
-                        <label for="editTeacherPhone">
-                            رقم الهاتف
-                        </label>
-
-                        <input
-                            id="editTeacherPhone"
-                            name="phone"
-                            type="tel"
-                            maxlength="30">
-
-                    </div>
-
-                </div>
-
-
-                <div
-                    class="modal-status"
-                    id="editTeacherStatusMessage"
-                    role="status"
-                    aria-live="polite">
-                </div>
-
-
-                <div class="modal-actions">
-
-                    <button
-                        class="primary-button"
-                        type="submit">
-
-                        حفظ التعديلات
-
-                    </button>
-
-
-                    <button
-                        class="secondary-button"
-                        type="button"
-                        data-close-modal>
-
-                        إلغاء
-
-                    </button>
-
-                </div>
-
-            </form>
 
         </div>
 
-    </section>
+        <form id="editTeacherForm">
+
+            <div class="modal-body">
+
+                <input type="hidden" id="editTeacherId">
+
+                <div
+                    id="editTeacherStatusMessage"
+                    class="modal-status">
+                </div>
+
+                <div class="form-field">
+                    <label for="editTeacherName">اسم المعلم</label>
+                    <input
+                        type="text"
+                        id="editTeacherName"
+                        required
+                        maxlength="150">
+                </div>
+
+                <div class="form-field">
+                    <label for="editTeacherPhone">رقم الهاتف</label>
+                    <input
+                        type="tel"
+                        id="editTeacherPhone"
+                        maxlength="30">
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="secondary-button"
+                    data-close-modal>
+                    إلغاء
+                </button>
+
+                <button type="submit" class="primary-button">
+                    حفظ التعديلات
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
 
 </div>
 
 
-<!-- نافذة حذف حساب المعلم -->
+<!-- نافذة حذف المعلم -->
 <div
     class="modal-overlay"
     id="deleteTeacherModal"
     aria-hidden="true">
 
-    <section
-        class="teacher-modal modal-small"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="deleteTeacherTitle">
+    <div class="modal-box modal-box-small">
 
-        <header class="modal-header">
+        <div class="modal-header">
 
             <div>
-                <h2 id="deleteTeacherTitle">حذف حساب المعلم</h2>
-                <p>تأكد من المعلم قبل تأكيد الحذف.</p>
+                <h2>حذف حساب المعلم</h2>
+                <p>يرجى التأكد قبل تنفيذ عملية الحذف.</p>
             </div>
 
             <button
-                class="modal-close"
                 type="button"
+                class="modal-close"
                 data-close-modal
                 aria-label="إغلاق">
-
                 ×
-
             </button>
-
-        </header>
-
-
-        <div class="modal-body">
-
-            <p class="modal-notice danger" id="deleteTeacherMessage">
-                لا يمكن التراجع عن عملية حذف الحساب.
-            </p>
-
-
-            <form id="deleteTeacherForm">
-
-                <input
-                    type="hidden"
-                    id="deleteTeacherId"
-                    name="teacher_id">
-
-
-                <div class="form-field">
-
-                    <label for="deleteTeacherName">
-                        المعلم المراد حذفه
-                    </label>
-
-                    <input
-                        id="deleteTeacherName"
-                        type="text"
-                        readonly>
-
-                </div>
-
-
-                <div
-                    class="modal-status"
-                    id="deleteTeacherStatus"
-                    role="status"
-                    aria-live="polite">
-                </div>
-
-
-                <div class="modal-actions">
-
-                    <button
-                        class="primary-button"
-                        type="submit">
-
-                        تأكيد الحذف
-
-                    </button>
-
-
-                    <button
-                        class="secondary-button"
-                        type="button"
-                        data-close-modal>
-
-                        إلغاء
-
-                    </button>
-
-                </div>
-
-            </form>
 
         </div>
 
-    </section>
+        <form id="deleteTeacherForm">
+
+            <div class="modal-body">
+
+                <input type="hidden" id="deleteTeacherId">
+
+                <div id="deleteTeacherStatus" class="modal-status"></div>
+
+                <div class="delete-warning">
+                    <span>!</span>
+                    <p>
+                        هل أنت متأكد من حذف حساب المعلم التالي؟
+                    </p>
+                </div>
+
+                <div class="form-field">
+                    <label for="deleteTeacherName">اسم المعلم</label>
+                    <input
+                        type="text"
+                        id="deleteTeacherName"
+                        readonly>
+                </div>
+
+                <p class="warning-description">
+                    قد تؤثر عملية الحذف في البيانات المرتبطة بهذا الحساب.
+                </p>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="secondary-button"
+                    data-close-modal>
+                    إلغاء
+                </button>
+
+                <button type="submit" class="danger-button">
+                    تأكيد الحذف
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
 
 </div>
 
 
-<!-- ملفات JavaScript الخارجية فقط -->
+<!-- رسالة التنبيه -->
+<div
+    id="toast"
+    class="toast"
+    role="status"
+    aria-live="polite">
+</div>
+
+
+<!-- =========================================
+     مكتبة Supabase
+========================================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- =========================================
+     إعداد اتصال Supabase
+========================================= -->
 <script src="supabase-config.js"></script>
-<script src="js/teacher-accounts.js" defer></script>
+
+<!-- =========================================
+     مكتبة تصدير Excel
+========================================= -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<!-- =========================================
+     JavaScript إدارة حسابات المعلمين
+========================================= -->
+<script src="js/teacher-accounts.js"></script>
 
 </body>
 </html>
+

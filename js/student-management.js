@@ -1,3 +1,4 @@
+
 "use strict";
 
 /* =========================================================
@@ -13,6 +14,7 @@
    - حذف الطالب بعد التأكيد
    - التحقق من جلسة Supabase
    - الحفاظ على البيانات السابقة عند فشل التحميل
+   - تصدير الطلاب الظاهرين إلى Excel
    ========================================================= */
 
 (() => {
@@ -55,6 +57,9 @@
 
         refreshButton: $("refreshStudentsButton"),
         clearFiltersButton: $("clearStudentFiltersButton"),
+
+        /* زر تصدير Excel */
+        exportButton: $("exportStudentsExcelButton"),
 
         tableBody: $("studentsTableBody"),
         listMessage: $("studentListMessage"),
@@ -499,6 +504,54 @@
         }
     }
 
+    async function loadAdminName() {
+    try {
+        const {
+            data: userData,
+            error: userError
+        } = await state.db.auth.getUser();
+
+        if (userError) throw userError;
+
+        const user = userData?.user;
+
+        if (!user) {
+            throw new Error("لم يتم العثور على المستخدم الحالي.");
+        }
+
+        const {
+            data: adminProfile,
+            error: profileError
+        } = await state.db
+            .from("profiles")
+            .select("full_name")
+            .eq("id", user.id)
+            .maybeSingle();
+
+        if (profileError) throw profileError;
+
+        const adminName = text(
+            adminProfile?.full_name,
+            "مدير المدرسة"
+        );
+
+        if (el.adminName) {
+            el.adminName.textContent = adminName;
+        }
+
+        if (el.adminAvatar) {
+            el.adminAvatar.textContent =
+                adminName.charAt(0) || "م";
+        }
+
+    } catch (error) {
+        console.error("[ILABRAT Admin Name]", error);
+
+        if (el.adminName) {
+            el.adminName.textContent = "مدير المدرسة";
+        }
+    }
+}
     /* =====================================================
        خيارات صفوف وشعب نافذة التعديل
        ===================================================== */
@@ -651,6 +704,106 @@
                 ? el.sectionFilter.selectedOptions[0]?.textContent || "الشعبة المختارة"
                 : "جميع الشعب";
         }
+    }
+
+    /* =====================================================
+       تصدير الطلاب الظاهرين إلى Excel
+       ===================================================== */
+
+    function exportStudentsToExcel() {
+        if (typeof XLSX === "undefined") {
+            setStatus(
+                "تعذر تحميل مكتبة Excel. تحقق من اتصال الإنترنت ثم حاول مجددًا.",
+                "error"
+            );
+            return;
+        }
+
+        const visibleStudents = getVisibleStudents();
+
+        if (visibleStudents.length === 0) {
+            setStatus(
+                "لا توجد بيانات طلاب لتصديرها حسب البحث والتصفية الحالية.",
+                "warning"
+            );
+            return;
+        }
+
+        const rows = [
+            [
+                "التسلسل",
+                "اسم الطالب",
+                "اسم المستخدم",
+                "رمز الدخول",
+                "المرحلة الدراسية",
+                "الصف",
+                "الشعبة",
+                "الصف والشعبة"
+            ]
+        ];
+
+        visibleStudents.forEach((student, index) => {
+            rows.push([
+                index + 1,
+                getStudentName(student),
+                getStudentLogin(student),
+                getStudentCode(student) || "غير محفوظ",
+                getStage(student),
+                getGrade(student),
+                getSection(student),
+                getClassName(student)
+            ]);
+        });
+
+        const worksheet = XLSX.utils.aoa_to_sheet(rows);
+
+        worksheet["!cols"] = [
+            { wch: 10 },
+            { wch: 30 },
+            { wch: 24 },
+            { wch: 18 },
+            { wch: 20 },
+            { wch: 20 },
+            { wch: 15 },
+            { wch: 38 }
+        ];
+
+        worksheet["!views"] = [
+            { rightToLeft: true }
+        ];
+
+        if (worksheet["!ref"]) {
+            worksheet["!autofilter"] = {
+                ref: worksheet["!ref"]
+            };
+        }
+
+        const workbook = XLSX.utils.book_new();
+
+        XLSX.utils.book_append_sheet(
+            workbook,
+            worksheet,
+            "قائمة الطلاب"
+        );
+
+        const schoolName = text(
+            state.school?.name,
+            "المدرسة"
+        ).replace(/[\\/:*?"<>|]/g, "-");
+
+        const date = new Date()
+            .toISOString()
+            .slice(0, 10);
+
+        const fileName =
+            `طلاب-${schoolName}-${date}.xlsx`;
+
+        XLSX.writeFile(workbook, fileName);
+
+        setStatus(
+            `تم تصدير ${visibleStudents.length} طالب إلى ملف Excel بنجاح.`,
+            "success"
+        );
     }
 
     /* =====================================================
@@ -1572,6 +1725,12 @@
             clearFilters
         );
 
+        /* تصدير الطلاب الظاهرين إلى Excel */
+        el.exportButton?.addEventListener(
+            "click",
+            exportStudentsToExcel
+        );
+
         /* حفظ التعديل */
         el.editForm?.addEventListener(
             "submit",
@@ -1746,8 +1905,8 @@
             return;
         }
 
-        await loadStudents();
-    }
+await loadAdminName();
+await loadStudents();    }
 
     if (document.readyState === "loading") {
         document.addEventListener(

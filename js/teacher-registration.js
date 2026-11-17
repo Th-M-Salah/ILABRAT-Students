@@ -1,10 +1,10 @@
 
 "use strict";
 
-/*
- * ILABRAT Students — Teacher Registration
- * ربط فعلي مع Supabase Edge Function: teacher-handler
- */
+/* =========================================================
+   ILABRAT Students — Teacher Registration
+   Supabase Edge Function: teacher-handler
+   ========================================================= */
 
 const $ = (id) => document.getElementById(id);
 
@@ -18,6 +18,10 @@ let currentSchool = null;
 let availableClasses = [];
 let isSubmitting = false;
 
+/* =========================================================
+   Supabase
+   ========================================================= */
+
 function getSupabaseClient() {
     return (
         window.supabaseClient ||
@@ -26,6 +30,10 @@ function getSupabaseClient() {
         null
     );
 }
+
+/* =========================================================
+   Notifications
+   ========================================================= */
 
 function showToast(message, isError = false) {
     const toast = $("toast");
@@ -46,6 +54,10 @@ function showToast(message, isError = false) {
     }, 3500);
 }
 
+/* =========================================================
+   Helpers
+   ========================================================= */
+
 function escapeHTML(value) {
     return String(value ?? "").replace(/[&<>"']/g, (char) => ({
         "&": "&amp;",
@@ -57,6 +69,8 @@ function escapeHTML(value) {
 }
 
 function formatDate(value) {
+    if (!value) return "—";
+
     const date = new Date(value);
 
     if (Number.isNaN(date.getTime())) {
@@ -69,6 +83,19 @@ function formatDate(value) {
         day: "2-digit"
     }).format(date);
 }
+
+function createLocalId() {
+    if (window.crypto?.randomUUID) {
+        return window.crypto.randomUUID();
+    }
+
+    return `teacher-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+/* =========================================================
+   Statistics
+   ملاحظة: الإحصائيات تخص الحسابات المنشأة في هذه الجلسة.
+   ========================================================= */
 
 function updateStats() {
     if ($("totalTeachers")) {
@@ -86,7 +113,10 @@ function updateStats() {
     }
 }
 
-/* إدارة حقل المادة الأخرى */
+/* =========================================================
+   Custom Subject
+   ========================================================= */
+
 function initCustomSubject() {
     const subjectSelect = $("teacherSubject");
     const customSubject = $("customSubject");
@@ -127,9 +157,11 @@ function getSubject() {
     return $("customSubject")?.value?.trim() || "";
 }
 
-/*
- * إضافة اختيار الصف إلى النموذج إن لم يكن موجودًا.
- */
+/* =========================================================
+   Class Selector
+   إضافة اختيار الصف إلى النموذج دون تغيير هيكله الأساسي.
+   ========================================================= */
+
 function ensureClassSelector() {
     const form = $("teacherForm");
 
@@ -147,10 +179,12 @@ function ensureClassSelector() {
     wrapper.id = "teacherClassWrapper";
 
     wrapper.innerHTML = `
-        <label for="teacherClass">الصف أو الشعبة</label>
+        <label for="teacherClass">الصف أو الشعبة *</label>
+
         <select id="teacherClass" name="teacherClass" required>
             <option value="">جارٍ تحميل الصفوف...</option>
         </select>
+
         <small id="teacherClassHelp">
             اختر الصف الذي سيُسند إليه المعلم.
         </small>
@@ -172,6 +206,7 @@ function setClassOptions(classes) {
         select.innerHTML = `
             <option value="">لا توجد صفوف مسجلة لهذه المدرسة</option>
         `;
+
         select.disabled = true;
         return;
     }
@@ -180,6 +215,7 @@ function setClassOptions(classes) {
 
     select.innerHTML = `
         <option value="">اختر الصف أو الشعبة</option>
+
         ${classes.map((item) => {
             const parts = [
                 item.stage,
@@ -199,10 +235,11 @@ function setClassOptions(classes) {
     `;
 }
 
-/*
- * تحميل المدرسة المرتبطة بمدير المدرسة الحالي
- * ثم تحميل صفوف المدرسة.
- */
+/* =========================================================
+   Load School and Classes
+   ========================================================= */
+
+
 async function loadSchoolAndClasses() {
     supabaseClient = getSupabaseClient();
 
@@ -223,6 +260,37 @@ async function loadSchoolAndClasses() {
         );
     }
 
+    // تحميل اسم مدير المدرسة من حساب المستخدم الحالي
+    const adminNameLabel = $("adminDisplayName");
+
+    if (adminNameLabel) {
+        adminNameLabel.textContent = "جارٍ تحميل الاسم...";
+    }
+
+    const {
+        data: adminProfile,
+        error: profileError
+    } = await supabaseClient
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .maybeSingle();
+
+    if (adminNameLabel) {
+        adminNameLabel.textContent =
+            !profileError && adminProfile?.full_name
+                ? adminProfile.full_name
+                : "مدير المدرسة";
+    }
+
+    if (profileError) {
+        console.warn(
+            "تعذر تحميل اسم مدير المدرسة:",
+            profileError.message
+        );
+    }
+
+    // تحميل عضوية مدير المدرسة
     const {
         data: memberships,
         error: membershipError
@@ -293,9 +361,9 @@ async function loadSchoolAndClasses() {
     }
 
     availableClasses = classes || [];
+
     setClassOptions(availableClasses);
 
-    // دعم معرّف بطاقة المدرسة في القائمة الجانبية الموحدة
     const schoolLabel =
         $("schoolDisplayName") || $("currentSchoolName");
 
@@ -304,15 +372,20 @@ async function loadSchoolAndClasses() {
     }
 }
 
-function renderTeachers() {
-    const tbody = $("teachersTableBody");
 
-    if (!tbody) return;
+/* =========================================================
+   Teacher Filtering
+   ========================================================= */
 
+function getFilteredTeachers() {
     const query =
         $("searchInput")?.value?.trim().toLowerCase() || "";
 
-    const filtered = teachers.filter((teacher) => {
+    if (!query) {
+        return teachers;
+    }
+
+    return teachers.filter((teacher) => {
         const searchableText = [
             teacher.name,
             teacher.email,
@@ -325,6 +398,18 @@ function renderTeachers() {
 
         return searchableText.includes(query);
     });
+}
+
+/* =========================================================
+   Render Teachers
+   ========================================================= */
+
+function renderTeachers() {
+    const tbody = $("teachersTableBody");
+
+    if (!tbody) return;
+
+    const filtered = getFilteredTeachers();
 
     if (!filtered.length) {
         tbody.innerHTML = "";
@@ -365,11 +450,17 @@ function renderTeachers() {
                     ${escapeHTML(teacher.name)}
                 </span>
             </td>
+
             <td>${escapeHTML(teacher.subject)}</td>
+
             <td>
-                <code class="code-cell">${escapeHTML(teacher.code)}</code>
+                <code class="code-cell">
+                    ${escapeHTML(teacher.code)}
+                </code>
             </td>
+
             <td>${escapeHTML(formatDate(teacher.createdAt))}</td>
+
             <td>
                 <div class="table-actions">
                     <button
@@ -377,7 +468,9 @@ function renderTeachers() {
                         class="small-button"
                         data-action="copy"
                         data-id="${escapeHTML(teacher.id)}"
-                    >نسخ الكود</button>
+                    >
+                        نسخ الكود
+                    </button>
                 </div>
             </td>
         </tr>
@@ -385,6 +478,10 @@ function renderTeachers() {
 
     updateStats();
 }
+
+/* =========================================================
+   Generated Account Panel
+   ========================================================= */
 
 function showGeneratedAccount(teacher) {
     latestGeneratedCode = teacher.code || "";
@@ -408,9 +505,11 @@ function showGeneratedAccount(teacher) {
     }
 }
 
-/*
- * إنشاء حساب حقيقي باستدعاء Edge Function.
- */
+/* =========================================================
+   Create Teacher
+   Edge Function: teacher-handler
+   ========================================================= */
+
 async function createTeacher(event) {
     event.preventDefault();
 
@@ -438,6 +537,7 @@ async function createTeacher(event) {
             "يرجى إدخال اسم المعلم الرباعي كما تتطلب الدالة الحالية.",
             true
         );
+
         $("teacherName")?.focus();
         return;
     }
@@ -566,7 +666,7 @@ async function createTeacher(event) {
             id:
                 teacherData.profile_id ||
                 teacherData.id ||
-                crypto.randomUUID(),
+                createLocalId(),
 
             name: teacherData.full_name || name,
             email,
@@ -631,6 +731,10 @@ async function createTeacher(event) {
     }
 }
 
+/* =========================================================
+   Copy Code
+   ========================================================= */
+
 async function copyText(text) {
     if (!text) {
         showToast("لا يوجد كود لنسخه.", true);
@@ -661,6 +765,7 @@ async function copyText(text) {
         showToast("تم نسخ كود دخول المعلم.");
 
     } catch (error) {
+        console.error("Copy failed:", error);
         showToast(`تعذر النسخ التلقائي. الكود: ${text}`, true);
     }
 }
@@ -684,15 +789,18 @@ function handleTableAction(event) {
     }
 }
 
-/* تصدير الحسابات التي أُنشئت خلال الجلسة الحالية */
-function csvEscape(value) {
-    return `"${String(value ?? "").replace(/"/g, '""')}"`;
-}
+/* =========================================================
+   Export Data
+   التصدير من الحسابات الموجودة في الجلسة الحالية
+   ويحترم نتائج البحث الحالية.
+   ========================================================= */
 
-function exportTeachers() {
-    if (!teachers.length) {
-        showToast("لا توجد حسابات معروضة لتصديرها.", true);
-        return;
+function getExportData() {
+    const filtered = getFilteredTeachers();
+
+    if (!filtered.length) {
+        showToast("لا توجد حسابات مطابقة للتصدير.", true);
+        return null;
     }
 
     const headers = [
@@ -706,7 +814,7 @@ function exportTeachers() {
         "تاريخ الإنشاء"
     ];
 
-    const rows = teachers.map((teacher) => [
+    const rows = filtered.map((teacher) => [
         teacher.name,
         teacher.email,
         teacher.phone,
@@ -717,7 +825,101 @@ function exportTeachers() {
         formatDate(teacher.createdAt)
     ]);
 
-    const csv = "\uFEFF" + [headers, ...rows]
+    return {
+        headers,
+        rows,
+        count: filtered.length
+    };
+}
+
+/* =========================================================
+   Excel Export — XLSX
+   ========================================================= */
+
+function exportTeachersExcel() {
+    if (typeof XLSX === "undefined") {
+        showToast(
+            "تعذر تحميل مكتبة Excel. تحقق من اتصال الإنترنت ثم أعد المحاولة.",
+            true
+        );
+        return;
+    }
+
+    const exportData = getExportData();
+
+    if (!exportData) return;
+
+    const sheetData = [
+        ["إيلابرات - حسابات المعلمين"],
+        [`المدرسة: ${currentSchool?.name || "—"}`],
+        [`تاريخ التصدير: ${formatDate(new Date())}`],
+        [`عدد الحسابات: ${exportData.count}`],
+        [],
+        exportData.headers,
+        ...exportData.rows
+    ];
+
+    const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+
+    worksheet["!cols"] = [
+        { wch: 28 },
+        { wch: 30 },
+        { wch: 19 },
+        { wch: 22 },
+        { wch: 32 },
+        { wch: 25 },
+        { wch: 19 },
+        { wch: 18 }
+    ];
+
+    worksheet["!merges"] = [
+        {
+            s: { r: 0, c: 0 },
+            e: { r: 0, c: 7 }
+        }
+    ];
+
+    worksheet["!views"] = [
+        { rightToLeft: true }
+    ];
+
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+        workbook,
+        worksheet,
+        "حسابات المعلمين"
+    );
+
+    const safeSchoolName = String(
+        currentSchool?.name || "school"
+    ).replace(/[\\/:*?"<>|]/g, "-");
+
+    XLSX.writeFile(
+        workbook,
+        `ILABRAT-Teachers-${safeSchoolName}.xlsx`
+    );
+
+    showToast(`تم تصدير ${exportData.count} حساب إلى Excel.`);
+}
+
+/* =========================================================
+   CSV Export
+   ========================================================= */
+
+function csvEscape(value) {
+    return `"${String(value ?? "").replace(/"/g, '""')}"`;
+}
+
+function exportTeachersCSV() {
+    const exportData = getExportData();
+
+    if (!exportData) return;
+
+    const csv = "\uFEFF" + [
+        exportData.headers,
+        ...exportData.rows
+    ]
         .map((row) => row.map(csvEscape).join(","))
         .join("\r\n");
 
@@ -735,21 +937,97 @@ function exportTeachers() {
     link.click();
     link.remove();
 
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-    showToast("تم تصدير الحسابات المعروضة.");
+    showToast(`تم تصدير ${exportData.count} حساب إلى CSV.`);
 }
+
+/* =========================================================
+   Export Menu
+   ========================================================= */
+
+function closeExportMenu() {
+    const menu = $("exportMenu");
+    const button = $("exportButton");
+
+    if (!menu || !button) return;
+
+    menu.hidden = true;
+    button.setAttribute("aria-expanded", "false");
+}
+
+function toggleExportMenu() {
+    const menu = $("exportMenu");
+    const button = $("exportButton");
+
+    if (!menu || !button) return;
+
+    const isOpening = menu.hidden;
+
+    menu.hidden = !isOpening;
+    button.setAttribute("aria-expanded", String(isOpening));
+}
+
+function handleExportMenuClick(event) {
+    const item = event.target.closest("[data-export-format]");
+
+    if (!item) return;
+
+    const format = item.dataset.exportFormat;
+
+    closeExportMenu();
+
+    if (format === "xlsx") {
+        exportTeachersExcel();
+    } else if (format === "csv") {
+        exportTeachersCSV();
+    }
+}
+
+function initExportMenu() {
+    const dropdown = $("exportDropdown");
+    const button = $("exportButton");
+    const menu = $("exportMenu");
+
+    if (!dropdown || !button || !menu) return;
+
+    button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        toggleExportMenu();
+    });
+
+    menu.addEventListener("click", handleExportMenuClick);
+
+    document.addEventListener("click", (event) => {
+        if (!dropdown.contains(event.target)) {
+            closeExportMenu();
+        }
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            closeExportMenu();
+        }
+    });
+}
+
+/* =========================================================
+   Initialization
+   ========================================================= */
 
 async function init() {
     const form = $("teacherForm");
 
     if (!form) {
-        console.error("لم يتم العثور على teacherForm في الصفحة.");
+        console.error(
+            "لم يتم العثور على teacherForm في الصفحة."
+        );
         return;
     }
 
     ensureClassSelector();
     initCustomSubject();
+    initExportMenu();
 
     form.addEventListener("submit", createTeacher);
 
@@ -766,8 +1044,6 @@ async function init() {
         }
     });
 
-    $("exportButton")?.addEventListener("click", exportTeachers);
-
     $("resetButton")?.addEventListener("click", () => {
         if ($("generatedCodePanel")) {
             $("generatedCodePanel").hidden = true;
@@ -779,12 +1055,20 @@ async function init() {
     try {
         await loadSchoolAndClasses();
 
-        showToast("تم الاتصال بقاعدة البيانات وتحميل صفوف المدرسة.");
+        showToast(
+            "تم الاتصال بقاعدة البيانات وتحميل صفوف المدرسة."
+        );
 
     } catch (error) {
-        console.error("Teacher page initialization failed:", error);
+        console.error(
+            "Teacher page initialization failed:",
+            error
+        );
 
-        showToast(error.message || "تعذر تجهيز الصفحة.", true);
+        showToast(
+            error.message || "تعذر تجهيز الصفحة.",
+            true
+        );
 
         const select = $("teacherClass");
 
@@ -792,11 +1076,16 @@ async function init() {
             select.innerHTML = `
                 <option value="">تعذر تحميل الصفوف</option>
             `;
+
             select.disabled = true;
         }
     }
 
     renderTeachers();
 }
+
+/* =========================================================
+   Start
+   ========================================================= */
 
 document.addEventListener("DOMContentLoaded", init);

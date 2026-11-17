@@ -1,6 +1,7 @@
+
 /* =========================================================
    ILABRAT Students — Teacher Registration
-   الهوية الموحدة مع لوحة مدير التطبيق
+   Unified School Admin Design
    ========================================================= */
 
 :root {
@@ -57,6 +58,11 @@ button {
     cursor: pointer;
 }
 
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
@@ -74,9 +80,9 @@ a {
     display: none !important;
 }
 
-/* =========================
-   Layout
-   ========================= */
+/* =========================================================
+   Main Layout
+   ========================================================= */
 
 .app-layout {
     display: flex;
@@ -90,137 +96,215 @@ a {
     min-width: 0;
     max-width: 1600px;
     margin-right: 255px;
-    padding: 0;
+    margin-left: 0;
 }
 
-/* =========================
-   Sidebar
-   ========================= */
+/* =========================================================
+   Unified Sidebar
+   ========================================================= */
 
 .sidebar {
     position: fixed;
-    inset: 0 0 0 auto;
-    z-index: 10;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: auto;
+    z-index: 1000;
+
     width: 255px;
     height: 100vh;
     min-height: 100vh;
-    overflow-y: auto;
-    padding: 25px 17px 18px;
+
     display: flex;
     flex-direction: column;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    padding: 22px 16px 16px;
+
     background: var(--primary-dark);
     color: var(--white);
-    border: 0;
+
+    scrollbar-width: thin;
+    scrollbar-color: rgba(226, 207, 168, 0.4) transparent;
 }
 
 .brand {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 0 7px 25px;
+    gap: 11px;
+
+    padding: 0 5px 20px;
+    margin: 0;
+
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .brand img {
-    width: 47px;
-    height: 47px;
-    flex: 0 0 47px;
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+
     object-fit: contain;
     padding: 4px;
-    border-radius: 12px;
+
+    border-radius: 11px;
     background: var(--white);
 }
 
-.brand h2 {
-    margin: 0;
-    color: var(--white);
-    font-size: 19px;
-    font-weight: 800;
-    line-height: 1.7;
-}
-
-.brand span {
-    display: block;
-    color: #D9C5C5;
-    font-size: 10px;
-}
-
-.school-info {
+.brand-text {
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 7px;
-    margin: 20px 0;
-    padding: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.09);
+    gap: 2px;
+}
+
+.brand-text strong {
+    color: var(--white);
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.6;
+}
+
+.brand-text small {
+    color: #D9C5C5;
+    font-size: 9px;
+    direction: ltr;
+    text-align: right;
+    letter-spacing: 0.5px;
+}
+
+.school-context-card {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+
+    margin: 18px 0 20px;
+    padding: 12px 11px;
+
+    border: 1px solid rgba(255, 255, 255, 0.10);
     border-radius: 12px;
+
     background: rgba(255, 255, 255, 0.07);
 }
 
-.school-label {
-    color: #BFA9AA;
+.school-context-icon {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 10px;
+    background: rgba(199, 165, 106, 0.16);
+
+    font-size: 19px;
+}
+
+.school-context-text {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.school-context-text small {
+    color: #CDB8B8;
     font-size: 10px;
 }
 
-.school-info strong {
+.school-context-text strong {
     color: var(--white);
-    font-size: 12px;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.7;
     overflow-wrap: anywhere;
 }
 
-.navigation {
+.sidebar-heading {
+    margin: 0 8px 10px;
+    color: #BFA9AA;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.sidebar-nav {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
 }
 
-.nav-item {
-    min-height: 46px;
+.sidebar-nav .nav-item {
+    min-height: 43px;
+
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 13px;
-    border-radius: 11px;
+    gap: 10px;
+
+    padding: 9px 11px;
+    border-radius: 10px;
+
     color: #E6DADB;
-    font-size: 12px;
-    transition: background 0.2s, color 0.2s;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.8;
+
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
-.nav-item > span:first-child {
-    width: 23px;
-    flex: 0 0 23px;
-    text-align: center;
-    font-size: 20px;
+.nav-icon {
+    width: 24px;
+    flex: 0 0 24px;
+
+    display: grid;
+    place-items: center;
+
+    color: var(--gold-light);
+    font-size: 19px;
+    line-height: 1;
 }
 
-.nav-item:hover {
-    background: rgba(255, 255, 255, 0.08);
+.sidebar-nav .nav-item:hover {
     color: var(--white);
+    background: rgba(255, 255, 255, 0.09);
 }
 
-.nav-item.active {
+.sidebar-nav .nav-item.active {
     color: var(--white);
     background: var(--primary-light);
     box-shadow: inset -3px 0 var(--gold);
 }
 
+.sidebar-nav .nav-item.active .nav-icon {
+    color: var(--gold-light);
+}
+
 .sidebar-footer {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 10px;
+
     margin-top: auto;
-    padding: 18px 10px 3px;
+    padding: 16px 9px 3px;
+
     border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.admin-avatar {
+.footer-icon {
+    width: 27px;
+    height: 27px;
+    flex: 0 0 27px;
+
     display: grid;
     place-items: center;
-    width: 35px;
-    height: 35px;
-    flex: 0 0 35px;
+
     border-radius: 50%;
     background: var(--gold-light);
     color: var(--primary-dark);
+
+    font-size: 13px;
     font-weight: 800;
 }
 
@@ -228,43 +312,52 @@ a {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
 }
 
 .sidebar-footer strong {
     color: var(--white);
-    font-size: 11px;
-}
-
-.sidebar-footer span {
-    color: #D9C5C5;
     font-size: 10px;
 }
 
-/* =========================
-   Page Header
-   ========================= */
+.sidebar-footer p {
+    margin: 0;
+    color: #D9C5C5;
+    font-size: 9px;
+    line-height: 1.8;
+}
+
+/* =========================================================
+   Topbar
+   ========================================================= */
 
 .topbar {
-    min-height: 100px;
+    min-height: 112px;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 18px;
+    gap: 20px;
+
     margin: 0;
     padding: 22px clamp(18px, 3vw, 43px);
+
     background: var(--white);
     border-bottom: 1px solid var(--border);
 }
 
+.topbar-info {
+    min-width: 0;
+}
+
 .breadcrumb {
-    margin: 0 0 8px;
+    margin: 0 0 7px;
     color: var(--text-soft);
     font-size: 11px;
 }
 
 .topbar h1 {
-    margin: 0 0 7px;
+    margin: 0 0 6px;
     color: var(--primary);
     font-size: clamp(23px, 2.2vw, 30px);
     font-weight: 800;
@@ -279,24 +372,37 @@ a {
     line-height: 2;
 }
 
-/* =========================
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 9px;
+}
+
+/* =========================================================
    Buttons
-   ========================= */
+   ========================================================= */
 
 .primary-button,
 .secondary-button,
-.cancel-button {
+.cancel-button,
+.logout-button {
     min-height: 42px;
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+
     padding: 9px 16px;
+
     border: 1px solid transparent;
     border-radius: 11px;
+
     white-space: nowrap;
     font-size: 11px;
     font-weight: 800;
+
     transition:
         background 0.2s,
         border-color 0.2s,
@@ -336,36 +442,55 @@ a {
     background: var(--beige-dark);
 }
 
+.logout-button {
+    color: var(--primary);
+    background: #FBF7F4;
+    border-color: #E8DAD1;
+}
+
+.logout-button:hover {
+    color: var(--white);
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
 .primary-button:active,
 .secondary-button:active,
-.cancel-button:active {
+.cancel-button:active,
+.logout-button:active {
     transform: scale(0.98);
 }
 
-/* =========================
+/* =========================================================
    Notice
-   ========================= */
+   ========================================================= */
 
 .notice {
     display: flex;
     align-items: flex-start;
     gap: 12px;
+
     margin: 24px clamp(18px, 3vw, 43px) 22px;
     padding: 15px 17px;
+
     border: 1px solid #EDE0CA;
     border-radius: 14px;
+
     background: #F7F0E5;
 }
 
 .notice-icon {
-    display: grid;
-    place-items: center;
     width: 27px;
     height: 27px;
     flex: 0 0 27px;
+
+    display: grid;
+    place-items: center;
+
     border-radius: 50%;
     color: var(--primary);
     background: #EAD8B4;
+
     font-size: 13px;
     font-weight: 800;
 }
@@ -385,9 +510,9 @@ a {
     overflow-wrap: anywhere;
 }
 
-/* =========================
-   Main Page Container
-   ========================= */
+/* =========================================================
+   Statistics
+   ========================================================= */
 
 .stats-grid,
 .content-card,
@@ -407,12 +532,16 @@ a {
 .stat-card {
     min-width: 0;
     min-height: 100px;
+
     display: flex;
     align-items: center;
     gap: 14px;
+
     padding: 19px;
+
     border: 1px solid var(--border);
     border-radius: var(--radius);
+
     background: var(--white);
     box-shadow: 0 4px 15px rgba(41, 35, 35, 0.025);
 }
@@ -421,11 +550,14 @@ a {
     width: 45px;
     height: 45px;
     flex: 0 0 45px;
+
     display: grid;
     place-items: center;
+
     border-radius: 12px;
     background: var(--beige);
     color: var(--brown);
+
     font-size: 22px;
 }
 
@@ -442,18 +574,21 @@ a {
     font-size: 25px;
     font-weight: 800;
     line-height: 1.5;
+    font-variant-numeric: tabular-nums;
 }
 
-/* =========================
-   Content Panels
-   ========================= */
+/* =========================================================
+   Content Cards
+   ========================================================= */
 
 .content-card {
     min-width: 0;
     margin-bottom: 22px;
     padding: 23px 24px 24px;
+
     border: 1px solid var(--border);
     border-radius: var(--radius);
+
     background: var(--white);
     box-shadow: 0 4px 15px rgba(41, 35, 35, 0.025);
 }
@@ -480,9 +615,23 @@ a {
     line-height: 1.9;
 }
 
-/* =========================
+.section-icon {
+    width: 39px;
+    height: 39px;
+    flex: 0 0 39px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 11px;
+    background: var(--beige);
+    color: var(--primary);
+    font-size: 21px;
+}
+
+/* =========================================================
    Form
-   ========================= */
+   ========================================================= */
 
 .form-grid {
     display: grid;
@@ -510,13 +659,18 @@ a {
     width: 100%;
     min-width: 0;
     height: 44px;
+
     padding: 0 12px;
+
     border: 1px solid var(--border);
     border-radius: 10px;
+
     outline: none;
     background: #FDFCFB;
     color: var(--text);
+
     font-size: 11px;
+
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -536,48 +690,58 @@ a {
     cursor: pointer;
 }
 
+.form-group small {
+    color: var(--text-soft);
+    font-size: 10px;
+    line-height: 1.8;
+}
+
 #customSubject {
-    margin-top: 3px !important;
+    margin-top: 3px;
 }
 
 .form-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 9px;
+
     margin-top: 23px;
     padding-top: 18px;
+
     border-top: 1px solid var(--border);
 }
 
-/* =========================
-   Generated Account Panel
-   ========================= */
+/* =========================================================
+   Generated Account
+   ========================================================= */
 
 .generated-panel {
     display: flex;
     align-items: flex-start;
     gap: 15px;
+
     margin-top: 0;
     margin-bottom: 22px;
     padding: 22px 23px;
+
     border: 1px solid #B9DCC8;
     border-radius: var(--radius);
-    background: #F3FAF6;
-}
 
-.generated-panel[hidden] {
-    display: none !important;
+    background: #F3FAF6;
 }
 
 .success-icon {
     width: 43px;
     height: 43px;
     flex: 0 0 43px;
+
     display: grid;
     place-items: center;
+
     border-radius: 50%;
     background: #D9EFE2;
     color: var(--success);
+
     font-size: 23px;
     font-weight: 800;
 }
@@ -618,11 +782,15 @@ a {
 .code-row code {
     direction: ltr;
     display: inline-block;
+
     padding: 10px 16px;
+
     border: 1px dashed #90BCA2;
     border-radius: 10px;
+
     background: var(--white);
     color: var(--primary);
+
     font-family: Consolas, monospace;
     font-size: 21px;
     font-weight: 800;
@@ -635,9 +803,9 @@ a {
     font-size: 10px;
 }
 
-/* =========================
+/* =========================================================
    Search
-   ========================= */
+   ========================================================= */
 
 .search-box {
     position: relative;
@@ -651,8 +819,10 @@ a {
     top: 50%;
     right: 13px;
     transform: translateY(-50%);
+
     color: var(--brown);
     font-size: 22px;
+
     pointer-events: none;
 }
 
@@ -660,15 +830,144 @@ a {
     padding-right: 42px;
 }
 
-/* =========================
-   Teachers Table
-   ========================= */
+/* =========================================================
+   Export Dropdown
+   ========================================================= */
+
+.export-dropdown {
+    position: relative;
+    z-index: 20;
+}
+
+.export-button {
+    min-height: 42px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+
+    padding: 9px 15px;
+
+    border: 1px solid #E5D6C5;
+    border-radius: 11px;
+
+    background: #FBF8F3;
+    color: var(--primary);
+
+    font-size: 11px;
+    font-weight: 800;
+
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.export-button:hover,
+.export-button[aria-expanded="true"] {
+    background: var(--beige);
+    border-color: var(--gold);
+}
+
+.export-button > span:first-child {
+    font-size: 17px;
+}
+
+.dropdown-arrow {
+    color: var(--brown);
+    font-size: 15px;
+}
+
+.export-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+
+    width: 225px;
+    padding: 7px;
+
+    border: 1px solid var(--border);
+    border-radius: 13px;
+
+    background: var(--white);
+    box-shadow: 0 12px 30px rgba(41, 35, 35, 0.13);
+
+    animation: exportMenuIn 0.15s ease;
+}
+
+@keyframes exportMenuIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.export-menu-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+
+    padding: 11px 10px;
+
+    border: 0;
+    border-radius: 9px;
+
+    background: transparent;
+    color: var(--text);
+    text-align: right;
+
+    transition: background 0.15s;
+}
+
+.export-menu-item:hover {
+    background: var(--beige);
+}
+
+.export-menu-icon {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 9px;
+    background: #F5EFE6;
+    color: var(--primary);
+
+    font-size: 18px;
+}
+
+.export-menu-item > span:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.export-menu-item strong {
+    color: var(--primary);
+    font-size: 11px;
+}
+
+.export-menu-item small {
+    color: var(--text-soft);
+    font-size: 9px;
+}
+
+/* =========================================================
+   Table
+   ========================================================= */
 
 .table-wrapper {
     width: 100%;
     overflow-x: auto;
+
     border: 1px solid var(--border);
     border-radius: 12px;
+
     scrollbar-width: thin;
     scrollbar-color: var(--gold-light) var(--beige);
 }
@@ -722,14 +1021,14 @@ tbody tr:last-child td {
 .code-cell {
     direction: ltr;
     display: inline-block;
+
     color: var(--primary);
+
     font-family: Consolas, monospace;
     font-size: 11px;
     font-weight: 800;
     letter-spacing: 1px;
 }
-
-/* Table actions */
 
 .table-actions {
     display: flex;
@@ -740,12 +1039,16 @@ tbody tr:last-child td {
 .small-button {
     min-height: 31px;
     padding: 6px 10px;
+
     border: 1px solid var(--border);
     border-radius: 8px;
+
     background: var(--white);
     color: var(--primary);
+
     font-size: 10px;
     font-weight: 800;
+
     transition: background 0.2s, border-color 0.2s;
 }
 
@@ -754,29 +1057,13 @@ tbody tr:last-child td {
     border-color: var(--gold-light);
 }
 
-.small-button.danger {
-    color: var(--danger);
-    border-color: #EBD0D1;
-    background: #FFF9F9;
-}
-
-.small-button.danger:hover {
-    color: #FFFFFF;
-    border-color: var(--danger);
-    background: var(--danger);
-}
-
-/* =========================
+/* =========================================================
    Empty State
-   ========================= */
+   ========================================================= */
 
 .empty-state {
     padding: 32px 15px 20px;
     text-align: center;
-}
-
-.empty-state[hidden] {
-    display: none !important;
 }
 
 .empty-icon {
@@ -798,41 +1085,53 @@ tbody tr:last-child td {
     line-height: 1.9;
 }
 
-/* =========================
+/* =========================================================
    Footer
-   ========================= */
+   ========================================================= */
 
 .page-footer {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+
     padding: 13px 0 23px;
+
     color: #958780;
     text-align: center;
     font-size: 10px;
 }
 
-/* =========================
-   Toast Messages
-   ========================= */
+/* =========================================================
+   Toast
+   ========================================================= */
 
 .toast {
     position: fixed;
     z-index: 2000;
     right: 24px;
     bottom: 24px;
+
     max-width: min(420px, calc(100vw - 32px));
+
     padding: 13px 18px;
+
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 12px;
+
     color: var(--white);
     background: var(--primary-dark);
+
     box-shadow: var(--shadow);
+
     font-size: 11px;
     line-height: 1.8;
+
     opacity: 0;
     pointer-events: none;
     transform: translateY(10px);
+
     transition: opacity 0.2s, transform 0.2s;
 }
 
@@ -845,11 +1144,11 @@ tbody tr:last-child td {
     background: var(--danger);
 }
 
-/* =========================
+/* =========================================================
    Tablet
-   ========================= */
+   ========================================================= */
 
-@media (max-width: 1250px) {
+@media (max-width: 1250px) and (min-width: 901px) {
     .sidebar {
         width: 225px;
     }
@@ -882,47 +1181,53 @@ tbody tr:last-child td {
     }
 }
 
-/* =========================
+/* =========================================================
    Small Tablet
-   ========================= */
+   ========================================================= */
 
-@media (max-width: 900px) {
+@media (max-width: 900px) and (min-width: 601px) {
     .sidebar {
         width: 76px;
-        padding: 20px 10px;
+        padding: 18px 9px;
     }
 
     .brand {
         justify-content: center;
-        padding: 0 0 20px;
+        padding: 0 0 17px;
     }
 
-    .brand > div,
-    .school-info,
-    .nav-item > span:last-child,
+    .brand-text,
+    .school-context-card,
+    .sidebar-heading,
+    .sidebar-nav .nav-item > span:last-child,
     .sidebar-footer > div:last-child {
         display: none;
     }
 
     .brand img {
-        width: 44px;
-        height: 44px;
-        flex-basis: 44px;
+        width: 43px;
+        height: 43px;
+        flex-basis: 43px;
     }
 
-    .navigation {
-        margin-top: 18px;
+    .sidebar-nav {
+        margin-top: 15px;
     }
 
-    .nav-item {
+    .sidebar-nav .nav-item {
         justify-content: center;
         padding: 10px 4px;
     }
 
+    .nav-icon {
+        width: 27px;
+        flex-basis: 27px;
+        font-size: 21px;
+    }
+
     .sidebar-footer {
         justify-content: center;
-        padding-right: 0;
-        padding-left: 0;
+        padding: 13px 0 0;
     }
 
     .main-content {
@@ -961,17 +1266,19 @@ tbody tr:last-child td {
     }
 }
 
-/* =========================
+/* =========================================================
    Mobile
-   ========================= */
+   ========================================================= */
 
 @media (max-width: 600px) {
     .sidebar {
         position: relative;
         inset: auto;
+
         width: 100%;
         height: auto;
         min-height: 0;
+
         overflow: visible;
         padding: 14px;
     }
@@ -981,16 +1288,8 @@ tbody tr:last-child td {
         padding: 0 3px 13px;
     }
 
-    .brand > div {
-        display: block;
-    }
-
-    .brand h2 {
-        font-size: 18px;
-    }
-
-    .brand span {
-        font-size: 10px;
+    .brand-text {
+        display: flex;
     }
 
     .brand img {
@@ -999,35 +1298,41 @@ tbody tr:last-child td {
         flex-basis: 43px;
     }
 
-    .school-info {
+    .school-context-card {
         display: flex;
         margin: 12px 0;
         padding: 10px 12px;
     }
 
-    .navigation {
+    .sidebar-heading {
+        display: block;
+        margin: 8px 5px;
+    }
+
+    .sidebar-nav {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 7px;
-        margin-top: 0;
     }
 
-    .nav-item {
+    .sidebar-nav .nav-item {
         min-width: 0;
         min-height: 42px;
+
         justify-content: flex-start;
         gap: 7px;
+
         padding: 8px;
         font-size: 10px;
     }
 
-    .nav-item > span:first-child {
+    .nav-icon {
         width: 20px;
         flex-basis: 20px;
         font-size: 17px;
     }
 
-    .nav-item > span:last-child {
+    .sidebar-nav .nav-item > span:last-child {
         display: inline;
         min-width: 0;
         line-height: 1.6;
@@ -1046,12 +1351,16 @@ tbody tr:last-child td {
     .main-content {
         width: 100%;
         margin-right: 0;
+        margin-left: 0;
     }
 
     .topbar {
         min-height: 0;
         padding: 17px 14px;
-        gap: 12px;
+
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 13px;
     }
 
     .breadcrumb {
@@ -1066,7 +1375,13 @@ tbody tr:last-child td {
         font-size: 10px;
     }
 
-    .topbar > .secondary-button {
+    .topbar-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .topbar-actions > * {
         width: 100%;
     }
 
@@ -1119,7 +1434,7 @@ tbody tr:last-child td {
 
     .section-heading {
         align-items: flex-start;
-        flex-direction: column;
+        flex-wrap: wrap;
         gap: 11px;
         margin-bottom: 17px;
     }
@@ -1132,8 +1447,10 @@ tbody tr:last-child td {
         font-size: 10px;
     }
 
-    .section-heading > .secondary-button {
-        width: 100%;
+    .section-icon {
+        width: 34px;
+        height: 34px;
+        flex-basis: 34px;
     }
 
     .form-grid {
@@ -1163,7 +1480,8 @@ tbody tr:last-child td {
 
     .primary-button,
     .secondary-button,
-    .cancel-button {
+    .cancel-button,
+    .logout-button {
         min-height: 40px;
         padding: 8px 11px;
         font-size: 10px;
@@ -1216,6 +1534,20 @@ tbody tr:last-child td {
         font-size: 10px;
     }
 
+    .export-dropdown {
+        width: 100%;
+    }
+
+    .export-button {
+        width: 100%;
+    }
+
+    .export-menu {
+        right: 0;
+        left: 0;
+        width: 100%;
+    }
+
     .table-wrapper {
         border-radius: 10px;
     }
@@ -1261,9 +1593,9 @@ tbody tr:last-child td {
     }
 }
 
-/* =========================
+/* =========================================================
    Reduced Motion
-   ========================= */
+   ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
     *,
@@ -1274,255 +1606,169 @@ tbody tr:last-child td {
         transition-duration: 0.01ms !important;
     }
 }
-
 /* =========================================================
-   ILABRAT — Unified School Admin Sidebar
-   توافق القائمة الجانبية الموحدة في جميع صفحات مدير المدرسة
+   ILABRAT — Sidebar unified with Admin Timetable
    ========================================================= */
 
-/* القائمة الجانبية */
 .sidebar {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: auto;
-    z-index: 1000;
-
-    width: 255px;
-    height: 100vh;
-    min-height: 100vh;
-
-    display: flex;
-    flex-direction: column;
-
-    overflow-x: hidden;
-    overflow-y: auto;
-
+    background: linear-gradient(
+        165deg,
+        #5A1825 0%,
+        #43131D 58%,
+        #351018 100%
+    );
     padding: 22px 16px 16px;
-
-    background: var(--primary-dark);
-    color: var(--white);
-
-    scrollbar-width: thin;
-    scrollbar-color: rgba(226, 207, 168, 0.4) transparent;
 }
 
-/* الشعار */
-.sidebar .brand {
-    display: flex;
-    align-items: center;
+.brand {
     gap: 11px;
-
     padding: 0 5px 20px;
-    margin: 0;
-
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.13);
 }
 
-.sidebar .brand img {
+.brand img {
     width: 46px;
     height: 46px;
     flex: 0 0 46px;
-
-    object-fit: contain;
     padding: 4px;
-
     border-radius: 11px;
-    background: var(--white);
+    background: #FFFFFF;
+    object-fit: contain;
 }
 
-.sidebar .brand-text {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.sidebar .brand-text strong {
-    color: var(--white);
-    font-size: 18px;
+.brand-text strong {
+    color: #FFFFFF;
+    font-size: 19px;
     font-weight: 800;
-    line-height: 1.6;
 }
 
-.sidebar .brand-text small {
-    color: #D9C5C5;
-    font-size: 9px;
-    direction: ltr;
-    text-align: right;
-    letter-spacing: 0.5px;
+.brand-text small {
+    color: #E2CFA8;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
 }
 
-/* بطاقة المدرسة */
 .school-context-card {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-
-    margin: 18px 0 20px;
-    padding: 12px 11px;
-
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    border-radius: 12px;
-
+    gap: 12px;
+    width: 100%;
+    margin: 23px 0 22px;
+    padding: 13px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 14px;
     background: rgba(255, 255, 255, 0.07);
 }
 
 .school-context-icon {
-    width: 36px;
-    height: 36px;
-    flex: 0 0 36px;
-
-    display: grid;
-    place-items: center;
-
-    border-radius: 10px;
-    background: rgba(199, 165, 106, 0.16);
-
-    font-size: 19px;
-}
-
-.school-context-text {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    width: 45px;
+    height: 45px;
+    flex: 0 0 45px;
+    border-radius: 12px;
+    background: rgba(199, 165, 106, 0.2);
+    font-size: 24px;
 }
 
 .school-context-text small {
-    color: #CDB8B8;
-    font-size: 10px;
-}
-
-.school-context-text strong {
-    color: var(--white);
-    font-size: 11px;
-    font-weight: 800;
-    line-height: 1.7;
-    overflow-wrap: anywhere;
-}
-
-/* عنوان القائمة */
-.sidebar-heading {
-    margin: 0 8px 10px;
-    color: #BFA9AA;
-    font-size: 10px;
+    color: #D9C5C5;
+    font-size: 12px;
     font-weight: 700;
 }
 
-/* روابط القائمة */
+.school-context-text strong {
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.8;
+}
+
+.sidebar-heading {
+    margin: 0 8px 11px;
+    color: #E2CFA8;
+    font-size: 13px;
+    font-weight: 800;
+}
+
 .sidebar-nav {
-    display: flex;
-    flex-direction: column;
     gap: 5px;
 }
 
 .sidebar-nav .nav-item {
-    min-height: 43px;
-
-    display: flex;
-    align-items: center;
-    gap: 10px;
-
-    padding: 9px 11px;
-
+    width: 100%;
+    min-height: 46px;
+    gap: 12px;
+    padding: 9px 12px;
     border-radius: 10px;
-
-    color: #E6DADB;
-    font-size: 11px;
-    font-weight: 600;
+    color: #F5EDEF;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 700;
     line-height: 1.8;
-
     transition:
         background 0.2s ease,
-        color 0.2s ease;
+        color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
-.sidebar-nav .nav-icon {
-    width: 24px;
-    flex: 0 0 24px;
-
-    display: grid;
-    place-items: center;
-
-    color: var(--gold-light);
+.nav-icon {
+    width: 25px;
+    height: 25px;
+    flex: 0 0 25px;
+    color: #E2CFA8;
     font-size: 19px;
     line-height: 1;
 }
 
 .sidebar-nav .nav-item:hover {
-    color: var(--white);
-    background: rgba(255, 255, 255, 0.09);
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.11);
 }
 
 .sidebar-nav .nav-item.active {
-    color: var(--white);
-    background: var(--primary-light);
-    box-shadow: inset -3px 0 var(--gold);
+    color: #43131D;
+    background: linear-gradient(
+        135deg,
+        #E2CFA8 0%,
+        #C7A56A 100%
+    );
+    font-weight: 800;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.13);
 }
 
 .sidebar-nav .nav-item.active .nav-icon {
-    color: var(--gold-light);
+    color: #43131D;
 }
 
-/* تذييل القائمة الموحدة */
-.sidebar .sidebar-footer {
-    display: flex;
-    align-items: flex-start;
+.sidebar-footer {
     gap: 10px;
-
-    margin-top: auto;
-    padding: 16px 9px 3px;
-
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 16px 8px 3px;
+    border-top: 1px solid rgba(255, 255, 255, 0.13);
 }
 
-.sidebar .footer-icon {
-    width: 27px;
-    height: 27px;
-    flex: 0 0 27px;
+.footer-icon {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    background: #E2CFA8;
+    color: #43131D;
+    font-weight: 800;
+}
 
-    display: grid;
-    place-items: center;
-
-    border-radius: 50%;
-
-    background: var(--gold-light);
-    color: var(--primary-dark);
-
+.sidebar-footer strong {
+    color: #FFFFFF;
     font-size: 13px;
     font-weight: 800;
 }
 
-.sidebar .sidebar-footer > div:last-child {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.sidebar .sidebar-footer strong {
-    color: var(--white);
-    font-size: 10px;
-}
-
-.sidebar .sidebar-footer p {
-    margin: 0;
+.sidebar-footer p {
     color: #D9C5C5;
-    font-size: 9px;
+    font-size: 11px;
     line-height: 1.8;
 }
 
-/* إزاحة المحتوى حتى لا يتداخل مع القائمة الثابتة */
-.main-content {
-    width: calc(100% - 255px);
-    min-width: 0;
-    margin-right: 255px;
-    margin-left: 0;
-}
+/* =========================================================
+   Sidebar Responsive — Reference Layout
+   ========================================================= */
 
-/* الشاشات المتوسطة */
 @media (max-width: 1250px) and (min-width: 901px) {
     .sidebar {
         width: 225px;
@@ -1534,27 +1780,26 @@ tbody tr:last-child td {
     }
 }
 
-/* الأجهزة اللوحية */
 @media (max-width: 900px) and (min-width: 601px) {
     .sidebar {
         width: 76px;
         padding: 18px 9px;
     }
 
-    .sidebar .brand {
+    .brand {
         justify-content: center;
         padding: 0 0 17px;
     }
 
-    .sidebar .brand-text,
-    .sidebar .school-context-card,
-    .sidebar .sidebar-heading,
-    .sidebar .nav-item > span:last-child,
-    .sidebar .sidebar-footer > div:last-child {
+    .brand-text,
+    .school-context-card,
+    .sidebar-heading,
+    .sidebar-nav .nav-item > span:last-child,
+    .sidebar-footer > div:last-child {
         display: none;
     }
 
-    .sidebar .brand img {
+    .brand img {
         width: 43px;
         height: 43px;
         flex-basis: 43px;
@@ -1565,17 +1810,19 @@ tbody tr:last-child td {
     }
 
     .sidebar-nav .nav-item {
+        min-height: 46px;
         justify-content: center;
         padding: 10px 4px;
     }
 
-    .sidebar-nav .nav-icon {
+    .nav-icon {
         width: 27px;
+        height: 27px;
         flex-basis: 27px;
         font-size: 21px;
     }
 
-    .sidebar .sidebar-footer {
+    .sidebar-footer {
         justify-content: center;
         padding: 13px 0 0;
     }
@@ -1586,30 +1833,27 @@ tbody tr:last-child td {
     }
 }
 
-/* الهاتف */
 @media (max-width: 600px) {
     .sidebar {
         position: relative;
         inset: auto;
-
         width: 100%;
         height: auto;
         min-height: 0;
-
         overflow: visible;
         padding: 14px;
     }
 
-    .sidebar .brand {
+    .brand {
         justify-content: flex-start;
         padding: 0 3px 13px;
     }
 
-    .sidebar .brand-text {
+    .brand-text {
         display: flex;
     }
 
-    .sidebar .brand img {
+    .brand img {
         width: 43px;
         height: 43px;
         flex-basis: 43px;
@@ -1621,32 +1865,40 @@ tbody tr:last-child td {
         padding: 10px 12px;
     }
 
+    .school-context-icon {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+        font-size: 21px;
+    }
+
+    .school-context-text small {
+        font-size: 11px;
+    }
+
+    .school-context-text strong {
+        font-size: 12px;
+    }
+
     .sidebar-heading {
         display: block;
-        margin: 8px 5px;
+        margin: 8px 5px 11px;
     }
 
     .sidebar-nav {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 7px;
+        margin-top: 0;
     }
 
     .sidebar-nav .nav-item {
         min-width: 0;
         min-height: 42px;
-
         justify-content: flex-start;
         gap: 7px;
-
         padding: 8px;
-        font-size: 10px;
-    }
-
-    .sidebar-nav .nav-icon {
-        width: 20px;
-        flex-basis: 20px;
-        font-size: 17px;
+        font-size: 11px;
     }
 
     .sidebar-nav .nav-item > span:last-child {
@@ -1655,21 +1907,215 @@ tbody tr:last-child td {
         line-height: 1.6;
     }
 
-    .sidebar .sidebar-footer {
-        display: flex;
-        justify-content: flex-start;
+    .nav-icon {
+        width: 20px;
+        height: 20px;
+        flex: 0 0 20px;
+        font-size: 17px;
+    }
 
+    .sidebar-footer {
+        justify-content: flex-start;
         margin-top: 13px;
         padding: 12px 4px 0;
     }
 
-    .sidebar .sidebar-footer > div:last-child {
+    .sidebar-footer > div:last-child {
         display: flex;
+    }
+
+    .sidebar-footer strong {
+        font-size: 11px;
+    }
+
+    .sidebar-footer p {
+        font-size: 10px;
     }
 
     .main-content {
         width: 100%;
         margin-right: 0;
         margin-left: 0;
+    }
+}
+/* =========================================================
+   ILABRAT — الشريط العلوي مثل صفحة حسابات الطلاب
+   ========================================================= */
+
+.topbar {
+    min-height: 86px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    margin: 0;
+    padding: 16px clamp(18px, 3vw, 43px);
+
+    background: #FFFFFF;
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 3px 12px rgba(67, 19, 29, 0.035);
+}
+
+/* مسار الصفحة */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 9px;
+
+    margin: 0;
+    color: var(--text-soft);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.breadcrumb a {
+    color: var(--text-soft);
+    transition: color 0.2s ease;
+}
+
+.breadcrumb a:hover {
+    color: var(--primary);
+}
+
+.breadcrumb span {
+    color: var(--gold);
+}
+
+.breadcrumb strong {
+    color: var(--primary);
+    font-weight: 800;
+}
+
+/* بيانات مدير المدرسة */
+.admin-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    flex: 0 0 auto;
+    min-height: 46px;
+
+    padding: 6px 12px;
+
+    border: 1px solid var(--border);
+    border-radius: 12px;
+
+    background: #FBF8F3;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.admin-profile:hover {
+    border-color: var(--gold-light);
+    background: #FFFFFF;
+}
+
+/* مؤشر الاتصال */
+.online-dot {
+    width: 9px;
+    height: 9px;
+    flex: 0 0 9px;
+
+    border-radius: 50%;
+    background: #287D53;
+
+    box-shadow: 0 0 0 3px rgba(40, 125, 83, 0.12);
+}
+
+/* اسم المدير */
+#adminDisplayName {
+    max-width: 220px;
+    overflow: hidden;
+
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 800;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* الصورة الرمزية */
+.profile-avatar {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+
+    display: grid;
+    place-items: center;
+
+    border: 2px solid var(--gold-light);
+    border-radius: 50%;
+
+    background: linear-gradient(
+        145deg,
+        var(--primary-light),
+        var(--primary-dark)
+    );
+
+    color: #FFFFFF;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+/* الشاشات المتوسطة */
+@media (max-width: 900px) {
+    .topbar {
+        padding-right: 22px;
+        padding-left: 22px;
+    }
+}
+
+/* الهواتف */
+@media (max-width: 600px) {
+    .topbar {
+        min-height: 72px;
+        gap: 10px;
+        padding: 12px 14px;
+    }
+
+    .breadcrumb {
+        gap: 6px;
+        font-size: 10px;
+    }
+
+    .admin-profile {
+        min-height: 40px;
+        gap: 7px;
+        padding: 4px 8px;
+    }
+
+    #adminDisplayName {
+        max-width: 105px;
+        font-size: 10px;
+    }
+
+    .profile-avatar {
+        width: 31px;
+        height: 31px;
+        flex-basis: 31px;
+        font-size: 13px;
+    }
+
+    .online-dot {
+        width: 7px;
+        height: 7px;
+        flex-basis: 7px;
+    }
+}
+
+@media (max-width: 390px) {
+    .topbar {
+        padding-right: 9px;
+        padding-left: 9px;
+    }
+
+    #adminDisplayName {
+        max-width: 78px;
+    }
+
+    .breadcrumb {
+        font-size: 9px;
     }
 }

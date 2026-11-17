@@ -1,9 +1,14 @@
+
 "use strict";
 
 /* =========================================================
    ILABRAT — إدارة الجدول الدراسي عبر Supabase
-   إنشاء الشعب وإضافة الحصص وتعديلها وحذفها وحفظها ونشرها
+   إدارة الشعب والحصص والحفظ والنشر والتصدير إلى Excel
    ========================================================= */
+
+/* =========================
+   1. الثوابت والإعدادات
+   ========================= */
 
 const DAYS = [
     { id: "sun", name: "الأحد" },
@@ -37,6 +42,10 @@ const DEFAULT_STAGE_GRADES = {
 const $ = id => document.getElementById(id);
 const db = window.supabaseClient;
 
+/* =========================
+   2. حالة الصفحة
+   ========================= */
+
 let currentUser = null;
 let currentProfile = null;
 let currentSchool = null;
@@ -46,14 +55,15 @@ let lessons = [];
 let schoolTeachers = [];
 
 let originalDbIds = new Set();
+
 let isBusy = false;
 let toastTimer = null;
 let loadToken = 0;
 let pendingDeleteAction = null;
 
-/* =========================================================
-   أدوات عامة
-   ========================================================= */
+/* =========================
+   3. أدوات عامة
+   ========================= */
 
 function escapeHTML(value) {
     return String(value ?? "").replace(/[&<>"']/g, char => ({
@@ -78,23 +88,23 @@ function isDatabaseId(id) {
 }
 
 function selectedYear() {
-    return $("yearSelect").value;
+    return $("yearSelect")?.value || "";
 }
 
 function selectedStage() {
-    return $("stageSelect").value;
+    return $("stageSelect")?.value || "";
 }
 
 function selectedGrade() {
-    return $("classSelect").value;
+    return $("classSelect")?.value || "";
 }
 
 function selectedGender() {
-    return $("genderSelect").value;
+    return $("genderSelect")?.value || "";
 }
 
 function selectedSection() {
-    return $("sectionSelect").value;
+    return $("sectionSelect")?.value || "";
 }
 
 function currentClass() {
@@ -112,31 +122,46 @@ function currentClass() {
 }
 
 function showToast(message) {
-    $("toastMessage").textContent = message;
-    $("toastMessage").classList.add("show");
+    const toast = $("toastMessage");
+    if (!toast) return;
+
+    toast.textContent = message;
+    toast.classList.add("show");
 
     clearTimeout(toastTimer);
 
     toastTimer = setTimeout(() => {
-        $("toastMessage").classList.remove("show");
+        toast.classList.remove("show");
     }, 3500);
 }
 
 function showError(message) {
-    $("connectionNotice").textContent = message;
-    $("saveMessage").textContent = message;
+    if ($("connectionNotice")) {
+        $("connectionNotice").textContent = message;
+    }
+
+    if ($("saveMessage")) {
+        $("saveMessage").textContent = message;
+    }
 }
 
 function setStatus(isPublished, label = "") {
-    $("publishStatus").classList.toggle("published", Boolean(isPublished));
+    const status = $("publishStatus");
+    const publishButton = $("publishScheduleButton");
 
-    $("publishStatus").innerHTML = isPublished
-        ? `<span></span> ${escapeHTML(label || "منشور للطلاب")}`
-        : "<span></span> مسودة غير منشورة";
+    if (status) {
+        status.classList.toggle("published", Boolean(isPublished));
 
-    $("publishScheduleButton").innerHTML = isPublished
-        ? "<span>↗</span> إعادة النشر"
-        : "<span>↗</span> نشر الجدول";
+        status.innerHTML = isPublished
+            ? `<span></span> ${escapeHTML(label || "منشور للطلاب")}`
+            : "<span></span> مسودة غير منشورة";
+    }
+
+    if (publishButton) {
+        publishButton.innerHTML = isPublished
+            ? "<span>↗</span> إعادة النشر"
+            : "<span>↗</span> نشر الجدول";
+    }
 }
 
 function setBusy(value) {
@@ -152,12 +177,16 @@ function setBusy(value) {
         "saveScheduleButton",
         "publishScheduleButton",
         "publishBottomButton",
-        "confirmClassButton"
+        "confirmClassButton",
+        "exportExcelButton"
     ].forEach(id => {
-        if ($(id)) $(id).disabled = isBusy;
+        const element = $(id);
+        if (element) element.disabled = isBusy;
     });
 
-    if (!isBusy) updateSelectionControls();
+    if (!isBusy) {
+        updateSelectionControls();
+    }
 }
 
 function updateSelectionControls() {
@@ -172,23 +201,48 @@ function updateSelectionControls() {
     const hasSection = Boolean(selectedSection());
     const hasClass = Boolean(currentClass());
 
-    $("stageSelect").disabled = isBusy || !currentSchool || !hasStageOptions;
-    $("classSelect").disabled = isBusy || !hasStage;
-    $("genderSelect").disabled = isBusy || !hasGrade;
-    $("sectionSelect").disabled = isBusy || !hasGender;
+    $("stageSelect").disabled =
+        isBusy || !currentSchool || !hasStageOptions;
 
-    $("confirmClassButton").disabled =
-        isBusy ||
-        !currentSchool ||
-        !hasStage ||
-        !hasGrade ||
-        !hasGender ||
-        !hasSection;
+    $("classSelect").disabled =
+        isBusy || !hasStage;
 
-    $("addLessonButton").disabled = isBusy || !hasClass;
-    $("saveScheduleButton").disabled = isBusy || !hasClass;
-    $("publishScheduleButton").disabled = isBusy || !hasClass;
-    $("publishBottomButton").disabled = isBusy || !hasClass;
+    $("genderSelect").disabled =
+        isBusy || !hasGrade;
+
+    $("sectionSelect").disabled =
+        isBusy || !hasGender;
+
+    if ($("confirmClassButton")) {
+        $("confirmClassButton").disabled =
+            isBusy ||
+            !currentSchool ||
+            !hasStage ||
+            !hasGrade ||
+            !hasGender ||
+            !hasSection;
+    }
+
+    if ($("addLessonButton")) {
+        $("addLessonButton").disabled = isBusy || !hasClass;
+    }
+
+    if ($("saveScheduleButton")) {
+        $("saveScheduleButton").disabled = isBusy || !hasClass;
+    }
+
+    if ($("publishScheduleButton")) {
+        $("publishScheduleButton").disabled = isBusy || !hasClass;
+    }
+
+    if ($("publishBottomButton")) {
+        $("publishBottomButton").disabled = isBusy || !hasClass;
+    }
+
+    if ($("exportExcelButton")) {
+        $("exportExcelButton").disabled =
+            isBusy || !hasClass || !lessons.length;
+    }
 }
 
 function getStageName(stage) {
@@ -199,20 +253,26 @@ function getStageName(stage) {
     })[stage] || stage || "";
 }
 
-/* =========================================================
-   المواد الدراسية
-   ========================================================= */
+/* =========================
+   4. المواد الدراسية
+   ========================= */
 
 function updateCustomSubjectField(focusInput = false) {
-    const custom = $("lessonSubject").value === "أخرى";
+    const subjectSelect = $("lessonSubject");
+    const customField = $("customSubjectField");
+    const customInput = $("customSubjectInput");
 
-    $("customSubjectField").hidden = !custom;
-    $("customSubjectInput").required = custom;
+    if (!subjectSelect || !customField || !customInput) return;
 
-    if (!custom) {
-        $("customSubjectInput").value = "";
+    const isCustom = subjectSelect.value === "أخرى";
+
+    customField.hidden = !isCustom;
+    customInput.required = isCustom;
+
+    if (!isCustom) {
+        customInput.value = "";
     } else if (focusInput) {
-        $("customSubjectInput").focus();
+        customInput.focus();
     }
 }
 
@@ -220,14 +280,16 @@ function prepareSubjectField(subject = "") {
     const select = $("lessonSubject");
     const customInput = $("customSubjectInput");
 
-    const standard = Array.from(select.options)
+    if (!select || !customInput) return;
+
+    const standardSubjects = Array.from(select.options)
         .map(option => option.value)
         .filter(value => value && value !== "أخرى");
 
     if (!subject) {
         select.value = "";
         customInput.value = "";
-    } else if (standard.includes(subject)) {
+    } else if (standardSubjects.includes(subject)) {
         select.value = subject;
         customInput.value = "";
     } else {
@@ -244,9 +306,9 @@ function getLessonSubjectValue() {
         : $("lessonSubject").value.trim();
 }
 
-/* =========================================================
-   منع تعارض حصص المعلم بين جميع شعب المدرسة
-   ========================================================= */
+/* =========================
+   5. التحقق من تعارض المعلمين
+   ========================= */
 
 function normalizeTeacherName(value) {
     return String(value || "")
@@ -271,14 +333,18 @@ function timeToMinutes(value) {
 }
 
 function lessonsOverlap(first, second) {
-    if (
-        first.day_of_week !== second.day_of_week &&
-        first.day !== second.day
-    ) {
+    const firstDay = first.day_of_week ?? first.day;
+    const secondDay = second.day_of_week ?? second.day;
+
+    if (firstDay !== secondDay) {
         return false;
     }
 
-    if (Number(first.period) === Number(second.period)) {
+    if (
+        first.period != null &&
+        second.period != null &&
+        Number(first.period) === Number(second.period)
+    ) {
         return true;
     }
 
@@ -348,6 +414,8 @@ async function validateTeacherConflicts(classItem) {
         class_id: classItem.id
     }));
 
+    /* التحقق من تعارض المعلم مع الشعب الأخرى */
+
     for (const proposed of proposedLessons) {
         const teacherName = normalizeTeacherName(
             proposed.teacher_name
@@ -388,6 +456,8 @@ async function validateTeacherConflicts(classItem) {
         }
     }
 
+    /* التحقق من تعارض المعلم داخل الشعبة الحالية */
+
     for (let i = 0; i < proposedLessons.length; i++) {
         for (let j = i + 1; j < proposedLessons.length; j++) {
             const first = proposedLessons[i];
@@ -418,17 +488,25 @@ async function validateTeacherConflicts(classItem) {
     return { valid: true };
 }
 
-/* =========================================================
-   تسجيل الدخول والصلاحيات
-   ========================================================= */
+/* =========================
+   6. تسجيل الدخول والصلاحيات
+   ========================= */
 
 async function initializePage() {
-    $("resetDemoButton").hidden = true;
+    if ($("resetDemoButton")) {
+        $("resetDemoButton").hidden = true;
+    }
 
     if (!db?.auth || !db?.from) {
-        showError("تعذر العثور على Supabase Client. تحقق من supabase-config.js.");
-        $("weeklySchedule").innerHTML =
-            '<div class="schedule-loading">تعذر الاتصال بقاعدة البيانات.</div>';
+        showError(
+            "تعذر العثور على Supabase Client. تحقق من supabase-config.js."
+        );
+
+        if ($("weeklySchedule")) {
+            $("weeklySchedule").innerHTML =
+                '<div class="schedule-loading">تعذر الاتصال بقاعدة البيانات.</div>';
+        }
+
         return;
     }
 
@@ -454,7 +532,12 @@ async function initializePage() {
             .maybeSingle();
 
         if (profileError) throw profileError;
-        if (!profile) throw new Error("لا يوجد ملف صلاحيات مرتبط بهذا الحساب.");
+
+        if (!profile) {
+            throw new Error(
+                "لا يوجد ملف صلاحيات مرتبط بهذا الحساب."
+            );
+        }
 
         currentProfile = profile;
 
@@ -466,39 +549,52 @@ async function initializePage() {
         }
 
         if (role !== "school_admin") {
-            throw new Error("ليس لديك صلاحية إدارة الجداول الدراسية.");
+            throw new Error(
+                "ليس لديك صلاحية إدارة الجداول الدراسية."
+            );
         }
 
-        $("adminDisplayName").textContent =
-            profile.full_name || "الإدارة";
+        if ($("adminDisplayName")) {
+            $("adminDisplayName").textContent =
+                profile.full_name || "الإدارة";
+        }
 
         await loadCurrentSchool();
         await loadClasses();
         await loadSchoolTeachers();
 
-        $("connectionNotice").textContent =
-            `تم الاتصال بقاعدة البيانات. المدرسة المحددة: ${currentSchool.name}`;
+        if ($("connectionNotice")) {
+            $("connectionNotice").textContent =
+                `تم الاتصال بقاعدة البيانات. المدرسة المحددة: ${currentSchool.name}`;
+        }
 
-        $("saveMessage").textContent =
-            "تم الاتصال بقاعدة البيانات بنجاح.";
+        if ($("saveMessage")) {
+            $("saveMessage").textContent =
+                "تم الاتصال بقاعدة البيانات بنجاح.";
+        }
 
         setStatus(false);
 
     } catch (error) {
         console.error("Initialize timetable error:", error);
 
-        showError(error.message || "تعذر تحميل صفحة إدارة الجدول.");
+        showError(
+            error.message || "تعذر تحميل صفحة إدارة الجدول."
+        );
 
-        $("weeklySchedule").innerHTML =
-            '<div class="schedule-loading">تعذر تحميل بيانات الجدول.</div>';
+        if ($("weeklySchedule")) {
+            $("weeklySchedule").innerHTML =
+                '<div class="schedule-loading">تعذر تحميل بيانات الجدول.</div>';
+        }
+
     } finally {
         setBusy(false);
     }
 }
 
-/* =========================================================
-   المدرسة الحالية
-   ========================================================= */
+/* =========================
+   7. المدرسة الحالية
+   ========================= */
 
 async function loadCurrentSchool() {
     const { data: memberships, error } = await db
@@ -510,7 +606,9 @@ async function loadCurrentSchool() {
     if (error) throw error;
 
     if (!memberships?.length) {
-        throw new Error("هذا الحساب غير مرتبط بمدرسة بصلاحية مدير مدرسة.");
+        throw new Error(
+            "هذا الحساب غير مرتبط بمدرسة بصلاحية مدير مدرسة."
+        );
     }
 
     const ids = [...new Set(
@@ -518,7 +616,9 @@ async function loadCurrentSchool() {
     )];
 
     if (ids.length !== 1) {
-        throw new Error("هذا الحساب مرتبط بأكثر من مدرسة. يلزم تحديد المدرسة من لوحة الإدارة.");
+        throw new Error(
+            "هذا الحساب مرتبط بأكثر من مدرسة. يلزم تحديد المدرسة من لوحة الإدارة."
+        );
     }
 
     const { data: school, error: schoolError } = await db
@@ -528,22 +628,39 @@ async function loadCurrentSchool() {
         .maybeSingle();
 
     if (schoolError) throw schoolError;
-    if (!school) throw new Error("تعذر العثور على المدرسة المرتبطة بالحساب.");
+
+    if (!school) {
+        throw new Error(
+            "تعذر العثور على المدرسة المرتبطة بالحساب."
+        );
+    }
 
     currentSchool = school;
-    $("schoolDisplayName").textContent = school.name || "المدرسة";
+
+    if ($("schoolDisplayName")) {
+        $("schoolDisplayName").textContent =
+            school.name || "المدرسة";
+    }
 
     return true;
 }
 
-/* =========================================================
-   الصفوف والشعب
-   ========================================================= */
+/* =========================
+   8. الصفوف والشعب
+   ========================= */
 
 async function loadClasses() {
     const { data, error } = await db
         .from("classes")
-        .select("id, name, school_id, stage, grade_name, gender, section_name")
+        .select(`
+            id,
+            name,
+            school_id,
+            stage,
+            grade_name,
+            gender,
+            section_name
+        `)
         .eq("school_id", currentSchool.id)
         .order("id", { ascending: true });
 
@@ -580,15 +697,21 @@ function getGradesForStage(stage) {
 
 function populateStageOptions(preferredStage = "") {
     const select = $("stageSelect");
+    if (!select) return;
+
     const stages = getAllStageOptions();
 
     select.innerHTML =
         '<option value="">اختر المرحلة الدراسية</option>' +
-        stages.map(stage =>
-            `<option value="${escapeHTML(stage)}">${escapeHTML(getStageName(stage))}</option>`
-        ).join("");
+        stages.map(stage => `
+            <option value="${escapeHTML(stage)}">
+                ${escapeHTML(getStageName(stage))}
+            </option>
+        `).join("");
 
-    select.value = stages.includes(preferredStage) ? preferredStage : "";
+    select.value = stages.includes(preferredStage)
+        ? preferredStage
+        : "";
 
     $("classSelect").innerHTML =
         '<option value="">اختر المرحلة أولًا</option>';
@@ -611,12 +734,16 @@ function populateGradeOptions(preferredGrade = "") {
 
     $("classSelect").innerHTML =
         '<option value="">اختر الصف الدراسي</option>' +
-        grades.map(grade =>
-            `<option value="${escapeHTML(grade)}">${escapeHTML(grade)}</option>`
-        ).join("");
+        grades.map(grade => `
+            <option value="${escapeHTML(grade)}">
+                ${escapeHTML(grade)}
+            </option>
+        `).join("");
 
     $("classSelect").value =
-        grades.includes(preferredGrade) ? preferredGrade : "";
+        grades.includes(preferredGrade)
+            ? preferredGrade
+            : "";
 
     $("genderSelect").value = "";
 
@@ -641,11 +768,12 @@ function populateSectionOptions(preferredGender = "") {
         rows.map(item => item.gender).filter(Boolean)
     )];
 
-    $("genderSelect").innerHTML =
-        '<option value="">اختر الجنس</option>' +
-        '<option value="بنين">بنين</option>' +
-        '<option value="بنات">بنات</option>' +
-        '<option value="مختلط">مختلط</option>';
+    $("genderSelect").innerHTML = `
+        <option value="">اختر الجنس</option>
+        <option value="بنين">بنين</option>
+        <option value="بنات">بنات</option>
+        <option value="مختلط">مختلط</option>
+    `;
 
     $("genderSelect").value =
         ["بنين", "بنات", "مختلط"].includes(preferredGender)
@@ -671,10 +799,16 @@ function populateSectionSelect(preferredSection = "") {
     const select = $("sectionSelect");
 
     if (!selectedGender()) {
-        select.innerHTML = '<option value="">اختر الجنس أولًا</option>';
+        select.innerHTML =
+            '<option value="">اختر الجنس أولًا</option>';
+
         lessons = [];
+        originalDbIds.clear();
+
         updateSelectedClassLabel();
         renderSchedule();
+        updateSelectionControls();
+
         return;
     }
 
@@ -727,7 +861,15 @@ async function insertClassRecord(stage, grade, gender, sectionName) {
             gender,
             section_name: sectionName
         })
-        .select("id, name, school_id, stage, grade_name, gender, section_name")
+        .select(`
+            id,
+            name,
+            school_id,
+            stage,
+            grade_name,
+            gender,
+            section_name
+        `)
         .single();
 
     if (error) throw error;
@@ -735,9 +877,9 @@ async function insertClassRecord(stage, grade, gender, sectionName) {
     return data;
 }
 
-/* =========================================================
-   إنشاء الشعبة
-   ========================================================= */
+/* =========================
+   9. إنشاء الشعبة
+   ========================= */
 
 async function confirmClassCreation() {
     if (isBusy) return;
@@ -748,7 +890,9 @@ async function confirmClassCreation() {
     const sectionName = selectedSection();
 
     if (!stage || !grade || !gender || !sectionName) {
-        showToast("يرجى اختيار المرحلة والصف والجنس والشعبة أولًا.");
+        showToast(
+            "يرجى اختيار المرحلة والصف والجنس والشعبة أولًا."
+        );
         return;
     }
 
@@ -768,11 +912,24 @@ async function confirmClassCreation() {
     setBusy(true);
 
     try {
-        await insertClassRecord(stage, grade, gender, sectionName);
+        await insertClassRecord(
+            stage,
+            grade,
+            gender,
+            sectionName
+        );
 
         const { data, error } = await db
             .from("classes")
-            .select("id, name, school_id, stage, grade_name, gender, section_name")
+            .select(`
+                id,
+                name,
+                school_id,
+                stage,
+                grade_name,
+                gender,
+                section_name
+            `)
             .eq("school_id", currentSchool.id)
             .order("id", { ascending: true });
 
@@ -795,7 +952,8 @@ async function confirmClassCreation() {
         updateSelectedClassLabel();
         renderSchedule();
 
-        $("saveMessage").textContent = "تم إنشاء الشعبة بنجاح.";
+        $("saveMessage").textContent =
+            "تم إنشاء الشعبة بنجاح.";
 
         showToast(
             `تم إنشاء ${grade} - ${gender} - الشعبة ${sectionName} بنجاح.`
@@ -804,16 +962,18 @@ async function confirmClassCreation() {
     } catch (error) {
         console.error("Create section error:", error);
 
-        showToast(error.message || "تعذر إنشاء الشعبة.");
+        showToast(
+            error.message || "تعذر إنشاء الشعبة."
+        );
 
     } finally {
         setBusy(false);
     }
 }
 
-/* =========================================================
-   المعلمون
-   ========================================================= */
+/* =========================
+   10. المعلمون
+   ========================= */
 
 async function loadSchoolTeachers() {
     const { data: memberships, error } = await db
@@ -860,7 +1020,8 @@ function populateTeacherOptions(selectedTeacher = "") {
 
     const currentValue = selectedTeacher || select.value;
 
-    select.innerHTML = '<option value="">اختر المعلم</option>';
+    select.innerHTML =
+        '<option value="">اختر المعلم</option>';
 
     if (!schoolTeachers.length) {
         select.innerHTML =
@@ -872,18 +1033,25 @@ function populateTeacherOptions(selectedTeacher = "") {
 
     schoolTeachers.forEach(teacher => {
         const option = document.createElement("option");
+
         option.value = teacher.name;
         option.textContent = teacher.name;
+
         select.appendChild(option);
     });
 
     if (
         currentValue &&
-        !schoolTeachers.some(teacher => teacher.name === currentValue)
+        !schoolTeachers.some(teacher =>
+            teacher.name === currentValue
+        )
     ) {
         const oldOption = document.createElement("option");
+
         oldOption.value = currentValue;
-        oldOption.textContent = `${currentValue} (اسم محفوظ سابقًا)`;
+        oldOption.textContent =
+            `${currentValue} (اسم محفوظ سابقًا)`;
+
         select.appendChild(oldOption);
     }
 
@@ -891,16 +1059,19 @@ function populateTeacherOptions(selectedTeacher = "") {
     select.disabled = false;
 }
 
-/* =========================================================
-   اختيار الشعبة وتحميل جدولها
-   ========================================================= */
+/* =========================
+   11. اختيار الشعبة وتحميل الجدول
+   ========================= */
 
 function updateSelectedClassLabel() {
     const item = currentClass();
 
     if (!item) {
-        $("selectedClassLabel").textContent = "لم يتم تحديد شعبة";
+        $("selectedClassLabel").textContent =
+            "لم يتم تحديد شعبة";
+
         $("lessonCount").textContent = "0 حصة";
+
     } else {
         $("selectedClassLabel").textContent =
             `${item.grade_name} · ${item.gender} · الشعبة ${item.section_name}`;
@@ -931,14 +1102,18 @@ async function loadSchedule(options = {}) {
     if (!classItem || !currentSchool) {
         lessons = [];
         originalDbIds.clear();
+
         renderSchedule();
         updateSelectedClassLabel();
+
         return;
     }
 
     const token = ++loadToken;
 
-    if (manageBusy) setBusy(true);
+    if (manageBusy) {
+        setBusy(true);
+    }
 
     try {
         const { data, error } = await db
@@ -971,7 +1146,8 @@ async function loadSchedule(options = {}) {
                 .map(item => String(item.id))
         );
 
-        const isPublished = lessons.length > 0 &&
+        const isPublished =
+            lessons.length > 0 &&
             lessons.every(item => item.isPublished);
 
         setStatus(isPublished);
@@ -981,15 +1157,21 @@ async function loadSchedule(options = {}) {
 
     } catch (error) {
         console.error("Load schedule error:", error);
-        showToast(error.message || "تعذر تحميل الجدول.");
+
+        showToast(
+            error.message || "تعذر تحميل الجدول."
+        );
+
     } finally {
-        if (manageBusy) setBusy(false);
+        if (manageBusy) {
+            setBusy(false);
+        }
     }
 }
 
-/* =========================================================
-   عرض الجدول الأسبوعي
-   ========================================================= */
+/* =========================
+   12. عرض الجدول الأسبوعي
+   ========================= */
 
 function renderSchedule() {
     const container = $("weeklySchedule");
@@ -999,11 +1181,18 @@ function renderSchedule() {
         container.innerHTML =
             '<div class="schedule-loading">اختر المرحلة والصف والجنس والشعبة لعرض الجدول.</div>';
 
-        $("lessonCount").textContent = "0 حصة";
+        if ($("lessonCount")) {
+            $("lessonCount").textContent = "0 حصة";
+        }
+
+        updateSelectionControls();
         return;
     }
 
-    $("lessonCount").textContent = `${lessons.length} حصة`;
+    if ($("lessonCount")) {
+        $("lessonCount").textContent =
+            `${lessons.length} حصة`;
+    }
 
     container.innerHTML = DAYS.map(day => {
         const dayLessons = lessons
@@ -1012,8 +1201,10 @@ function renderSchedule() {
 
         return `
             <div class="day-column">
+
                 <div class="day-header">
                     <h3>${escapeHTML(day.name)}</h3>
+
                     <button
                         type="button"
                         class="add-day-button"
@@ -1023,13 +1214,16 @@ function renderSchedule() {
                 </div>
 
                 <div class="day-lessons">
+
                     ${
                         dayLessons.length
                             ? dayLessons.map(item => `
                                 <article class="lesson-card">
 
                                     <div class="lesson-period">
-                                        <span>الحصة ${escapeHTML(item.period)}</span>
+                                        <span>
+                                            الحصة ${escapeHTML(item.period)}
+                                        </span>
                                     </div>
 
                                     <p class="lesson-subject">
@@ -1041,16 +1235,23 @@ function renderSchedule() {
                                     </p>
 
                                     <div class="lesson-time">
-                                        ${escapeHTML(item.start)} - ${escapeHTML(item.end)}
+                                        ${escapeHTML(item.start)}
+                                        -
+                                        ${escapeHTML(item.end)}
                                     </div>
 
                                     ${
                                         item.note
-                                            ? `<div class="lesson-note">${escapeHTML(item.note)}</div>`
+                                            ? `
+                                                <div class="lesson-note">
+                                                    ${escapeHTML(item.note)}
+                                                </div>
+                                            `
                                             : ""
                                     }
 
                                     <div class="lesson-card-actions">
+
                                         <button
                                             type="button"
                                             class="lesson-action-btn lesson-edit-btn"
@@ -1064,6 +1265,7 @@ function renderSchedule() {
                                             data-delete-id="${escapeHTML(item.id)}">
                                             × حذف
                                         </button>
+
                                     </div>
                                 </article>
                             `).join("")
@@ -1074,15 +1276,18 @@ function renderSchedule() {
                                 </div>
                             `
                     }
+
                 </div>
             </div>
         `;
     }).join("");
+
+    updateSelectionControls();
 }
 
-/* =========================================================
-   نافذة تأكيد حذف الحصة داخل الصفحة
-   ========================================================= */
+/* =========================
+   13. نافذة تأكيد حذف الحصة
+   ========================= */
 
 function ensureDeleteConfirmModal() {
     if ($("deleteConfirmModal")) return;
@@ -1100,7 +1305,7 @@ function ensureDeleteConfirmModal() {
             align-items: center;
             justify-content: center;
             padding: 20px;
-            background: rgba(25, 12, 15, 0.62);
+            background: rgba(25, 12, 15, .62);
             backdrop-filter: blur(4px);
             opacity: 1;
             visibility: visible;
@@ -1216,6 +1421,7 @@ function ensureDeleteConfirmModal() {
                 opacity: 0;
                 transform: translateY(10px) scale(.97);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0) scale(1);
@@ -1260,9 +1466,20 @@ function ensureDeleteConfirmModal() {
             </p>
 
             <div class="delete-confirm-details">
-                <p>المادة: <strong id="deleteConfirmSubject"></strong></p>
-                <p>اليوم: <strong id="deleteConfirmDay"></strong></p>
-                <p>رقم الحصة: <strong id="deleteConfirmPeriod"></strong></p>
+                <p>
+                    المادة:
+                    <strong id="deleteConfirmSubject"></strong>
+                </p>
+
+                <p>
+                    اليوم:
+                    <strong id="deleteConfirmDay"></strong>
+                </p>
+
+                <p>
+                    رقم الحصة:
+                    <strong id="deleteConfirmPeriod"></strong>
+                </p>
             </div>
 
             <p class="delete-confirm-note">
@@ -1271,6 +1488,7 @@ function ensureDeleteConfirmModal() {
             </p>
 
             <div class="delete-confirm-actions">
+
                 <button
                     type="button"
                     class="delete-confirm-cancel"
@@ -1284,6 +1502,7 @@ function ensureDeleteConfirmModal() {
                     id="acceptDeleteConfirmButton">
                     تأكيد الحذف
                 </button>
+
             </div>
         </div>
     `;
@@ -1320,11 +1539,17 @@ function openDeleteConfirmModal(lesson, onConfirm) {
     ensureDeleteConfirmModal();
 
     const dayName =
-        DAYS.find(day => day.id === lesson.day)?.name || lesson.day;
+        DAYS.find(day => day.id === lesson.day)?.name ||
+        lesson.day;
 
-    $("deleteConfirmSubject").textContent = lesson.subject || "—";
-    $("deleteConfirmDay").textContent = dayName || "—";
-    $("deleteConfirmPeriod").textContent = lesson.period || "—";
+    $("deleteConfirmSubject").textContent =
+        lesson.subject || "—";
+
+    $("deleteConfirmDay").textContent =
+        dayName || "—";
+
+    $("deleteConfirmPeriod").textContent =
+        lesson.period || "—";
 
     pendingDeleteAction = onConfirm;
 
@@ -1343,9 +1568,9 @@ function closeDeleteConfirmModal() {
     pendingDeleteAction = null;
 }
 
-/* =========================================================
-   تنفيذ الحذف محليًا بعد تأكيد المستخدم
-   ========================================================= */
+/* =========================
+   14. الحذف المحلي
+   ========================= */
 
 function deleteLessonLocally(id) {
     if (isBusy) return;
@@ -1360,7 +1585,8 @@ function deleteLessonLocally(id) {
     }
 
     const dayName =
-        DAYS.find(day => day.id === lesson.day)?.name || lesson.day;
+        DAYS.find(day => day.id === lesson.day)?.name ||
+        lesson.day;
 
     lessons = lessons.filter(item =>
         String(item.id) !== String(id)
@@ -1377,10 +1603,6 @@ function deleteLessonLocally(id) {
         `تم حذف حصة ${lesson.subject} من ${dayName}. اضغط حفظ التغييرات لتثبيت الحذف.`
     );
 }
-
-/* =========================================================
-   حذف الحصة مباشرة من بطاقة الجدول
-   ========================================================= */
 
 function deleteLessonFromCard(id) {
     if (isBusy) return;
@@ -1399,14 +1621,17 @@ function deleteLessonFromCard(id) {
     });
 }
 
-/* =========================================================
-   نافذة إضافة وتعديل الحصة
-   ========================================================= */
+/* =========================
+   15. نافذة إضافة وتعديل الحصة
+   ========================= */
 
 function ensureDeleteLessonButton() {
     if ($("deleteLessonButton")) return;
 
-    const actions = $("lessonForm").querySelector(".modal-actions");
+    const form = $("lessonForm");
+    if (!form) return;
+
+    const actions = form.querySelector(".modal-actions");
     if (!actions) return;
 
     const button = document.createElement("button");
@@ -1441,30 +1666,44 @@ function openLessonModal(lesson = null, day = "sun") {
         lesson ? "تعديل الحصة" : "إضافة حصة جديدة";
 
     $("lessonDay").value = lesson?.day || day;
-    $("lessonPeriod").value = String(lesson?.period || 1);
+    $("lessonPeriod").value =
+        String(lesson?.period || 1);
 
     prepareSubjectField(lesson?.subject || "");
     populateTeacherOptions(lesson?.teacher || "");
 
-    $("lessonStart").value = lesson?.start || "08:00";
-    $("lessonEnd").value = lesson?.end || "08:45";
-    $("lessonNote").value = lesson?.note || "";
+    $("lessonStart").value =
+        lesson?.start || "08:00";
 
-    $("deleteLessonButton").hidden = !lesson;
+    $("lessonEnd").value =
+        lesson?.end || "08:45";
+
+    $("lessonNote").value =
+        lesson?.note || "";
+
+    if ($("deleteLessonButton")) {
+        $("deleteLessonButton").hidden = !lesson;
+    }
 
     $("lessonModal").hidden = false;
     document.body.classList.add("modal-open");
 }
 
 function closeLessonModal() {
-    $("lessonModal").hidden = true;
+    if ($("lessonModal")) {
+        $("lessonModal").hidden = true;
+    }
+
     document.body.classList.remove("modal-open");
-    $("formError").textContent = "";
+
+    if ($("formError")) {
+        $("formError").textContent = "";
+    }
 }
 
-/* =========================================================
-   إضافة وتعديل الحصص
-   ========================================================= */
+/* =========================
+   16. إضافة وتعديل الحصص
+   ========================= */
 
 function handleLessonSubmit(event) {
     event.preventDefault();
@@ -1477,12 +1716,14 @@ function handleLessonSubmit(event) {
     const end = $("lessonEnd").value;
 
     if (!subject) {
-        $("formError").textContent = "يرجى اختيار المادة الدراسية.";
+        $("formError").textContent =
+            "يرجى اختيار المادة الدراسية.";
         return;
     }
 
     if (!teacher) {
-        $("formError").textContent = "يرجى اختيار المعلم.";
+        $("formError").textContent =
+            "يرجى اختيار المعلم.";
         return;
     }
 
@@ -1497,9 +1738,9 @@ function handleLessonSubmit(event) {
     const period = Number($("lessonPeriod").value);
 
     const conflict = lessons.find(item =>
-        item.id !== id &&
+        String(item.id) !== String(id) &&
         item.day === day &&
-        item.period === period
+        Number(item.period) === period
     );
 
     if (conflict) {
@@ -1522,13 +1763,16 @@ function handleLessonSubmit(event) {
 
     if (id) {
         lessons = lessons.map(item =>
-            item.id === id ? lessonData : item
+            String(item.id) === String(id)
+                ? lessonData
+                : item
         );
     } else {
         lessons.push(lessonData);
     }
 
     closeLessonModal();
+
     setStatus(false);
     renderSchedule();
     updateSelectedClassLabel();
@@ -1536,12 +1780,14 @@ function handleLessonSubmit(event) {
     $("saveMessage").textContent =
         "توجد تغييرات غير محفوظة. اضغط حفظ التغييرات.";
 
-    showToast("تم تحديث الحصة. احفظ التغييرات لتثبيتها في قاعدة البيانات.");
+    showToast(
+        "تم تحديث الحصة. احفظ التغييرات لتثبيتها في قاعدة البيانات."
+    );
 }
 
-/* =========================================================
-   حذف الحصة من نافذة التعديل
-   ========================================================= */
+/* =========================
+   17. حذف الحصة من نافذة التعديل
+   ========================= */
 
 function deleteCurrentLesson() {
     if (isBusy) return;
@@ -1550,7 +1796,9 @@ function deleteCurrentLesson() {
 
     if (!id) return;
 
-    const lesson = lessons.find(item => item.id === id);
+    const lesson = lessons.find(item =>
+        String(item.id) === String(id)
+    );
 
     if (!lesson) {
         showToast("تعذر العثور على الحصة المطلوبة.");
@@ -1563,9 +1811,9 @@ function deleteCurrentLesson() {
     });
 }
 
-/* =========================================================
-   حفظ الجدول في Supabase
-   ========================================================= */
+/* =========================
+   18. حفظ الجدول في Supabase
+   ========================= */
 
 async function saveSchedule(showMessage = true) {
     const classItem = currentClass();
@@ -1580,11 +1828,14 @@ async function saveSchedule(showMessage = true) {
     setBusy(true);
 
     try {
-        const validation = await validateTeacherConflicts(classItem);
+        const validation =
+            await validateTeacherConflicts(classItem);
 
         if (!validation.valid) {
             showToast(validation.message);
-            $("saveMessage").textContent = validation.message;
+
+            $("saveMessage").textContent =
+                validation.message;
 
             return false;
         }
@@ -1604,6 +1855,8 @@ async function saveSchedule(showMessage = true) {
         const idsToDelete = [...originalDbIds]
             .filter(id => !currentIds.has(id));
 
+        /* حذف الحصص التي حُذفت محليًا */
+
         if (idsToDelete.length) {
             const { error } = await db
                 .from("timetable_lessons")
@@ -1615,6 +1868,8 @@ async function saveSchedule(showMessage = true) {
 
             if (error) throw error;
         }
+
+        /* تحديث الحصص الموجودة وإضافة الحصص الجديدة */
 
         for (const lesson of lessons) {
             const payload = {
@@ -1653,6 +1908,8 @@ async function saveSchedule(showMessage = true) {
             }
         }
 
+        /* إبقاء الجدول مسودة بعد الحفظ */
+
         const { error: unpublishError } = await db
             .from("timetable_lessons")
             .update({ is_published: false })
@@ -1679,7 +1936,9 @@ async function saveSchedule(showMessage = true) {
             $("saveMessage").textContent =
                 "تم حفظ التغييرات في قاعدة البيانات كمسودة غير منشورة.";
 
-            showToast("تم حفظ التغييرات في Supabase بنجاح.");
+            showToast(
+                "تم حفظ التغييرات في Supabase بنجاح."
+            );
         }
 
         return true;
@@ -1688,7 +1947,8 @@ async function saveSchedule(showMessage = true) {
         console.error("Save timetable error:", error);
 
         showToast(
-            error.message || "تعذر حفظ الجدول. تحقق من صلاحيات RLS."
+            error.message ||
+            "تعذر حفظ الجدول. تحقق من صلاحيات RLS."
         );
 
         $("saveMessage").textContent =
@@ -1701,9 +1961,9 @@ async function saveSchedule(showMessage = true) {
     }
 }
 
-/* =========================================================
-   نشر الجدول
-   ========================================================= */
+/* =========================
+   19. نشر الجدول
+   ========================= */
 
 async function publishSchedule() {
     const classItem = currentClass();
@@ -1714,13 +1974,17 @@ async function publishSchedule() {
     }
 
     if (!lessons.length) {
-        showToast("أضف حصة واحدة على الأقل قبل نشر الجدول.");
+        showToast(
+            "أضف حصة واحدة على الأقل قبل نشر الجدول."
+        );
         return;
     }
 
     if (isBusy) return;
 
-    if (!confirm("هل تريد حفظ التغييرات ونشر هذا الجدول للطلاب؟")) {
+    if (!confirm(
+        "هل تريد حفظ التغييرات ونشر هذا الجدول للطلاب؟"
+    )) {
         return;
     }
 
@@ -1761,15 +2025,196 @@ async function publishSchedule() {
 
     } catch (error) {
         console.error("Publish timetable error:", error);
-        showToast(error.message || "تعذر نشر الجدول.");
+
+        showToast(
+            error.message || "تعذر نشر الجدول."
+        );
+
     } finally {
         setBusy(false);
     }
 }
 
-/* =========================================================
-   أحداث الصفحة
-   ========================================================= */
+/* =========================
+   20. تصدير الجدول إلى Excel
+   ========================= */
+
+function exportScheduleToExcel() {
+    const classItem = currentClass();
+
+    if (!classItem) {
+        showToast(
+            "اختر الشعبة أولاً قبل تصدير الجدول."
+        );
+        return;
+    }
+
+    if (!lessons.length) {
+        showToast(
+            "لا توجد حصص في الجدول الحالي لتصديرها."
+        );
+        return;
+    }
+
+    if (!window.XLSX) {
+        showToast(
+            "تعذر تحميل مكتبة Excel. أعد تحميل الصفحة وحاول مجدداً."
+        );
+        return;
+    }
+
+    const dayNames = {
+        sun: "الأحد",
+        mon: "الاثنين",
+        tue: "الثلاثاء",
+        wed: "الأربعاء",
+        thu: "الخميس"
+    };
+
+    const sortedLessons = [...lessons].sort((a, b) => {
+        const dayOrder =
+            DAYS.findIndex(day => day.id === a.day);
+
+        const otherDayOrder =
+            DAYS.findIndex(day => day.id === b.day);
+
+        if (dayOrder !== otherDayOrder) {
+            return dayOrder - otherDayOrder;
+        }
+
+        return Number(a.period) - Number(b.period);
+    });
+
+    const exportDate = new Date().toLocaleDateString("ar-IQ");
+
+    const rows = [
+        ["إيلابرات ILABRAT"],
+        ["تقرير الجدول الدراسي"],
+        ["اسم المدرسة", currentSchool?.name || ""],
+        ["المرحلة", getStageName(classItem.stage)],
+        ["الصف", classItem.grade_name || ""],
+        ["الجنس", classItem.gender || ""],
+        ["الشعبة", classItem.section_name || ""],
+        ["السنة الدراسية", selectedYear()],
+        ["تاريخ التصدير", exportDate],
+        [],
+        [
+            "اليوم",
+            "رقم الحصة",
+            "المادة الدراسية",
+            "اسم المعلم",
+            "وقت البداية",
+            "وقت النهاية",
+            "ملاحظات"
+        ]
+    ];
+
+    sortedLessons.forEach(lesson => {
+        rows.push([
+            dayNames[lesson.day] || lesson.day,
+            lesson.period,
+            lesson.subject || "",
+            lesson.teacher || "",
+            lesson.start || "",
+            lesson.end || "",
+            lesson.note || ""
+        ]);
+    });
+
+    try {
+        const worksheet = XLSX.utils.aoa_to_sheet(rows);
+
+        /* عرض الأعمدة */
+
+        worksheet["!cols"] = [
+            { wch: 17 },
+            { wch: 14 },
+            { wch: 24 },
+            { wch: 28 },
+            { wch: 16 },
+            { wch: 16 },
+            { wch: 30 }
+        ];
+
+        /* ارتفاع صفوف العنوان */
+
+        worksheet["!rows"] = [
+            { hpt: 28 },
+            { hpt: 24 }
+        ];
+
+        /* دمج عنوان التقرير */
+
+        worksheet["!merges"] = [
+            {
+                s: { r: 0, c: 0 },
+                e: { r: 0, c: 6 }
+            },
+            {
+                s: { r: 1, c: 0 },
+                e: { r: 1, c: 6 }
+            }
+        ];
+
+        /* اتجاه الورقة من اليمين إلى اليسار */
+
+        worksheet["!views"] = [
+            {
+                RTL: true
+            }
+        ];
+
+        const workbook = XLSX.utils.book_new();
+
+        XLSX.utils.book_append_sheet(
+            workbook,
+            worksheet,
+            "الجدول الدراسي"
+        );
+
+        const safeName = String(
+            currentSchool?.name || "المدرسة"
+        )
+            .replace(/[\\/:*?"<>|]/g, "-")
+            .trim();
+
+        const safeClass = String(
+            classItem.grade_name || "الصف"
+        )
+            .replace(/[\\/:*?"<>|]/g, "-")
+            .trim();
+
+        const safeSection = String(
+            classItem.section_name || "الشعبة"
+        )
+            .replace(/[\\/:*?"<>|]/g, "-")
+            .trim();
+
+        const safeYear = String(selectedYear())
+            .replace(/[\\/:*?"<>|]/g, "-")
+            .trim();
+
+        const fileName =
+            `جدول-${safeName}-${safeClass}-${safeSection}-${safeYear}.xlsx`;
+
+        XLSX.writeFile(workbook, fileName);
+
+        showToast(
+            "تم تجهيز ملف Excel وتنزيله بنجاح."
+        );
+
+    } catch (error) {
+        console.error("Excel export error:", error);
+
+        showToast(
+            "حدث خطأ أثناء تصدير الجدول إلى Excel."
+        );
+    }
+}
+
+/* =========================
+   21. أحداث الصفحة
+   ========================= */
 
 function bindEvents() {
     $("stageSelect").addEventListener("change", () => {
@@ -1784,7 +2229,10 @@ function bindEvents() {
         populateSectionSelect();
     });
 
-    $("sectionSelect").addEventListener("change", handleSectionChange);
+    $("sectionSelect").addEventListener(
+        "change",
+        handleSectionChange
+    );
 
     $("confirmClassButton").addEventListener(
         "click",
@@ -1803,48 +2251,75 @@ function bindEvents() {
         openLessonModal();
     });
 
-    $("weeklySchedule").addEventListener("click", event => {
-        const add = event.target.closest("[data-add-day]");
+    /* أحداث بطاقات الجدول */
 
-        if (add) {
-            openLessonModal(null, add.dataset.addDay);
+    $("weeklySchedule").addEventListener("click", event => {
+        const addButton =
+            event.target.closest("[data-add-day]");
+
+        if (addButton) {
+            openLessonModal(
+                null,
+                addButton.dataset.addDay
+            );
             return;
         }
 
-        const deleteButton = event.target.closest("[data-delete-id]");
+        const deleteButton =
+            event.target.closest("[data-delete-id]");
 
         if (deleteButton) {
             event.preventDefault();
             event.stopPropagation();
 
-            deleteLessonFromCard(deleteButton.dataset.deleteId);
+            deleteLessonFromCard(
+                deleteButton.dataset.deleteId
+            );
             return;
         }
 
-        const editButton = event.target.closest("[data-edit-id]");
+        const editButton =
+            event.target.closest("[data-edit-id]");
 
         if (editButton) {
             event.preventDefault();
             event.stopPropagation();
 
-            const lesson = lessons.find(
-                item => item.id === editButton.dataset.editId
+            const lesson = lessons.find(item =>
+                String(item.id) ===
+                String(editButton.dataset.editId)
             );
 
-            if (lesson) openLessonModal(lesson);
+            if (lesson) {
+                openLessonModal(lesson);
+            }
         }
     });
 
-    $("lessonForm").addEventListener("submit", handleLessonSubmit);
+    /* نموذج الحصة */
 
-    $("closeModalButton").addEventListener("click", closeLessonModal);
-    $("cancelModalButton").addEventListener("click", closeLessonModal);
+    $("lessonForm").addEventListener(
+        "submit",
+        handleLessonSubmit
+    );
+
+    $("closeModalButton").addEventListener(
+        "click",
+        closeLessonModal
+    );
+
+    $("cancelModalButton").addEventListener(
+        "click",
+        closeLessonModal
+    );
 
     $("lessonModal").addEventListener("click", event => {
         if (event.target === $("lessonModal")) {
             closeLessonModal();
         }
     });
+
+    /* زر Escape */
 
     document.addEventListener("keydown", event => {
         if (
@@ -1858,15 +2333,21 @@ function bindEvents() {
 
         if (
             event.key === "Escape" &&
+            $("lessonModal") &&
             !$("lessonModal").hidden
         ) {
             closeLessonModal();
         }
     });
 
-    $("saveScheduleButton").addEventListener("click", () => {
-        saveSchedule(true);
-    });
+    /* الحفظ */
+
+    $("saveScheduleButton").addEventListener(
+        "click",
+        () => saveSchedule(true)
+    );
+
+    /* النشر */
 
     $("publishScheduleButton").addEventListener(
         "click",
@@ -1878,16 +2359,29 @@ function bindEvents() {
         publishSchedule
     );
 
-    $("resetDemoButton").addEventListener("click", () => {
-        showToast(
-            "بيانات المثال التجريبية متوقفة؛ لن نكتب بيانات وهمية في قاعدة بيانات المدرسة."
+    /* تصدير Excel */
+
+    if ($("exportExcelButton")) {
+        $("exportExcelButton").addEventListener(
+            "click",
+            exportScheduleToExcel
         );
-    });
+    }
+
+    /* زر البيانات التجريبية */
+
+    if ($("resetDemoButton")) {
+        $("resetDemoButton").addEventListener("click", () => {
+            showToast(
+                "بيانات المثال التجريبية متوقفة؛ لن نكتب بيانات وهمية في قاعدة بيانات المدرسة."
+            );
+        });
+    }
 }
 
-/* =========================================================
-   بدء الصفحة
-   ========================================================= */
+/* =========================
+   22. بدء الصفحة
+   ========================= */
 
 bindEvents();
 ensureDeleteLessonButton();

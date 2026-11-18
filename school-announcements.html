@@ -9,18 +9,20 @@
 
     <title>الإعلانات والإشعارات | إيلابرات ILABRAT</title>
 
-    <link rel="icon" type="image/png" href="assets/images/logo.png">
+    <link rel="icon" type="image/png" href="assets/ilabrat-logo.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
 
     <link rel="stylesheet" href="css/school-announcements.css">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
 
-    <!-- تنسيق حقلي نطاق الإعلان والفئة المستهدفة -->
     <style>
         .form-field.announcement-options {
             grid-column: 1 / -1;
@@ -59,7 +61,7 @@
 
         @media (max-width: 600px) {
             .form-field.announcement-options {
-                grid-template-columns: 1fr;
+                grid-template-columns: minmax(0, 1fr);
                 gap: 10px;
             }
         }
@@ -73,21 +75,32 @@
     <!-- القائمة الجانبية -->
     <aside class="sidebar">
 
-        <div class="sidebar-brand">
-            <div class="brand-mark">I</div>
+        <!-- الشعار -->
+        <a
+            href="index.html"
+            class="sidebar-brand"
+            aria-label="العودة إلى إيلابرات"
+        >
+            <img
+                src="assets/ilabrat-logo.png"
+                alt="شعار إيلابرات"
+                class="brand-icon"
+            >
 
-            <div>
-                <div class="brand-name">ILABRAT</div>
-                <div class="brand-subtitle">SCHOOL ADMIN</div>
-            </div>
-        </div>
+            <span class="brand-text">
+                <strong>إيلابرات</strong>
+                <small>ILABRAT · ADMIN</small>
+            </span>
+        </a>
 
+        <!-- معلومات المدرسة -->
         <div class="sidebar-school">
-            <span class="sidebar-school-label">المدرسة</span>
-            <strong id="sidebarSchoolName">جاري التحميل...</strong>
+            <span class="sidebar-school-label">إدارة المدرسة</span>
+            <strong id="sidebarSchoolName">جاري تحميل اسم المدرسة...</strong>
         </div>
 
-        <nav class="sidebar-nav">
+        <!-- روابط الإدارة -->
+        <nav class="sidebar-nav" aria-label="القائمة الرئيسية">
 
             <div class="nav-section-title">القائمة الرئيسية</div>
 
@@ -97,22 +110,22 @@
             </a>
 
             <a href="teacher-registration.html" class="nav-item">
-                <span class="nav-icon">♙</span>
+                <span class="nav-icon">＋</span>
                 <span>إضافة معلم</span>
             </a>
 
             <a href="student-accounts.html" class="nav-item">
-                <span class="nav-icon">♧</span>
+                <span class="nav-icon">＋</span>
                 <span>إضافة طالب</span>
             </a>
 
             <a href="teacher-accounts.html" class="nav-item">
-                <span class="nav-icon">♧</span>
+                <span class="nav-icon">♙</span>
                 <span>حسابات المعلمين</span>
             </a>
 
             <a href="student-management.html" class="nav-item">
-                <span class="nav-icon">♧</span>
+                <span class="nav-icon">♙</span>
                 <span>حسابات الطلاب</span>
             </a>
 
@@ -126,13 +139,28 @@
                 <span>عرض الجداول</span>
             </a>
 
-            <a href="school-announcements.html" class="nav-item active">
+            <a href="admin-classes.html" class="nav-item">
+                <span class="nav-icon">▤</span>
+                <span>إدارة الشعب</span>
+            </a>
+
+            <a
+                href="school-announcements.html"
+                class="nav-item active"
+                aria-current="page"
+            >
                 <span class="nav-icon">✦</span>
                 <span>الإعلانات والإشعارات</span>
             </a>
 
+            <a href="school-admin-chat-monitor.html" class="nav-item">
+                <span class="nav-icon">◉</span>
+                <span>مراقبة غرف الأسئلة</span>
+            </a>
+
         </nav>
 
+        <!-- معلومات المدير وتسجيل الخروج -->
         <div class="sidebar-bottom">
 
             <div class="sidebar-user">
@@ -148,7 +176,7 @@
 
             <a href="index.html" class="logout-link">
                 <span>↪</span>
-                تسجيل الخروج
+                <span>تسجيل الخروج</span>
             </a>
 
         </div>
@@ -158,6 +186,7 @@
     <!-- المحتوى الرئيسي -->
     <main class="main-area">
 
+        <!-- الشريط العلوي -->
         <header class="topbar">
 
             <div>
@@ -204,36 +233,27 @@
             <section class="stats-grid">
 
                 <article class="stat-card">
-
                     <div class="stat-icon">✦</div>
-
                     <div>
                         <span>إجمالي الإعلانات</span>
                         <strong id="totalAnnouncements">0</strong>
                     </div>
-
                 </article>
 
                 <article class="stat-card">
-
                     <div class="stat-icon">◷</div>
-
                     <div>
                         <span>إعلانات نشطة</span>
                         <strong id="activeAnnouncements">0</strong>
                     </div>
-
                 </article>
 
                 <article class="stat-card">
-
                     <div class="stat-icon">▧</div>
-
                     <div>
                         <span>إعلانات منتهية</span>
                         <strong id="expiredAnnouncements">0</strong>
                     </div>
-
                 </article>
 
             </section>
@@ -244,9 +264,7 @@
                 <div class="section-heading">
 
                     <div>
-                        <span class="section-kicker">
-                            NEW ANNOUNCEMENT
-                        </span>
+                        <span class="section-kicker">NEW ANNOUNCEMENT</span>
 
                         <h2 id="formTitle">إنشاء إعلان جديد</h2>
 
@@ -268,9 +286,7 @@
 
                             <div class="compact-field">
 
-                                <label for="classSelect">
-                                    نطاق الإعلان
-                                </label>
+                                <label for="classSelect">نطاق الإعلان</label>
 
                                 <select id="classSelect">
                                     <option value="">جميع شعب المدرسة</option>
@@ -284,24 +300,12 @@
 
                             <div class="compact-field">
 
-                                <label for="audienceSelect">
-                                    الفئة المستهدفة
-                                </label>
+                                <label for="audienceSelect">الفئة المستهدفة</label>
 
                                 <select id="audienceSelect" required>
-
-                                    <option value="both">
-                                        الطلاب والمعلمون
-                                    </option>
-
-                                    <option value="students">
-                                        الطلاب فقط
-                                    </option>
-
-                                    <option value="teachers">
-                                        المعلمون فقط
-                                    </option>
-
+                                    <option value="both">الطلاب والمعلمون</option>
+                                    <option value="students">الطلاب فقط</option>
+                                    <option value="teachers">المعلمون فقط</option>
                                 </select>
 
                             </div>
@@ -311,9 +315,7 @@
                         <!-- نص الإعلان -->
                         <div class="form-field full-width">
 
-                            <label for="announcementContent">
-                                نص الإعلان
-                            </label>
+                            <label for="announcementContent">نص الإعلان</label>
 
                             <textarea
                                 id="announcementContent"
@@ -328,9 +330,7 @@
                                     يمكنك نشر إعلان نصي أو إرفاق صورة أو الجمع بينهما.
                                 </small>
 
-                                <span id="contentCounter">
-                                    0 / 5000
-                                </span>
+                                <span id="contentCounter">0 / 5000</span>
 
                             </div>
 
@@ -339,9 +339,7 @@
                         <!-- صورة الإعلان -->
                         <div class="form-field full-width">
 
-                            <label for="announcementImages">
-                                صورة الإعلان
-                            </label>
+                            <label for="announcementImages">صورة الإعلان</label>
 
                             <div class="upload-box" id="uploadBox">
 
@@ -386,7 +384,7 @@
 
                     </div>
 
-                    <!-- الأزرار -->
+                    <!-- أزرار النموذج -->
                     <div class="form-actions">
 
                         <button
@@ -394,13 +392,8 @@
                             class="btn btn-primary"
                             id="saveAnnouncementBtn"
                         >
-
                             <span>✦</span>
-
-                            <span id="saveButtonText">
-                                نشر الإعلان
-                            </span>
-
+                            <span id="saveButtonText">نشر الإعلان</span>
                         </button>
 
                         <button
@@ -424,9 +417,7 @@
                 <div class="section-heading list-heading">
 
                     <div>
-                        <span class="section-kicker">
-                            ANNOUNCEMENTS ARCHIVE
-                        </span>
+                        <span class="section-kicker">ANNOUNCEMENTS ARCHIVE</span>
 
                         <h2>إعلانات المدرسة</h2>
 
@@ -445,38 +436,30 @@
 
                 </div>
 
-                <!-- فلاتر القائمة -->
+                <!-- الفلاتر -->
                 <div class="list-filters">
 
                     <div class="form-field filter-field">
 
-                        <label for="filterStatus">
-                            حالة الإعلان
-                        </label>
+                        <label for="filterStatus">حالة الإعلان</label>
 
                         <select id="filterStatus">
-
                             <option value="all">الكل</option>
                             <option value="active">نشطة</option>
                             <option value="expired">منتهية</option>
-
                         </select>
 
                     </div>
 
                     <div class="form-field filter-field">
 
-                        <label for="filterAudience">
-                            الفئة المستهدفة
-                        </label>
+                        <label for="filterAudience">الفئة المستهدفة</label>
 
                         <select id="filterAudience">
-
                             <option value="all">الكل</option>
                             <option value="students">الطلاب</option>
                             <option value="teachers">المعلمون</option>
                             <option value="both">الطلاب والمعلمون</option>
-
                         </select>
 
                     </div>
@@ -490,11 +473,8 @@
                 >
 
                     <div class="loading-state">
-
                         <span class="loading-spinner"></span>
-
                         <p>جاري تحميل الإعلانات...</p>
-
                     </div>
 
                 </div>
@@ -519,9 +499,7 @@
 
         <div class="modal-icon danger-icon">!</div>
 
-        <h3 id="deleteModalTitle">
-            تأكيد حذف الإعلان
-        </h3>
+        <h3 id="deleteModalTitle">تأكيد حذف الإعلان</h3>
 
         <p>
             هل أنت متأكد من حذف هذا الإعلان وجميع صوره؟
@@ -554,14 +532,11 @@
 
 <!-- مؤشر التحميل -->
 <div id="globalLoader" class="global-loader" hidden>
-
     <span class="loading-spinner"></span>
-
     <p>يرجى الانتظار...</p>
-
 </div>
 
-<!-- تحميل JavaScript مرة واحدة فقط -->
+<!-- JavaScript -->
 <script src="js/school-announcements.js"></script>
 
 </body>

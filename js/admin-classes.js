@@ -1,439 +1,1409 @@
 
-"use strict";
-
-/* =========================================================
-   ILABRAT — إدارة الشعب الدراسية
-   إنشاء / عرض / بحث / تعديل / حذف آمن
-   ========================================================= */
-
-const db = window.supabaseClient || window.db;
-
-const el = (id) => document.getElementById(id);
-
-let currentUser = null;
-let currentSchoolId = null;
-let currentSchoolName = "";
-let currentClasses = [];
-let toastTimer = null;
-
-document.addEventListener("DOMContentLoaded", initializePage);
-
-async function initializePage() {
-    bindEvents();
-
-    if (!db) {
-        showConnection("تعذر العثور على اتصال Supabase. تحقق من supabase-config.js.");
-        return;
-    }
-
-    try {
-        const { data: authData, error: authError } = await db.auth.getUser();
-
-        if (authError || !authData?.user) {
-            showConnection("انتهت جلسة الدخول. يرجى تسجيل الدخول مرة أخرى.");
-            return;
-        }
-
-        currentUser = authData.user;
-
-        const { data: profile, error: profileError } = await db
-            .from("profiles")
-            .select("id, full_name, role")
-            .eq("id", currentUser.id)
-            .maybeSingle();
-
-        if (profileError) throw profileError;
-
-        if (!profile || profile.role !== "school_admin") {
-            showConnection("هذه الصفحة مخصصة لمدير المدرسة.");
-            return;
-        }
-
-        el("adminDisplayName").textContent = profile.full_name || "مدير المدرسة";
-
-        const { data: membership, error: membershipError } = await db
-            .from("school_memberships")
-            .select("school_id")
-            .eq("profile_id", currentUser.id)
-            .eq("role", "school_admin")
-            .maybeSingle();
-
-        if (membershipError) throw membershipError;
-
-        if (!membership?.school_id) {
-            showConnection("لم يتم العثور على ارتباط مدرستك في النظام.");
-            return;
-        }
-
-        currentSchoolId = membership.school_id;
-
-        const { data: school, error: schoolError } = await db
-            .from("schools")
-            .select("id, name")
-            .eq("id", currentSchoolId)
-            .maybeSingle();
-
-        if (schoolError) throw schoolError;
-
-        currentSchoolName = school?.name || "مدرستي";
-        el("schoolDisplayName").textContent = currentSchoolName;
-
-        showConnection("تم التحقق من صلاحياتك. يمكنك إدارة شعب مدرستك.");
-        await loadClasses();
-
-    } catch (error) {
-        console.error("ILABRAT classes initialization:", error);
-        showConnection(error.message || "حدث خطأ أثناء تحميل الصفحة.");
-    }
+:root {
+    --primary: #5A1825;
+    --primary-dark: #43131D;
+    --primary-light: #7A2A39;
+    --gold: #C7A56A;
+    --gold-light: #E2CFA8;
+    --beige: #F3EEE7;
+    --white: #fff;
+    --text: #292323;
+    --text-soft: #6F6461;
+    --border: #E5DCD3;
+    --success: #287D53;
+    --danger: #B43A42;
+    --font: "Cairo", Tahoma, Arial, sans-serif;
+    --radius: 16px;
 }
 
-function bindEvents() {
-    el("addClassButton").addEventListener("click", openCreateModal);
-    el("refreshButton").addEventListener("click", loadClasses);
-
-    el("searchInput").addEventListener("input", renderClasses);
-    el("filterStage").addEventListener("change", renderClasses);
-    el("filterGender").addEventListener("change", renderClasses);
-
-    el("closeModalButton").addEventListener("click", closeModal);
-    el("cancelModalButton").addEventListener("click", closeModal);
-
-    el("classModal").addEventListener("click", (event) => {
-        if (event.target === el("classModal")) closeModal();
-    });
-
-    el("classForm").addEventListener("submit", handleClassSubmit);
-
-    el("classesTableBody").addEventListener("click", (event) => {
-        const button = event.target.closest("button[data-action]");
-        if (!button) return;
-
-        const id = Number(button.dataset.id);
-        const record = currentClasses.find(item => Number(item.id) === id);
-
-        if (!record) return;
-
-        if (button.dataset.action === "edit") {
-            openEditModal(record);
-        } else if (button.dataset.action === "delete") {
-            deleteClass(record);
-        }
-    });
+* {
+    box-sizing: border-box;
 }
 
-async function loadClasses() {
-    if (!currentSchoolId) return;
-
-    setTableMessage("جارٍ تحميل الشعب...");
-
-    try {
-        const { data, error } = await db
-            .from("classes")
-            .select("id, name, school_id, stage, grade_name, gender, section_name")
-            .eq("school_id", currentSchoolId)
-            .order("stage", { ascending: true })
-            .order("grade_name", { ascending: true })
-            .order("section_name", { ascending: true });
-
-        if (error) throw error;
-
-        currentClasses = data || [];
-
-        updateStatistics();
-        populateStageFilter();
-        renderClasses();
-
-    } catch (error) {
-        console.error("loadClasses:", error);
-        setTableMessage(error.message || "تعذر تحميل الشعب.");
-        showToast("حدث خطأ أثناء تحميل الشعب.");
-    }
+html {
+    width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
 }
 
-function updateStatistics() {
-    const stages = new Set(
-        currentClasses.map(item => item.stage).filter(Boolean)
+body {
+    margin: 0;
+    width: 100%;
+    min-height: 100vh;
+    direction: rtl;
+    overflow-x: hidden;
+    background: #FAF8F5;
+    color: var(--text);
+    font: 14px var(--font);
+    -webkit-tap-highlight-color: transparent;
+}
+
+button,
+input,
+select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+input,
+select,
+button {
+    max-width: 100%;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.admin-layout {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+/* =========================
+   القائمة الجانبية
+========================= */
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+
+    width: 255px;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding: 22px 16px 16px;
+
+    color: #fff;
+    background: linear-gradient(
+        165deg,
+        #5A1825 0%,
+        #43131D 58%,
+        #351018 100%
     );
 
-    el("totalClasses").textContent = currentClasses.length;
-    el("totalStages").textContent = stages.size;
-    el("lastUpdate").textContent = new Date().toLocaleDateString("ar-IQ");
+    scrollbar-width: thin;
+    scrollbar-color: #C7A56A66 transparent;
 }
 
-function populateStageFilter() {
-    const select = el("filterStage");
-    const previous = select.value;
-
-    select.innerHTML = '<option value="">كل المراحل</option>';
-
-    const stages = [...new Set(
-        currentClasses.map(item => item.stage).filter(Boolean)
-    )].sort((a, b) => a.localeCompare(b, "ar"));
-
-    stages.forEach(stage => {
-        const option = document.createElement("option");
-        option.value = stage;
-        option.textContent = stage;
-        select.appendChild(option);
-    });
-
-    select.value = stages.includes(previous) ? previous : "";
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 0 5px 20px;
+    border-bottom: 1px solid #ffffff22;
 }
 
-function renderClasses() {
-    const search = el("searchInput").value.trim().toLowerCase();
-    const stage = el("filterStage").value;
-    const gender = el("filterGender").value;
-
-    const filtered = currentClasses.filter(item => {
-        const text = [
-            item.name,
-            item.stage,
-            item.grade_name,
-            item.gender,
-            item.section_name
-        ].filter(Boolean).join(" ").toLowerCase();
-
-        return (!search || text.includes(search)) &&
-            (!stage || item.stage === stage) &&
-            (!gender || item.gender === gender);
-    });
-
-    const tbody = el("classesTableBody");
-    tbody.innerHTML = "";
-
-    if (!filtered.length) {
-        setTableMessage("لا توجد شعب مطابقة للبحث.");
-        el("resultsCount").textContent = "0 شعبة";
-        return;
-    }
-
-    filtered.forEach((item, index) => {
-        const tr = document.createElement("tr");
-
-        appendCell(tr, index + 1);
-        appendCell(tr, item.stage || "—");
-        appendCell(tr, item.grade_name || item.name || "—");
-        appendCell(tr, item.gender || "—");
-        appendCell(tr, item.section_name || "—");
-
-        const actionsCell = document.createElement("td");
-        const actions = document.createElement("div");
-        actions.className = "row-actions";
-
-        const editButton = document.createElement("button");
-        editButton.type = "button";
-        editButton.className = "small-action edit-action";
-        editButton.textContent = "تعديل";
-        editButton.dataset.action = "edit";
-        editButton.dataset.id = item.id;
-
-        const deleteButton = document.createElement("button");
-        deleteButton.type = "button";
-        deleteButton.className = "small-action delete-action";
-        deleteButton.textContent = "حذف";
-        deleteButton.dataset.action = "delete";
-        deleteButton.dataset.id = item.id;
-
-        actions.append(editButton, deleteButton);
-        actionsCell.appendChild(actions);
-        tr.appendChild(actionsCell);
-
-        tbody.appendChild(tr);
-    });
-
-    el("resultsCount").textContent = `${filtered.length} شعبة`;
+.brand-icon {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    object-fit: contain;
+    padding: 4px;
+    border-radius: 11px;
+    background: #fff;
 }
 
-function appendCell(row, value) {
-    const td = document.createElement("td");
-    td.textContent = String(value ?? "—");
-    row.appendChild(td);
+.brand-text {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
-function setTableMessage(message) {
-    const tbody = el("classesTableBody");
-    tbody.innerHTML = "";
-
-    const tr = document.createElement("tr");
-    const td = document.createElement("td");
-
-    td.colSpan = 6;
-    td.className = "table-message";
-    td.textContent = message;
-
-    tr.appendChild(td);
-    tbody.appendChild(tr);
+.brand-text strong {
+    font-size: 19px;
+    font-weight: 800;
 }
 
-function openCreateModal() {
-    el("classForm").reset();
-    el("classId").value = "";
-    el("modalTitle").textContent = "إنشاء شعبة جديدة";
-    el("saveClassButton").textContent = "حفظ الشعبة";
-    el("formError").textContent = "";
-    el("classModal").hidden = false;
+.brand-text small {
+    color: var(--gold-light);
+    font-size: 10px;
+    direction: ltr;
 }
 
-function openEditModal(record) {
-    el("classForm").reset();
-
-    el("classId").value = record.id;
-    el("stageInput").value = record.stage || "";
-    el("gradeInput").value = record.grade_name || "";
-    el("genderInput").value = record.gender || "";
-    el("sectionInput").value = record.section_name || "";
-
-    el("modalTitle").textContent = "تعديل بيانات الشعبة";
-    el("saveClassButton").textContent = "حفظ التعديلات";
-    el("formError").textContent = "";
-    el("classModal").hidden = false;
+.school-context-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 23px 0;
+    padding: 13px 12px;
+    border: 1px solid #ffffff26;
+    border-radius: 14px;
+    background: #ffffff12;
 }
 
-function closeModal() {
-    el("classModal").hidden = true;
-    el("classForm").reset();
-    el("formError").textContent = "";
+.school-context-icon {
+    width: 45px;
+    height: 45px;
+    flex: 0 0 45px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: #C7A56A33;
+    font-size: 24px;
 }
 
-async function handleClassSubmit(event) {
-    event.preventDefault();
+.school-context-text {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
 
-    if (!currentSchoolId) {
-        showFormError("تعذر تحديد المدرسة.");
-        return;
-    }
+.school-context-text small {
+    color: #D9C5C5;
+    font-size: 12px;
+}
 
-    const id = el("classId").value;
+.school-context-text strong {
+    font-size: 14px;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+}
 
-    const stage = el("stageInput").value.trim();
-    const gradeName = el("gradeInput").value.trim();
-    const gender = el("genderInput").value;
-    const sectionName = el("sectionInput").value.trim();
+.sidebar-heading {
+    margin: 0 8px 11px;
+    color: var(--gold-light);
+    font-size: 13px;
+    font-weight: 800;
+}
 
-    if (!stage || !gradeName || !gender || !sectionName) {
-        showFormError("يرجى إكمال جميع بيانات الشعبة.");
-        return;
-    }
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
 
-    const duplicate = currentClasses.some(item =>
-        String(item.id) !== String(id) &&
-        item.stage === stage &&
-        item.grade_name === gradeName &&
-        item.gender === gender &&
-        item.section_name?.trim().toLowerCase() === sectionName.toLowerCase()
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 46px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    color: #F5EDEF;
+    font-size: 13px;
+    font-weight: 700;
+    transition: background .2s, color .2s;
+}
+
+.nav-icon {
+    width: 25px;
+    flex: 0 0 25px;
+    text-align: center;
+    color: var(--gold-light);
+    font-size: 19px;
+}
+
+.nav-item:hover {
+    background: #ffffff1c;
+}
+
+.nav-item.active {
+    color: var(--primary-dark);
+    background: linear-gradient(
+        110deg,
+        var(--gold),
+        var(--gold-light)
     );
+    font-weight: 800;
+}
 
-    if (duplicate) {
-        showFormError("هذه الشعبة مسجلة مسبقاً في مدرستك.");
-        return;
+.nav-item.active .nav-icon {
+    color: var(--primary-dark);
+}
+
+.sidebar-footer {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+    padding: 16px 8px 3px;
+    border-top: 1px solid #ffffff22;
+}
+
+.footer-icon {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--primary-dark);
+    background: var(--gold-light);
+    font-weight: 800;
+}
+
+.sidebar-footer strong {
+    font-size: 13px;
+}
+
+.sidebar-footer p {
+    margin: 4px 0 0;
+    color: #D9C5C5;
+    font-size: 11px;
+    line-height: 1.8;
+}
+
+/* =========================
+   المحتوى الرئيسي
+========================= */
+
+.main-content {
+    flex: 1;
+    min-width: 0;
+    width: calc(100% - 255px);
+    margin-right: 255px;
+}
+
+.topbar {
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 14px clamp(18px, 3vw, 43px);
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+}
+
+.breadcrumb {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    color: var(--text-soft);
+    font-size: 11px;
+}
+
+.breadcrumb strong {
+    color: var(--primary);
+}
+
+.admin-profile {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--text-soft);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.online-dot {
+    width: 8px;
+    height: 8px;
+    flex: 0 0 8px;
+    border-radius: 50%;
+    background: #55A57A;
+}
+
+.profile-avatar {
+    width: 37px;
+    height: 37px;
+    flex: 0 0 37px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    color: #fff;
+    background: var(--primary);
+    font-weight: 800;
+}
+
+.page-container {
+    width: 100%;
+    max-width: 1600px;
+    margin: auto;
+    padding: 30px clamp(18px, 3vw, 43px) 22px;
+}
+
+/* =========================
+   عنوان الصفحة
+========================= */
+
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 22px;
+    margin-bottom: 24px;
+}
+
+.section-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: #8B5E4A;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.label-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--gold);
+    transform: rotate(45deg);
+}
+
+.page-header h1 {
+    margin: 0 0 7px;
+    color: var(--primary);
+    font-size: clamp(24px, 2.2vw, 30px);
+    font-weight: 800;
+    line-height: 1.6;
+}
+
+.page-header p {
+    max-width: 700px;
+    margin: 0;
+    color: var(--text-soft);
+    font-size: 12px;
+    line-height: 2;
+}
+
+/* =========================
+   الأزرار
+========================= */
+
+.btn {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 16px;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+    transition: background .2s, transform .2s;
+}
+
+.btn:active {
+    transform: scale(.98);
+}
+
+.btn:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    color: #fff;
+    background: var(--primary);
+}
+
+.btn-primary:hover {
+    background: var(--primary-light);
+}
+
+.btn-secondary {
+    color: #655852;
+    background: #fff;
+    border-color: var(--border);
+}
+
+.btn-secondary:hover {
+    background: var(--beige);
+}
+
+/* =========================
+   إشعار الاتصال
+========================= */
+
+.notice-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 22px;
+    padding: 15px 17px;
+    border: 1px solid #EDE0CA;
+    border-radius: 14px;
+    background: #F7F0E5;
+}
+
+.notice-icon {
+    width: 27px;
+    height: 27px;
+    flex: 0 0 27px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--primary);
+    background: #EAD8B4;
+    font-weight: 800;
+}
+
+.notice-card strong {
+    color: #684A35;
+    font-size: 12px;
+}
+
+.notice-card p {
+    margin: 4px 0 0;
+    color: #826F60;
+    font-size: 10px;
+    line-height: 2;
+    overflow-wrap: anywhere;
+}
+
+/* =========================
+   الإحصائيات
+========================= */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    min-width: 0;
+    padding: 17px 19px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #fff;
+    transition: box-shadow .2s, transform .2s;
+}
+
+.stat-card:hover {
+    box-shadow: 0 5px 18px #2923230c;
+    transform: translateY(-2px);
+}
+
+.stat-card span {
+    display: block;
+    color: var(--text-soft);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.stat-card strong {
+    display: block;
+    margin-top: 7px;
+    color: var(--primary);
+    font-size: 25px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+/* =========================
+   لوحة الشعب
+========================= */
+
+.panel {
+    min-width: 0;
+    padding: 23px 24px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: #fff;
+    box-shadow: 0 4px 15px #29232308;
+}
+
+.panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.panel-heading h2 {
+    margin: 0 0 5px;
+    color: var(--primary);
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.panel-heading p {
+    margin: 0;
+    color: var(--text-soft);
+    font-size: 11px;
+    line-height: 1.9;
+}
+
+/* =========================
+   البحث والتصفية
+========================= */
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.form-field {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.form-field > span {
+    color: #5D514C;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.form-field input,
+.form-field select {
+    width: 100%;
+    min-width: 0;
+    height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    outline-color: var(--gold);
+    color: var(--text);
+    background: #FDFCFB;
+    font-size: 11px;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px #C7A56A22;
+}
+
+/* =========================
+   جدول الشعب
+========================= */
+
+.table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--gold) #F8F4EF;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 650px;
+    text-align: right;
+}
+
+thead {
+    background: #F8F4EF;
+}
+
+th,
+td {
+    padding: 13px 14px;
+    border-bottom: 1px solid #EEE7E0;
+    font-size: 11px;
+}
+
+th {
+    color: var(--primary);
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+td {
+    color: #514743;
+    vertical-align: middle;
+}
+
+tbody tr {
+    transition: background .15s;
+}
+
+tbody tr:hover {
+    background: #FCFAF7;
+}
+
+tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.table-message {
+    text-align: center !important;
+    padding: 30px !important;
+    color: var(--text-soft) !important;
+}
+
+.table-footer {
+    padding-top: 13px;
+    color: var(--text-soft);
+    font-size: 10px;
+}
+
+.row-actions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+}
+
+.small-action {
+    min-height: 34px;
+    padding: 6px 11px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    transition: background .2s, transform .2s;
+}
+
+.small-action:active {
+    transform: scale(.96);
+}
+
+.edit-action {
+    color: var(--primary);
+    background: #F5EFE9;
+}
+
+.edit-action:hover {
+    background: #EDE1D6;
+}
+
+.delete-action {
+    color: var(--danger);
+    background: #FBF0EF;
+    border-color: #F0D9D7;
+}
+
+.delete-action:hover {
+    background: #F7E2E0;
+}
+
+/* =========================
+   التذييل
+========================= */
+
+.page-footer {
+    text-align: center;
+    padding: 24px 0 4px;
+    color: #958780;
+    font-size: 10px;
+    line-height: 2;
+}
+
+/* =========================
+   النافذة المنبثقة
+========================= */
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1500;
+
+    display: grid;
+    place-items: center;
+
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
+    padding: 20px;
+
+    background: #21131599;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.class-modal {
+    width: min(570px, 100%);
+    max-height: calc(100dvh - 40px);
+    overflow-y: auto;
+
+    padding: 25px;
+
+    border-radius: 19px;
+    background: #fff;
+    box-shadow: 0 25px 80px #0004;
+
+    scrollbar-width: thin;
+    scrollbar-color: var(--gold) transparent;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 22px;
+    padding-bottom: 17px;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-label {
+    color: #8B5E4A;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.modal-header h2 {
+    margin: 5px 0 0;
+    color: var(--primary);
+    font-size: 20px;
+    line-height: 1.6;
+}
+
+.modal-close {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--primary);
+    background: #fff;
+    font-size: 24px;
+}
+
+.modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.form-error {
+    margin: 12px 0 0;
+    color: var(--danger);
+    font-size: 11px;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+}
+
+.form-error:empty {
+    display: none;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 23px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+}
+
+/* =========================
+   رسائل التنبيه
+========================= */
+
+.toast-message {
+    position: fixed;
+    z-index: 2000;
+    right: 24px;
+    bottom: 24px;
+
+    width: max-content;
+    max-width: min(420px, calc(100vw - 32px));
+
+    padding: 13px 18px;
+    border-radius: 12px;
+
+    color: #fff;
+    background: var(--primary-dark);
+    box-shadow: 0 10px 30px #43131d22;
+
+    font-size: 11px;
+    line-height: 1.8;
+
+    opacity: 0;
+    pointer-events: none;
+    overflow-wrap: anywhere;
+
+    transform: translateY(10px);
+    transition: .2s;
+}
+
+.toast-message.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* =========================
+   الشاشات المتوسطة
+========================= */
+
+@media (max-width: 1100px) {
+    .sidebar {
+        width: 225px;
     }
 
-    const saveButton = el("saveClassButton");
-    saveButton.disabled = true;
-    saveButton.textContent = "جارٍ الحفظ...";
+    .main-content {
+        width: calc(100% - 225px);
+        margin-right: 225px;
+    }
 
-    try {
-        const payload = {
-            name: `${gradeName} - ${gender} - ${sectionName}`,
-            school_id: currentSchoolId,
-            stage,
-            grade_name: gradeName,
-            gender,
-            section_name: sectionName
-        };
+    .filters-grid {
+        grid-template-columns: 1fr 1fr;
+    }
 
-        let result;
+    .filters-grid .form-field:first-child {
+        grid-column: 1 / -1;
+    }
 
-        if (id) {
-            result = await db
-                .from("classes")
-                .update(payload)
-                .eq("id", Number(id))
-                .eq("school_id", currentSchoolId);
-        } else {
-            result = await db
-                .from("classes")
-                .insert(payload);
-        }
-
-        if (result.error) throw result.error;
-
-        closeModal();
-        showToast(id ? "تم تعديل بيانات الشعبة." : "تم إنشاء الشعبة بنجاح.");
-        await loadClasses();
-
-    } catch (error) {
-        console.error("save class:", error);
-        showFormError(error.message || "تعذر حفظ الشعبة.");
-    } finally {
-        saveButton.disabled = false;
-        saveButton.textContent = id ? "حفظ التعديلات" : "حفظ الشعبة";
+    .panel {
+        padding: 20px;
     }
 }
 
-async function deleteClass(record) {
-    const confirmed = window.confirm(
-        `هل تريد حذف الشعبة:\n${record.grade_name || record.name} - ${record.section_name}؟\n\nسيتم أولاً التحقق من عدم ارتباطها بطلاب أو حصص أو تعيينات معلمين.`
-    );
+/* =========================
+   الأجهزة اللوحية
+========================= */
 
-    if (!confirmed) return;
+@media (max-width: 900px) and (min-width: 601px) {
+    .sidebar {
+        width: 76px;
+        padding: 18px 9px;
+    }
 
-    try {
-        const dependencies = [
-            { table: "students", column: "class_id", label: "طلاب" },
-            { table: "timetable_lessons", column: "class_id", label: "حصص دراسية" },
-            { table: "teacher_assignments", column: "class_id", label: "تعيينات معلمين" }
-        ];
+    .sidebar .brand {
+        justify-content: center;
+        padding-right: 0;
+        padding-left: 0;
+    }
 
-        for (const dependency of dependencies) {
-            const { data, error } = await db
-                .from(dependency.table)
-                .select("id")
-                .eq(dependency.column, record.id)
-                .limit(1);
+    .brand-icon {
+        width: 44px;
+        height: 44px;
+    }
 
-            if (error) throw error;
+    .brand-text,
+    .school-context-card,
+    .sidebar-heading,
+    .nav-item > span:last-child,
+    .sidebar-footer > div:last-child {
+        display: none;
+    }
 
-            if (data && data.length) {
-                showToast(`لا يمكن حذف الشعبة: توجد بيانات مرتبطة بها (${dependency.label}).`);
-                return;
-            }
-        }
+    .sidebar-nav .nav-item {
+        justify-content: center;
+        padding: 10px 4px;
+    }
 
-        const { error: deleteError } = await db
-            .from("classes")
-            .delete()
-            .eq("id", record.id)
-            .eq("school_id", currentSchoolId);
+    .nav-icon {
+        width: 100%;
+        flex-basis: 100%;
+        font-size: 21px;
+    }
 
-        if (deleteError) throw deleteError;
+    .sidebar-footer {
+        justify-content: center;
+        padding-right: 0;
+        padding-left: 0;
+    }
 
-        showToast("تم حذف الشعبة.");
-        await loadClasses();
+    .main-content {
+        width: calc(100% - 76px);
+        margin-right: 76px;
+    }
 
-    } catch (error) {
-        console.error("deleteClass:", error);
-        showToast(error.message || "تعذر حذف الشعبة.");
+    .page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .page-header .btn {
+        align-self: flex-start;
     }
 }
 
-function showConnection(message) {
-    el("connectionNotice").textContent = message;
+/* =========================
+   الهواتف
+========================= */
+
+@media (max-width: 600px) {
+
+    html,
+    body {
+        width: 100%;
+        overflow-x: hidden;
+    }
+
+    .admin-layout {
+        display: block;
+        width: 100%;
+    }
+
+    /* القائمة */
+
+    .sidebar {
+        position: relative;
+        top: auto;
+        right: auto;
+        bottom: auto;
+
+        width: 100%;
+        height: auto;
+        min-height: 0;
+
+        overflow: visible;
+
+        padding: 13px 12px 12px;
+
+        border-radius: 0 0 16px 16px;
+    }
+
+    .sidebar .brand {
+        padding-bottom: 13px;
+    }
+
+    .brand-icon {
+        width: 42px;
+        height: 42px;
+    }
+
+    .brand-text strong {
+        font-size: 17px;
+    }
+
+    .school-context-card {
+        margin: 12px 0;
+        padding: 10px;
+    }
+
+    .school-context-icon {
+        width: 38px;
+        height: 38px;
+        flex-basis: 38px;
+        font-size: 20px;
+    }
+
+    .school-context-text strong {
+        font-size: 12px;
+    }
+
+    .sidebar-heading {
+        margin: 10px 5px;
+        font-size: 12px;
+    }
+
+    .sidebar-nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .nav-item {
+        min-width: 0;
+        min-height: 43px;
+        gap: 7px;
+        padding: 8px;
+        border: 1px solid #ffffff12;
+        font-size: 10px;
+        line-height: 1.6;
+    }
+
+    .nav-icon {
+        width: 21px;
+        flex: 0 0 21px;
+        font-size: 17px;
+    }
+
+    .nav-item > span:last-child {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .sidebar-footer {
+        margin-top: 13px;
+        padding-top: 12px;
+    }
+
+    /* المحتوى */
+
+    .main-content {
+        width: 100%;
+        min-width: 0;
+        margin: 0;
+    }
+
+    .topbar {
+        min-height: 58px;
+        gap: 8px;
+        padding: 10px 13px;
+    }
+
+    .breadcrumb {
+        gap: 6px;
+        font-size: 10px;
+    }
+
+    .admin-profile {
+        gap: 6px;
+        font-size: 10px;
+    }
+
+    .admin-profile > span:not(.online-dot) {
+        display: none;
+    }
+
+    .profile-avatar {
+        width: 33px;
+        height: 33px;
+        flex-basis: 33px;
+    }
+
+    .page-container {
+        padding: 19px 12px 14px;
+    }
+
+    /* العنوان */
+
+    .page-header {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 13px;
+        margin-bottom: 17px;
+    }
+
+    .section-label {
+        font-size: 10px;
+    }
+
+    .page-header h1 {
+        font-size: 22px;
+        line-height: 1.6;
+    }
+
+    .page-header p {
+        font-size: 11px;
+        line-height: 1.9;
+    }
+
+    .page-header .btn {
+        width: 100%;
+        min-height: 46px;
+    }
+
+    /* الإشعار */
+
+    .notice-card {
+        gap: 9px;
+        margin-bottom: 15px;
+        padding: 12px;
+    }
+
+    .notice-card strong {
+        font-size: 11px;
+        line-height: 1.8;
+    }
+
+    .notice-card p {
+        font-size: 10px;
+    }
+
+    /* الإحصائيات */
+
+    .stats-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 7px;
+        margin-bottom: 15px;
+    }
+
+    .stat-card {
+        min-width: 0;
+        padding: 12px 7px;
+        border-radius: 11px;
+        text-align: center;
+    }
+
+    .stat-card span {
+        font-size: 9px;
+        line-height: 1.7;
+    }
+
+    .stat-card strong {
+        margin-top: 6px;
+        font-size: 19px;
+        line-height: 1.5;
+    }
+
+    /* اللوحة */
+
+    .panel {
+        padding: 15px 11px;
+        border-radius: 13px;
+    }
+
+    .panel-heading {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 11px;
+        margin-bottom: 15px;
+    }
+
+    .panel-heading h2 {
+        font-size: 15px;
+    }
+
+    .panel-heading p {
+        font-size: 10px;
+    }
+
+    .panel-heading .btn {
+        width: 100%;
+    }
+
+    /* الفلاتر */
+
+    .filters-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-bottom: 15px;
+    }
+
+    .filters-grid .form-field:first-child {
+        grid-column: auto;
+    }
+
+    .form-field {
+        gap: 6px;
+    }
+
+    .form-field > span {
+        font-size: 11px;
+    }
+
+    .form-field input,
+    .form-field select {
+        height: 45px;
+        padding: 0 11px;
+        font-size: 12px;
+        border-radius: 9px;
+    }
+
+    /* الجدول */
+
+    .table-wrap {
+        border-radius: 10px;
+    }
+
+    table {
+        min-width: 620px;
+    }
+
+    th,
+    td {
+        padding: 12px 10px;
+        font-size: 10px;
+    }
+
+    .small-action {
+        min-height: 36px;
+        padding: 7px 10px;
+        font-size: 10px;
+    }
+
+    .row-actions {
+        gap: 6px;
+    }
+
+    .table-footer {
+        padding-top: 11px;
+        font-size: 10px;
+    }
+
+    .page-footer {
+        padding: 19px 5px 5px;
+        font-size: 9px;
+    }
+
+    /* النافذة */
+
+    .modal-backdrop {
+        place-items: center;
+        padding: 12px;
+    }
+
+    .class-modal {
+        width: 100%;
+        max-width: 500px;
+        max-height: calc(100dvh - 24px);
+        padding: 17px 13px;
+        border-radius: 15px;
+    }
+
+    .modal-header {
+        gap: 10px;
+        margin-bottom: 17px;
+        padding-bottom: 13px;
+    }
+
+    .modal-header h2 {
+        font-size: 17px;
+    }
+
+    .modal-close {
+        width: 35px;
+        height: 35px;
+        flex-basis: 35px;
+    }
+
+    .modal-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .modal-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 17px;
+        padding-top: 13px;
+    }
+
+    .modal-actions .btn {
+        width: 100%;
+        padding: 9px 7px;
+        white-space: normal;
+        font-size: 10px;
+    }
+
+    /* التنبيهات */
+
+    .toast-message {
+        right: 12px;
+        bottom: 12px;
+        max-width: calc(100vw - 24px);
+        padding: 11px 14px;
+        font-size: 10px;
+    }
 }
 
-function showFormError(message) {
-    el("formError").textContent = message;
+/* =========================
+   الهواتف الصغيرة جداً
+========================= */
+
+@media (max-width: 380px) {
+
+    .sidebar {
+        padding: 11px 9px;
+    }
+
+    .nav-item {
+        gap: 5px;
+        padding: 7px 5px;
+        font-size: 9px;
+    }
+
+    .nav-icon {
+        width: 18px;
+        flex-basis: 18px;
+        font-size: 15px;
+    }
+
+    .page-container {
+        padding-right: 9px;
+        padding-left: 9px;
+    }
+
+    .page-header h1 {
+        font-size: 20px;
+    }
+
+    .stats-grid {
+        gap: 5px;
+    }
+
+    .stat-card {
+        padding: 10px 4px;
+    }
+
+    .stat-card span {
+        font-size: 8px;
+    }
+
+    .stat-card strong {
+        font-size: 17px;
+    }
+
+    .panel {
+        padding: 13px 9px;
+    }
+
+    .class-modal {
+        padding: 15px 11px;
+    }
+
+    .modal-actions {
+        grid-template-columns: 1fr;
+    }
 }
 
-function showToast(message) {
-    const toast = el("toastMessage");
+/* =========================
+   الشاشات القصيرة
+========================= */
 
-    toast.textContent = message;
-    toast.classList.add("show");
+@media (max-height: 650px) and (max-width: 600px) {
 
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => {
-        toast.classList.remove("show");
-    }, 3500);
+    .modal-backdrop {
+        place-items: start center;
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+
+    .class-modal {
+        max-height: calc(100dvh - 16px);
+        margin: auto 0;
+    }
+
+    .modal-header {
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+    }
+
+    .modal-grid {
+        gap: 9px;
+    }
+
+    .form-field input,
+    .form-field select {
+        height: 40px;
+    }
+
+    .modal-actions {
+        margin-top: 12px;
+        padding-top: 10px;
+    }
+}
+
+/* =========================
+   تقليل الحركة
+========================= */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
 }

@@ -1,7 +1,9 @@
 
 "use strict";
 
-/* ILABRAT - Main Admin Dashboard */
+/* =========================================================
+   ILABRAT - Main Admin Dashboard
+========================================================= */
 
 const dashboardData = {
     schools: [],
@@ -14,12 +16,13 @@ let supabaseClientInstance = null;
 let currentUser = null;
 let toastTimer = null;
 let schoolPendingDelete = null;
+let managerPendingDelete = null;
 
 document.addEventListener("DOMContentLoaded", initializeDashboard);
 
-/* =========================
+/* =========================================================
    INITIALIZATION
-========================= */
+========================================================= */
 
 async function initializeDashboard() {
     bindNavigationEvents();
@@ -31,7 +34,10 @@ async function initializeDashboard() {
     supabaseClientInstance = getSupabaseClient();
 
     if (!supabaseClientInstance) {
-        showToast("تعذر الاتصال بـ Supabase. تحقق من ملف الإعدادات.", "error");
+        showToast(
+            "تعذر الاتصال بـ Supabase. تحقق من ملف الإعدادات.",
+            "error"
+        );
         return;
     }
 
@@ -39,22 +45,32 @@ async function initializeDashboard() {
 
     await loadSchools();
     await loadManagers();
+
     renderDashboard();
 }
 
 function getSupabaseClient() {
-    if (window.supabaseClient) return window.supabaseClient;
+    if (window.supabaseClient) {
+        return window.supabaseClient;
+    }
 
-    if (typeof supabaseClient !== "undefined" && supabaseClient) {
+    if (
+        typeof supabaseClient !== "undefined" &&
+        supabaseClient
+    ) {
         return supabaseClient;
+    }
+
+    if (window.db) {
+        return window.db;
     }
 
     return null;
 }
 
-/* =========================
+/* =========================================================
    AUTHENTICATION
-========================= */
+========================================================= */
 
 async function verifyMainAdmin() {
     try {
@@ -85,21 +101,28 @@ async function verifyMainAdmin() {
             );
 
             await supabaseClientInstance.auth.signOut();
+
             redirectToLogin();
             return false;
         }
 
         if ($("adminName")) {
             $("adminName").textContent =
-                profile.full_name || user.email || "مدير التطبيق";
+                profile.full_name ||
+                user.email ||
+                "مدير التطبيق";
         }
 
         return true;
+
     } catch (error) {
         console.error("Authentication error:", error);
 
         showToast(
-            getErrorMessage(error, "تعذر التحقق من صلاحيات الحساب."),
+            getErrorMessage(
+                error,
+                "تعذر التحقق من صلاحيات الحساب."
+            ),
             "error"
         );
 
@@ -111,9 +134,9 @@ function redirectToLogin() {
     window.location.replace("index.html");
 }
 
-/* =========================
+/* =========================================================
    SCHOOLS: LOAD AND DISPLAY
-========================= */
+========================================================= */
 
 async function loadSchools() {
     try {
@@ -135,6 +158,7 @@ async function loadSchools() {
         renderSchools();
         updateSchoolSelect();
         updateStatistics();
+
     } catch (error) {
         console.error("Load schools error:", error);
 
@@ -149,21 +173,28 @@ function renderSchools() {
     const primaryTable = $("schoolsTableBody");
     const secondaryTable = $("schoolsSecondaryTableBody");
 
-    // بحث مستقل لجدول المدارس المسجلة في الرئيسية
-    const primarySearchTerm = ($("schoolSearch")?.value || "")
+    const primarySearchTerm = (
+        $("schoolSearch")?.value || ""
+    )
         .trim()
         .toLocaleLowerCase("ar");
 
-    // بحث مستقل لجدول إدارة المدارس
-    const secondarySearchTerm = ($("schoolSearchSecondary")?.value || "")
+    const secondarySearchTerm = (
+        $("schoolSearchSecondary")?.value || ""
+    )
         .trim()
         .toLocaleLowerCase("ar");
 
     function matchesSearch(school, searchTerm) {
-        const name = String(school.name || "").toLocaleLowerCase("ar");
-        const location = String(school.location || "").toLocaleLowerCase("ar");
+        const name = String(school.name || "")
+            .toLocaleLowerCase("ar");
+
+        const location = String(school.location || "")
+            .toLocaleLowerCase("ar");
+
         const manager = String(school.manager_name || "")
             .toLocaleLowerCase("ar");
+
         const phone = String(school.manager_phone || "")
             .toLocaleLowerCase("ar");
 
@@ -175,15 +206,16 @@ function renderSchools() {
         );
     }
 
-    const primarySchools = dashboardData.schools.filter((school) =>
-        matchesSearch(school, primarySearchTerm)
+    const primarySchools = dashboardData.schools.filter(
+        (school) => matchesSearch(school, primarySearchTerm)
     );
 
-    const secondarySchools = dashboardData.schools.filter((school) =>
-        matchesSearch(school, secondarySearchTerm)
+    const secondarySchools = dashboardData.schools.filter(
+        (school) => matchesSearch(school, secondarySearchTerm)
     );
 
-    // جدول المدارس المسجلة: ستة أعمدة
+    /* جدول الرئيسية: ستة أعمدة */
+
     if (primaryTable) {
         primaryTable.replaceChildren();
 
@@ -196,14 +228,18 @@ function renderSchools() {
 
             row.appendChild(cell);
             primaryTable.appendChild(row);
+
         } else {
             primarySchools.forEach((school) => {
-                primaryTable.appendChild(createSchoolRow(school));
+                primaryTable.appendChild(
+                    createSchoolRow(school)
+                );
             });
         }
     }
 
-    // جدول إدارة المدارس: أربعة أعمدة
+    /* جدول إدارة المدارس: خمسة أعمدة */
+
     if (secondaryTable) {
         secondaryTable.replaceChildren();
 
@@ -211,11 +247,12 @@ function renderSchools() {
             const row = document.createElement("tr");
             const cell = document.createElement("td");
 
-            cell.colSpan = 4;
+            cell.colSpan = 5;
             cell.textContent = "لا توجد مدارس مطابقة.";
 
             row.appendChild(cell);
             secondaryTable.appendChild(row);
+
         } else {
             secondarySchools.forEach((school) => {
                 secondaryTable.appendChild(
@@ -248,14 +285,15 @@ function renderSchools() {
     updateStatistics();
 }
 
-/* =========================
+/* =========================================================
    SCHOOL TABLE ROWS
-========================= */
+========================================================= */
 
 function createSchoolRow(school) {
     const row = document.createElement("tr");
 
-    // 1. اسم المدرسة
+    /* اسم المدرسة */
+
     const nameCell = document.createElement("td");
 
     const name = document.createElement("div");
@@ -264,14 +302,17 @@ function createSchoolRow(school) {
 
     nameCell.appendChild(name);
 
-    // 2. تاريخ الإضافة
+    /* تاريخ الإضافة */
+
     const dateCell = document.createElement("td");
     dateCell.textContent = formatDate(school.created_at);
 
-    // 3. حالة المدرسة
+    /* حالة المدرسة */
+
     const statusCell = document.createElement("td");
 
     const status = document.createElement("span");
+
     status.textContent = school.is_active
         ? "مفعّلة"
         : "غير مفعّلة";
@@ -293,7 +334,8 @@ function createSchoolRow(school) {
 
     statusCell.appendChild(status);
 
-    // 4. رقم هاتف مدير المدرسة
+    /* هاتف المدير */
+
     const phoneCell = document.createElement("td");
     phoneCell.dir = "auto";
 
@@ -301,14 +343,17 @@ function createSchoolRow(school) {
         ? school.manager_phone || "غير مسجّل"
         : "لا يوجد مدير";
 
-    // 5. موقع المدرسة
+    /* موقع المدرسة */
+
     const locationCell = document.createElement("td");
     locationCell.textContent = school.location || "—";
 
-    // 6. الإجراءات
+    /* الإجراءات */
+
     const actionsCell = document.createElement("td");
 
     const actions = document.createElement("div");
+
     actions.className = "school-actions";
     actions.style.display = "flex";
     actions.style.flexWrap = "wrap";
@@ -316,16 +361,22 @@ function createSchoolRow(school) {
     actions.style.alignItems = "center";
 
     actions.append(
-        makeButton("تعديل", "btn-secondary", () =>
-            openEditSchoolModal(school.id)
+        makeButton(
+            "تعديل",
+            "btn-secondary",
+            () => openEditSchoolModal(school.id)
         ),
+
         makeButton(
             school.is_active ? "إيقاف" : "تفعيل",
             "btn-secondary",
             () => toggleSchoolStatus(school.id)
         ),
-        makeButton("حذف", "btn-delete", () =>
-            openDeleteSchoolConfirmation(school.id)
+
+        makeButton(
+            "حذف",
+            "btn-delete",
+            () => openDeleteSchoolConfirmation(school.id)
         )
     );
 
@@ -347,7 +398,8 @@ function createSecondarySchoolRow(school) {
     const row = document.createElement("tr");
 
     const nameCell = document.createElement("td");
-    nameCell.textContent = school.name || "مدرسة بدون اسم";
+    nameCell.textContent =
+        school.name || "مدرسة بدون اسم";
 
     const dateCell = document.createElement("td");
     dateCell.textContent = formatDate(school.created_at);
@@ -359,11 +411,49 @@ function createSecondarySchoolRow(school) {
 
     const phoneCell = document.createElement("td");
     phoneCell.dir = "auto";
+
     phoneCell.textContent = school.manager_profile_id
         ? school.manager_phone || "غير مسجّل"
         : "—";
 
-    row.append(nameCell, dateCell, managerCell, phoneCell);
+    const actionsCell = document.createElement("td");
+
+    const actions = document.createElement("div");
+    actions.className = "school-actions";
+    actions.style.display = "flex";
+    actions.style.flexWrap = "wrap";
+    actions.style.gap = "6px";
+    actions.style.alignItems = "center";
+
+    actions.append(
+        makeButton(
+            "تعديل",
+            "btn-secondary",
+            () => openEditSchoolModal(school.id)
+        ),
+
+        makeButton(
+            school.is_active ? "إيقاف" : "تفعيل",
+            "btn-secondary",
+            () => toggleSchoolStatus(school.id)
+        ),
+
+        makeButton(
+            "حذف",
+            "btn-delete",
+            () => openDeleteSchoolConfirmation(school.id)
+        )
+    );
+
+    actionsCell.appendChild(actions);
+
+    row.append(
+        nameCell,
+        dateCell,
+        managerCell,
+        phoneCell,
+        actionsCell
+    );
 
     return row;
 }
@@ -380,9 +470,9 @@ function makeButton(label, className, handler) {
     return button;
 }
 
-/* =========================
+/* =========================================================
    ADD SCHOOL
-========================= */
+========================================================= */
 
 async function addSchool(event) {
     event.preventDefault();
@@ -403,7 +493,9 @@ async function addSchool(event) {
     }
 
     const duplicate = dashboardData.schools.some((school) =>
-        String(school.name || "").trim().toLocaleLowerCase("ar") ===
+        String(school.name || "")
+            .trim()
+            .toLocaleLowerCase("ar") ===
         name.toLocaleLowerCase("ar")
     );
 
@@ -413,6 +505,7 @@ async function addSchool(event) {
     }
 
     const button = event.submitter;
+
     setButtonLoading(button, true, "جارٍ الحفظ...");
 
     try {
@@ -423,13 +516,17 @@ async function addSchool(event) {
                 location,
                 is_active: true
             })
-            .select("id, name, created_at, location, is_active")
+            .select(
+                "id, name, created_at, location, is_active"
+            )
             .single();
 
         if (error) throw error;
 
         if (!data) {
-            throw new Error("لم تُرجع قاعدة البيانات بيانات المدرسة.");
+            throw new Error(
+                "لم تُرجع قاعدة البيانات بيانات المدرسة."
+            );
         }
 
         dashboardData.schools.unshift({
@@ -441,13 +538,18 @@ async function addSchool(event) {
         });
 
         $("schoolForm")?.reset();
+
         closeSchoolModal();
 
         renderSchools();
         updateSchoolSelect();
         updateStatistics();
 
-        showToast("تمت إضافة المدرسة بنجاح.", "success");
+        showToast(
+            "تمت إضافة المدرسة بنجاح.",
+            "success"
+        );
+
     } catch (error) {
         console.error("Add school error:", error);
 
@@ -455,34 +557,44 @@ async function addSchool(event) {
             getErrorMessage(error, "تعذرت إضافة المدرسة."),
             "error"
         );
+
     } finally {
         setButtonLoading(button, false);
     }
 }
 
-/* =========================
+/* =========================================================
    EDIT SCHOOL
-========================= */
+========================================================= */
 
 async function openEditSchoolModal(schoolId) {
     const modal = $("editSchoolModal");
     const fieldsContainer = $("editSchoolFields");
 
     if (!modal || !fieldsContainer) {
-        showToast("نافذة تعديل المدرسة غير مكتملة في HTML.", "error");
+        showToast(
+            "نافذة تعديل المدرسة غير مكتملة في HTML.",
+            "error"
+        );
         return;
     }
 
     const editButton = document.activeElement;
 
     if (editButton instanceof HTMLButtonElement) {
-        setButtonLoading(editButton, true, "جارٍ التحميل...");
+        setButtonLoading(
+            editButton,
+            true,
+            "جارٍ التحميل..."
+        );
     }
 
     try {
         const { data: school, error } = await supabaseClientInstance
             .from("schools")
-            .select("id, name, created_at, location, is_active")
+            .select(
+                "id, name, created_at, location, is_active"
+            )
             .eq("id", schoolId)
             .single();
 
@@ -497,9 +609,13 @@ async function openEditSchoolModal(schoolId) {
         );
 
         if (index !== -1) {
-            Object.assign(dashboardData.schools[index], school, {
-                is_active: school.is_active !== false
-            });
+            Object.assign(
+                dashboardData.schools[index],
+                school,
+                {
+                    is_active: school.is_active !== false
+                }
+            );
         }
 
         if ($("editSchoolId")) {
@@ -516,6 +632,7 @@ async function openEditSchoolModal(schoolId) {
             label.textContent = labelText;
 
             const input = document.createElement("input");
+
             input.type = options.type || "text";
             input.id = `editSchoolField_${key}`;
             input.dataset.column = key;
@@ -527,7 +644,9 @@ async function openEditSchoolModal(schoolId) {
             if (options.readOnly) input.readOnly = true;
             if (options.disabled) input.disabled = true;
             if (options.required) input.required = true;
-            if (options.maxLength) input.maxLength = options.maxLength;
+            if (options.maxLength) {
+                input.maxLength = options.maxLength;
+            }
             if (options.dir) input.dir = options.dir;
 
             if (options.placeholder) {
@@ -540,16 +659,23 @@ async function openEditSchoolModal(schoolId) {
             return input;
         }
 
-        addTextField("name", "اسم المدرسة", school.name, {
-            required: true,
-            maxLength: 120
-        });
+        addTextField(
+            "name",
+            "اسم المدرسة",
+            school.name,
+            {
+                required: true,
+                maxLength: 120
+            }
+        );
 
         addTextField(
             "created_at",
             "تاريخ الإنشاء",
             formatDate(school.created_at),
-            { readOnly: true }
+            {
+                readOnly: true
+            }
         );
 
         const statusGroup = document.createElement("div");
@@ -560,6 +686,7 @@ async function openEditSchoolModal(schoolId) {
         statusLabel.textContent = "حالة المدرسة";
 
         const statusSelect = document.createElement("select");
+
         statusSelect.id = "editSchoolField_is_active";
         statusSelect.dataset.column = "is_active";
 
@@ -571,38 +698,57 @@ async function openEditSchoolModal(schoolId) {
         inactiveOption.value = "false";
         inactiveOption.textContent = "غير مفعّلة";
 
-        statusSelect.append(activeOption, inactiveOption);
-        statusSelect.value = school.is_active === false ? "false" : "true";
+        statusSelect.append(
+            activeOption,
+            inactiveOption
+        );
 
-        statusGroup.append(statusLabel, statusSelect);
+        statusSelect.value =
+            school.is_active === false ? "false" : "true";
+
+        statusGroup.append(
+            statusLabel,
+            statusSelect
+        );
+
         fieldsContainer.appendChild(statusGroup);
 
-        addTextField("location", "موقع المدرسة", school.location, {
-            required: true,
-            maxLength: 200
-        });
+        addTextField(
+            "location",
+            "موقع المدرسة",
+            school.location,
+            {
+                required: true,
+                maxLength: 200
+            }
+        );
 
-        // استدعاء مدير المدرسة المرتبط بهذه المدرسة
-        const { data: membership, error: membershipError } =
-            await supabaseClientInstance
-                .from("school_memberships")
-                .select("profile_id, school_id, role")
-                .eq("school_id", school.id)
-                .eq("role", "school_admin")
-                .limit(1)
-                .maybeSingle();
+        /* جلب مدير المدرسة المرتبط بها */
+
+        const {
+            data: membership,
+            error: membershipError
+        } = await supabaseClientInstance
+            .from("school_memberships")
+            .select("profile_id, school_id, role")
+            .eq("school_id", school.id)
+            .eq("role", "school_admin")
+            .limit(1)
+            .maybeSingle();
 
         if (membershipError) throw membershipError;
 
         let managerProfile = null;
 
         if (membership?.profile_id) {
-            const { data: profile, error: profileError } =
-                await supabaseClientInstance
-                    .from("profiles")
-                    .select("id, full_name, phone, role")
-                    .eq("id", membership.profile_id)
-                    .maybeSingle();
+            const {
+                data: profile,
+                error: profileError
+            } = await supabaseClientInstance
+                .from("profiles")
+                .select("id, full_name, phone, role")
+                .eq("id", membership.profile_id)
+                .maybeSingle();
 
             if (profileError) throw profileError;
 
@@ -624,7 +770,9 @@ async function openEditSchoolModal(schoolId) {
             "manager_name",
             "اسم المدير",
             managerProfile?.full_name || "لا يوجد مدير مرتبط",
-            { readOnly: true }
+            {
+                readOnly: true
+            }
         );
 
         const phoneInput = addTextField(
@@ -642,7 +790,8 @@ async function openEditSchoolModal(schoolId) {
             }
         );
 
-        phoneInput.dataset.profileId = managerProfile?.id || "";
+        phoneInput.dataset.profileId =
+            managerProfile?.id || "";
 
         modal.classList.remove("hidden");
         modal.hidden = false;
@@ -651,13 +800,21 @@ async function openEditSchoolModal(schoolId) {
         $("editSchoolField_name")?.focus();
 
         renderSchools();
+
     } catch (error) {
-        console.error("Load school for editing error:", error);
+        console.error(
+            "Load school for editing error:",
+            error
+        );
 
         showToast(
-            getErrorMessage(error, "تعذر تحميل بيانات المدرسة."),
+            getErrorMessage(
+                error,
+                "تعذر تحميل بيانات المدرسة."
+            ),
             "error"
         );
+
     } finally {
         if (editButton instanceof HTMLButtonElement) {
             setButtonLoading(editButton, false);
@@ -667,6 +824,7 @@ async function openEditSchoolModal(schoolId) {
 
 function closeEditSchoolModal() {
     const modal = $("editSchoolModal");
+
     if (!modal) return;
 
     modal.classList.remove("is-open");
@@ -681,7 +839,10 @@ async function updateSchool(event) {
     const fieldsContainer = $("editSchoolFields");
 
     if (!id || !fieldsContainer) {
-        showToast("تعذر تحديد المدرسة أو حقول التعديل.", "error");
+        showToast(
+            "تعذر تحديد المدرسة أو حقول التعديل.",
+            "error"
+        );
         return;
     }
 
@@ -707,12 +868,17 @@ async function updateSchool(event) {
 
     const duplicate = dashboardData.schools.some((school) =>
         String(school.id) !== String(id) &&
-        String(school.name || "").trim().toLocaleLowerCase("ar") ===
+        String(school.name || "")
+            .trim()
+            .toLocaleLowerCase("ar") ===
         name.toLocaleLowerCase("ar")
     );
 
     if (duplicate) {
-        showToast("يوجد اسم مدرسة مطابق بالفعل.", "error");
+        showToast(
+            "يوجد اسم مدرسة مطابق بالفعل.",
+            "error"
+        );
         return;
     }
 
@@ -722,31 +888,48 @@ async function updateSchool(event) {
         is_active: statusInput?.value === "true"
     };
 
-    const managerProfileId = phoneInput?.dataset.profileId || "";
-    const managerPhone = phoneInput?.value.trim() || "";
+    const managerProfileId =
+        phoneInput?.dataset.profileId || "";
+
+    const managerPhone =
+        phoneInput?.value.trim() || "";
 
     if (managerProfileId && !managerPhone) {
-        showToast("يرجى إدخال رقم هاتف المدير.", "error");
+        showToast(
+            "يرجى إدخال رقم هاتف المدير.",
+            "error"
+        );
         phoneInput?.focus();
         return;
     }
 
     const button = event.submitter;
-    setButtonLoading(button, true, "جارٍ التحديث...");
+
+    setButtonLoading(
+        button,
+        true,
+        "جارٍ التحديث..."
+    );
 
     try {
-        const { data: updatedSchool, error: schoolError } =
-            await supabaseClientInstance
-                .from("schools")
-                .update(updates)
-                .eq("id", id)
-                .select("id, name, created_at, location, is_active")
-                .single();
+        const {
+            data: updatedSchool,
+            error: schoolError
+        } = await supabaseClientInstance
+            .from("schools")
+            .update(updates)
+            .eq("id", id)
+            .select(
+                "id, name, created_at, location, is_active"
+            )
+            .single();
 
         if (schoolError) throw schoolError;
 
         if (!updatedSchool) {
-            throw new Error("لم يتم تأكيد تحديث المدرسة.");
+            throw new Error(
+                "لم يتم تأكيد تحديث المدرسة."
+            );
         }
 
         const index = dashboardData.schools.findIndex(
@@ -754,24 +937,37 @@ async function updateSchool(event) {
         );
 
         if (index !== -1) {
-            Object.assign(dashboardData.schools[index], updatedSchool, {
-                is_active: updatedSchool.is_active !== false
-            });
+            Object.assign(
+                dashboardData.schools[index],
+                updatedSchool,
+                {
+                    is_active:
+                        updatedSchool.is_active !== false
+                }
+            );
         }
 
-        // الهاتف يُحدّث في profiles وليس schools
+        /* الهاتف يُحدّث في profiles */
+
         if (managerProfileId) {
-            const { data: updatedProfile, error: phoneError } =
-                await supabaseClientInstance
-                    .from("profiles")
-                    .update({ phone: managerPhone })
-                    .eq("id", managerProfileId)
-                    .eq("role", "school_admin")
-                    .select("id, full_name, phone")
-                    .maybeSingle();
+            const {
+                data: updatedProfile,
+                error: phoneError
+            } = await supabaseClientInstance
+                .from("profiles")
+                .update({
+                    phone: managerPhone
+                })
+                .eq("id", managerProfileId)
+                .eq("role", "school_admin")
+                .select("id, full_name, phone")
+                .maybeSingle();
 
             if (phoneError) {
-                console.error("Update manager phone error:", phoneError);
+                console.error(
+                    "Update manager phone error:",
+                    phoneError
+                );
 
                 await loadSchools();
                 await loadManagers();
@@ -811,7 +1007,11 @@ async function updateSchool(event) {
         updateSchoolSelect();
         updateStatistics();
 
-        showToast("تم تحديث بيانات المدرسة بنجاح.", "success");
+        showToast(
+            "تم تحديث بيانات المدرسة بنجاح.",
+            "success"
+        );
+
     } catch (error) {
         console.error("Update school error:", error);
 
@@ -822,14 +1022,15 @@ async function updateSchool(event) {
             ),
             "error"
         );
+
     } finally {
         setButtonLoading(button, false);
     }
 }
 
-/* =========================
-   ACTIVATE / DEACTIVATE
-========================= */
+/* =========================================================
+   ACTIVATE / DEACTIVATE SCHOOL
+========================================================= */
 
 async function toggleSchoolStatus(schoolId) {
     const school = dashboardData.schools.find(
@@ -837,27 +1038,43 @@ async function toggleSchoolStatus(schoolId) {
     );
 
     if (!school) {
-        showToast("لم يتم العثور على المدرسة.", "error");
+        showToast(
+            "لم يتم العثور على المدرسة.",
+            "error"
+        );
         return;
     }
 
     const newStatus = !school.is_active;
     const action = newStatus ? "تفعيل" : "إيقاف";
 
-    if (!window.confirm(`هل تريد ${action} مدرسة «${school.name}»؟`)) {
+    if (
+        !window.confirm(
+            `هل تريد ${action} مدرسة «${school.name}»؟`
+        )
+    ) {
         return;
     }
 
     try {
         const { data, error } = await supabaseClientInstance
             .from("schools")
-            .update({ is_active: newStatus })
+            .update({
+                is_active: newStatus
+            })
             .eq("id", schoolId)
-            .select("id, name, created_at, location, is_active")
+            .select(
+                "id, name, created_at, location, is_active"
+            )
             .single();
 
         if (error) throw error;
-        if (!data) throw new Error("لم يتم تأكيد تغيير حالة المدرسة.");
+
+        if (!data) {
+            throw new Error(
+                "لم يتم تأكيد تغيير حالة المدرسة."
+            );
+        }
 
         Object.assign(school, data, {
             is_active: data.is_active !== false
@@ -867,22 +1084,28 @@ async function toggleSchoolStatus(schoolId) {
         updateSchoolSelect();
 
         showToast(
-            newStatus ? "تم تفعيل المدرسة." : "تم إيقاف المدرسة.",
+            newStatus
+                ? "تم تفعيل المدرسة."
+                : "تم إيقاف المدرسة.",
             "success"
         );
+
     } catch (error) {
         console.error("Toggle school error:", error);
 
         showToast(
-            getErrorMessage(error, "تعذر تغيير حالة المدرسة."),
+            getErrorMessage(
+                error,
+                "تعذر تغيير حالة المدرسة."
+            ),
             "error"
         );
     }
 }
 
-/* =========================
+/* =========================================================
    DELETE SCHOOL
-========================= */
+========================================================= */
 
 function openDeleteSchoolConfirmation(schoolId) {
     const school = dashboardData.schools.find(
@@ -890,7 +1113,10 @@ function openDeleteSchoolConfirmation(schoolId) {
     );
 
     if (!school) {
-        showToast("لم يتم العثور على المدرسة.", "error");
+        showToast(
+            "لم يتم العثور على المدرسة.",
+            "error"
+        );
         return;
     }
 
@@ -900,7 +1126,7 @@ function openDeleteSchoolConfirmation(schoolId) {
 
     if (!modal) {
         showToast(
-            "أضف نافذة deleteSchoolModal إلى ملف HTML أولًا.",
+            "نافذة تأكيد حذف المدرسة غير موجودة في HTML.",
             "error"
         );
 
@@ -909,7 +1135,8 @@ function openDeleteSchoolConfirmation(schoolId) {
     }
 
     if ($("deleteSchoolName")) {
-        $("deleteSchoolName").textContent = school.name || "المدرسة";
+        $("deleteSchoolName").textContent =
+            school.name || "اسم المدرسة";
     }
 
     modal.classList.remove("hidden");
@@ -931,14 +1158,21 @@ function closeDeleteSchoolModal() {
 
 async function confirmDeleteSchool() {
     if (!schoolPendingDelete) {
-        showToast("لم يتم تحديد مدرسة للحذف.", "error");
+        showToast(
+            "لم يتم تحديد مدرسة للحذف.",
+            "error"
+        );
         return;
     }
 
     const school = schoolPendingDelete;
     const button = $("confirmDeleteSchoolBtn");
 
-    setButtonLoading(button, true, "جارٍ الحذف...");
+    setButtonLoading(
+        button,
+        true,
+        "جارٍ الحذف..."
+    );
 
     try {
         const { data, error } = await supabaseClientInstance
@@ -955,9 +1189,11 @@ async function confirmDeleteSchool() {
             );
         }
 
-        dashboardData.schools = dashboardData.schools.filter(
-            (item) => String(item.id) !== String(school.id)
-        );
+        dashboardData.schools =
+            dashboardData.schools.filter(
+                (item) =>
+                    String(item.id) !== String(school.id)
+            );
 
         closeDeleteSchoolModal();
 
@@ -967,7 +1203,11 @@ async function confirmDeleteSchool() {
 
         await loadManagers();
 
-        showToast("تم حذف المدرسة.", "success");
+        showToast(
+            "تم حذف المدرسة.",
+            "success"
+        );
+
     } catch (error) {
         console.error("Delete school error:", error);
 
@@ -978,80 +1218,18 @@ async function confirmDeleteSchool() {
             ),
             "error"
         );
+
     } finally {
         setButtonLoading(button, false);
     }
 }
 
-/* =========================
-   SCHOOL MANAGEMENT EVENTS
-========================= */
-
-function bindSchoolManagementEvents() {
-    $("editSchoolForm")?.addEventListener("submit", updateSchool);
-
-    $("schoolSearchSecondary")?.addEventListener(
-        "input",
-        renderSchools
-    );
-
-    $("closeEditSchoolBtn")?.addEventListener(
-        "click",
-        closeEditSchoolModal
-    );
-
-    $("closeEditSchoolModalBtn")?.addEventListener(
-        "click",
-        closeEditSchoolModal
-    );
-
-    $("cancelEditSchoolBtn")?.addEventListener(
-        "click",
-        closeEditSchoolModal
-    );
-
-    $("confirmDeleteSchoolBtn")?.addEventListener(
-        "click",
-        confirmDeleteSchool
-    );
-
-    $("closeDeleteSchoolModalBtn")?.addEventListener(
-        "click",
-        closeDeleteSchoolModal
-    );
-
-    $("closeDeleteSchoolBtn")?.addEventListener(
-        "click",
-        closeDeleteSchoolModal
-    );
-
-    $("cancelDeleteSchoolBtn")?.addEventListener(
-        "click",
-        closeDeleteSchoolModal
-    );
-
-    ["editSchoolModal", "deleteSchoolModal"].forEach((id) => {
-        $(id)?.addEventListener("click", (event) => {
-            if (event.target !== $(id)) return;
-
-            if (id === "editSchoolModal") {
-                closeEditSchoolModal();
-            }
-
-            if (id === "deleteSchoolModal") {
-                closeDeleteSchoolModal();
-            }
-        });
-    });
-}
-
-/* =========================
+/* =========================================================
    MANAGERS: LOAD
-========================= */
+========================================================= */
 
 async function loadManagers() {
     try {
-        // جلب ارتباط كل مدير بالمدرسة
         const {
             data: memberships,
             error: membershipsError
@@ -1062,7 +1240,6 @@ async function loadManagers() {
 
         if (membershipsError) throw membershipsError;
 
-        // جلب بيانات المديرين من profiles
         const {
             data: profiles,
             error: profilesError
@@ -1076,7 +1253,6 @@ async function loadManagers() {
         const membershipList = memberships || [];
         const profileList = profiles || [];
 
-        // إنشاء قائمة المديرين المستخدمة في صفحة مديري المدارس
         dashboardData.managers = profileList.map((profile) => {
             const membership = membershipList.find(
                 (item) =>
@@ -1086,22 +1262,21 @@ async function loadManagers() {
             const school = membership
                 ? dashboardData.schools.find(
                     (item) =>
-                        String(item.id) === String(membership.school_id)
+                        String(item.id) ===
+                        String(membership.school_id)
                 )
                 : null;
 
             return {
                 ...profile,
                 school_id: membership?.school_id ?? null,
-                school_name: school?.name || "مدرسة غير محددة"
+                school_name:
+                    school?.name || "مدرسة غير محددة"
             };
         });
 
-        /*
-         * ربط بيانات المدير بكل مدرسة.
-         * school_memberships.profile_id = profiles.id
-         * school_memberships.school_id = schools.id
-         */
+        /* ربط بيانات المدير بكل مدرسة */
+
         dashboardData.schools.forEach((school) => {
             const membership = membershipList.find(
                 (item) =>
@@ -1111,13 +1286,19 @@ async function loadManagers() {
             const manager = membership
                 ? profileList.find(
                     (profile) =>
-                        String(profile.id) === String(membership.profile_id)
+                        String(profile.id) ===
+                        String(membership.profile_id)
                 )
                 : null;
 
-            school.manager_profile_id = manager?.id || null;
-            school.manager_name = manager?.full_name || "";
-            school.manager_phone = manager?.phone || "";
+            school.manager_profile_id =
+                manager?.id || null;
+
+            school.manager_name =
+                manager?.full_name || "";
+
+            school.manager_phone =
+                manager?.phone || "";
         });
 
         renderSchools();
@@ -1128,31 +1309,45 @@ async function loadManagers() {
         console.error("Load managers error:", error);
 
         showToast(
-            getErrorMessage(error, "تعذر تحميل المديرين."),
+            getErrorMessage(
+                error,
+                "تعذر تحميل المديرين."
+            ),
             "error"
         );
     }
 }
 
-/* =========================
+/* =========================================================
    MANAGERS: DISPLAY
-========================= */
+========================================================= */
 
 function renderManagers() {
     const body = $("managersTableBody");
 
-    const term = ($("managerSearch")?.value || "")
+    const term = (
+        $("managerSearch")?.value || ""
+    )
         .trim()
         .toLocaleLowerCase("ar");
 
-    const managers = dashboardData.managers.filter((manager) =>
-        String(manager.full_name || "")
-            .toLocaleLowerCase("ar")
-            .includes(term) ||
-        String(manager.school_name || "")
-            .toLocaleLowerCase("ar")
-            .includes(term) ||
-        String(manager.phone || "").includes(term)
+    const managers = dashboardData.managers.filter(
+        (manager) => {
+            const name = String(manager.full_name || "")
+                .toLocaleLowerCase("ar");
+
+            const school = String(manager.school_name || "")
+                .toLocaleLowerCase("ar");
+
+            const phone = String(manager.phone || "")
+                .toLocaleLowerCase("ar");
+
+            return (
+                name.includes(term) ||
+                school.includes(term) ||
+                phone.includes(term)
+            );
+        }
     );
 
     if (body) {
@@ -1162,28 +1357,18 @@ function renderManagers() {
             const row = document.createElement("tr");
             const cell = document.createElement("td");
 
-            cell.colSpan = 3;
-            cell.textContent = "لا يوجد مديرون مطابقون للبحث.";
+            cell.colSpan = 5;
+            cell.textContent =
+                "لا يوجد مديرون مطابقون للبحث.";
 
             row.appendChild(cell);
             body.appendChild(row);
+
         } else {
             managers.forEach((manager) => {
-                const row = document.createElement("tr");
-
-                const name = document.createElement("td");
-                name.textContent =
-                    manager.full_name || "مدير بدون اسم";
-
-                const school = document.createElement("td");
-                school.textContent =
-                    manager.school_name || "مدرسة غير محددة";
-
-                const role = document.createElement("td");
-                role.textContent = "مدير مدرسة";
-
-                row.append(name, school, role);
-                body.appendChild(row);
+                body.appendChild(
+                    createManagerRow(manager)
+                );
             });
         }
     }
@@ -1199,54 +1384,454 @@ function renderManagers() {
     );
 }
 
-/* =========================
+function createManagerRow(manager) {
+    const row = document.createElement("tr");
+
+    /* اسم المدير */
+
+    const nameCell = document.createElement("td");
+    nameCell.textContent =
+        manager.full_name || "مدير بدون اسم";
+
+    /* المدرسة */
+
+    const schoolCell = document.createElement("td");
+    schoolCell.textContent =
+        manager.school_name || "مدرسة غير محددة";
+
+    /* الهاتف */
+
+    const phoneCell = document.createElement("td");
+    phoneCell.dir = "auto";
+    phoneCell.textContent =
+        manager.phone || "غير مسجّل";
+
+    /* الصلاحية */
+
+    const roleCell = document.createElement("td");
+    roleCell.textContent = "مدير مدرسة";
+
+    /* الإجراءات */
+
+    const actionsCell = document.createElement("td");
+
+    const actions = document.createElement("div");
+
+    actions.className = "manager-actions";
+    actions.style.display = "flex";
+    actions.style.flexWrap = "wrap";
+    actions.style.alignItems = "center";
+    actions.style.gap = "6px";
+
+    actions.append(
+        makeButton(
+            "تعديل",
+            "btn-secondary",
+            () => openEditManagerModal(manager.id)
+        ),
+
+        makeButton(
+            "حذف",
+            "btn-delete",
+            () => openDeleteManagerConfirmation(manager.id)
+        )
+    );
+
+    actionsCell.appendChild(actions);
+
+    row.append(
+        nameCell,
+        schoolCell,
+        phoneCell,
+        roleCell,
+        actionsCell
+    );
+
+    return row;
+}
+
+/* =========================================================
+   EDIT MANAGER
+========================================================= */
+
+function openEditManagerModal(managerId) {
+    const manager = dashboardData.managers.find(
+        (item) =>
+            String(item.id) === String(managerId)
+    );
+
+    if (!manager) {
+        showToast(
+            "لم يتم العثور على المدير.",
+            "error"
+        );
+        return;
+    }
+
+    const modal = $("editManagerModal");
+
+    if (!modal) {
+        showToast(
+            "نافذة تعديل المدير غير موجودة في HTML.",
+            "error"
+        );
+        return;
+    }
+
+    if ($("editManagerId")) {
+        $("editManagerId").value = String(manager.id);
+    }
+
+    if ($("editManagerFullName")) {
+        $("editManagerFullName").value =
+            manager.full_name || "";
+    }
+
+    if ($("editManagerPhone")) {
+        $("editManagerPhone").value =
+            manager.phone || "";
+    }
+
+    if ($("editManagerSchoolName")) {
+        $("editManagerSchoolName").value =
+            manager.school_name || "مدرسة غير محددة";
+    }
+
+    modal.classList.remove("hidden");
+    modal.hidden = false;
+    modal.classList.add("is-open");
+
+    $("editManagerFullName")?.focus();
+}
+
+function closeEditManagerModal() {
+    const modal = $("editManagerModal");
+
+    if (!modal) return;
+
+    modal.classList.remove("is-open");
+    modal.classList.add("hidden");
+    modal.hidden = true;
+}
+
+async function updateManager(event) {
+    event.preventDefault();
+
+    const managerId = $("editManagerId")?.value;
+    const fullName = $("editManagerFullName")?.value.trim();
+    const phone = $("editManagerPhone")?.value.trim();
+
+    if (!managerId) {
+        showToast(
+            "تعذر تحديد المدير المطلوب تعديله.",
+            "error"
+        );
+        return;
+    }
+
+    if (!fullName) {
+        showToast(
+            "يرجى إدخال اسم المدير.",
+            "error"
+        );
+        $("editManagerFullName")?.focus();
+        return;
+    }
+
+    if (!phone) {
+        showToast(
+            "يرجى إدخال رقم هاتف المدير.",
+            "error"
+        );
+        $("editManagerPhone")?.focus();
+        return;
+    }
+
+    if (phone.length > 30) {
+        showToast(
+            "رقم الهاتف طويل جدًا.",
+            "error"
+        );
+        $("editManagerPhone")?.focus();
+        return;
+    }
+
+    const button = $("updateManagerBtn");
+
+    setButtonLoading(
+        button,
+        true,
+        "جارٍ حفظ التعديلات..."
+    );
+
+    try {
+        const { data, error } =
+            await supabaseClientInstance.functions.invoke(
+                "quick-handler",
+                {
+                    body: {
+                        action: "update_manager",
+                        manager_id: managerId,
+                        full_name: fullName,
+                        phone
+                    }
+                }
+            );
+
+        if (error) {
+            const details =
+                await getFunctionErrorDetails(error);
+
+            throw new Error(
+                details ||
+                error.message ||
+                "تعذر تعديل بيانات المدير."
+            );
+        }
+
+        if (data?.error) {
+            throw new Error(data.error);
+        }
+
+        if (data?.success !== true) {
+            throw new Error(
+                "لم تؤكد الوظيفة نجاح تعديل بيانات المدير."
+            );
+        }
+
+        closeEditManagerModal();
+
+        await loadManagers();
+
+        renderSchools();
+        updateStatistics();
+
+        showToast(
+            "تم تعديل بيانات المدير بنجاح.",
+            "success"
+        );
+
+    } catch (error) {
+        console.error("Update manager error:", error);
+
+        showToast(
+            getErrorMessage(
+                error,
+                "تعذر تعديل بيانات المدير."
+            ),
+            "error"
+        );
+
+    } finally {
+        setButtonLoading(button, false);
+    }
+}
+
+/* =========================================================
+   DELETE MANAGER
+========================================================= */
+
+function openDeleteManagerConfirmation(managerId) {
+    const manager = dashboardData.managers.find(
+        (item) =>
+            String(item.id) === String(managerId)
+    );
+
+    if (!manager) {
+        showToast(
+            "لم يتم العثور على المدير.",
+            "error"
+        );
+        return;
+    }
+
+    managerPendingDelete = manager;
+
+    const modal = $("deleteManagerModal");
+
+    if (!modal) {
+        showToast(
+            "نافذة تأكيد حذف المدير غير موجودة في HTML.",
+            "error"
+        );
+
+        managerPendingDelete = null;
+        return;
+    }
+
+    if ($("deleteManagerName")) {
+        $("deleteManagerName").textContent =
+            manager.full_name || "مدير المدرسة";
+    }
+
+    modal.classList.remove("hidden");
+    modal.hidden = false;
+    modal.classList.add("is-open");
+}
+
+function closeDeleteManagerModal() {
+    const modal = $("deleteManagerModal");
+
+    if (modal) {
+        modal.classList.remove("is-open");
+        modal.classList.add("hidden");
+        modal.hidden = true;
+    }
+
+    managerPendingDelete = null;
+}
+
+async function confirmDeleteManager() {
+    if (!managerPendingDelete) {
+        showToast(
+            "لم يتم تحديد المدير المطلوب حذفه.",
+            "error"
+        );
+        return;
+    }
+
+    const manager = managerPendingDelete;
+    const button = $("confirmDeleteManagerBtn");
+
+    setButtonLoading(
+        button,
+        true,
+        "جارٍ الحذف النهائي..."
+    );
+
+    try {
+        const { data, error } =
+            await supabaseClientInstance.functions.invoke(
+                "quick-handler",
+                {
+                    body: {
+                        action: "delete_manager",
+                        manager_id: manager.id
+                    }
+                }
+            );
+
+        if (error) {
+            const details =
+                await getFunctionErrorDetails(error);
+
+            throw new Error(
+                details ||
+                error.message ||
+                "تعذر حذف حساب المدير."
+            );
+        }
+
+        if (data?.error) {
+            throw new Error(data.error);
+        }
+
+        if (data?.success !== true) {
+            throw new Error(
+                "لم تؤكد الوظيفة نجاح حذف حساب المدير."
+            );
+        }
+
+        closeDeleteManagerModal();
+
+        await loadSchools();
+        await loadManagers();
+
+        renderDashboard();
+
+        showToast(
+            "تم حذف حساب المدير نهائياً.",
+            "success"
+        );
+
+    } catch (error) {
+        console.error("Delete manager error:", error);
+
+        showToast(
+            getErrorMessage(
+                error,
+                "تعذر حذف حساب المدير."
+            ),
+            "error"
+        );
+
+    } finally {
+        setButtonLoading(button, false);
+    }
+}
+
+/* =========================================================
    MANAGER SCHOOL SELECT
-========================= */
+========================================================= */
 
 function updateSchoolSelect() {
     const select = $("managerSchool");
+
     if (!select) return;
 
     const previous = select.value;
+
     select.replaceChildren();
 
     const placeholder = document.createElement("option");
+
     placeholder.value = "";
     placeholder.textContent = "اختر المدرسة";
+
     select.appendChild(placeholder);
 
     dashboardData.schools
-        .filter((school) => school.is_active !== false)
+        .filter(
+            (school) => school.is_active !== false
+        )
         .forEach((school) => {
             const option = document.createElement("option");
 
             option.value = String(school.id);
-            option.textContent = school.name || "مدرسة بدون اسم";
+            option.textContent =
+                school.name || "مدرسة بدون اسم";
 
             select.appendChild(option);
         });
 
-    if ([...select.options].some(
-        (option) => option.value === previous
-    )) {
+    if (
+        [...select.options].some(
+            (option) => option.value === previous
+        )
+    ) {
         select.value = previous;
     }
 }
 
-/* =========================
+/* =========================================================
    CREATE MANAGER
-========================= */
+========================================================= */
 
 async function createManager(event) {
     event.preventDefault();
 
-    const fullName = $("managerFullName")?.value.trim();
-    const email = $("managerEmail")?.value.trim();
-    const password = $("managerPassword")?.value;
-    const phone = $("managerPhone")?.value.trim();
-    const schoolId = $("managerSchool")?.value;
+    const fullName =
+        $("managerFullName")?.value.trim();
 
-    if (!fullName || !email || !password || !phone || !schoolId) {
+    const email =
+        $("managerEmail")?.value.trim();
+
+    const password =
+        $("managerPassword")?.value;
+
+    const phone =
+        $("managerPhone")?.value.trim();
+
+    const schoolId =
+        $("managerSchool")?.value;
+
+    if (
+        !fullName ||
+        !email ||
+        !password ||
+        !phone ||
+        !schoolId
+    ) {
         showToast(
             "يرجى ملء الاسم والبريد وكلمة المرور والهاتف والمدرسة.",
             "error"
@@ -1255,7 +1840,10 @@ async function createManager(event) {
     }
 
     if (phone.length > 30) {
-        showToast("رقم الهاتف طويل جدًا.", "error");
+        showToast(
+            "رقم الهاتف طويل جدًا.",
+            "error"
+        );
         $("managerPhone")?.focus();
         return;
     }
@@ -1265,6 +1853,7 @@ async function createManager(event) {
             "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.",
             "error"
         );
+        $("managerPassword")?.focus();
         return;
     }
 
@@ -1275,13 +1864,22 @@ async function createManager(event) {
     );
 
     if (!school) {
-        showToast("اختر مدرسة نشطة وصحيحة.", "error");
+        showToast(
+            "اختر مدرسة نشطة وصحيحة.",
+            "error"
+        );
+
         updateSchoolSelect();
         return;
     }
 
     const button = $("saveManagerBtn");
-    setButtonLoading(button, true, "جارٍ إنشاء الحساب...");
+
+    setButtonLoading(
+        button,
+        true,
+        "جارٍ إنشاء الحساب..."
+    );
 
     try {
         const { data, error } =
@@ -1289,6 +1887,7 @@ async function createManager(event) {
                 "quick-handler",
                 {
                     body: {
+                        action: "create_manager",
                         full_name: fullName,
                         email,
                         password,
@@ -1299,10 +1898,13 @@ async function createManager(event) {
             );
 
         if (error) {
-            const details = await getFunctionErrorDetails(error);
+            const details =
+                await getFunctionErrorDetails(error);
 
             throw new Error(
-                details || error.message || "تعذر إنشاء الحساب."
+                details ||
+                error.message ||
+                "تعذر إنشاء الحساب."
             );
         }
 
@@ -1312,11 +1914,12 @@ async function createManager(event) {
 
         if (data?.success !== true) {
             throw new Error(
-                "لم تؤكد الوظيفة نجاح إنشاء الحساب. تحقق من سجل الدالة."
+                "لم تؤكد الوظيفة نجاح إنشاء الحساب."
             );
         }
 
         $("managerForm")?.reset();
+
         closeManagerModal();
 
         await loadSchools();
@@ -1337,6 +1940,7 @@ async function createManager(event) {
             ),
             "error"
         );
+
     } finally {
         setButtonLoading(button, false);
     }
@@ -1350,7 +1954,11 @@ async function getFunctionErrorDetails(error) {
         ) {
             const body = await error.context.json();
 
-            return body?.error || body?.message || "";
+            return (
+                body?.error ||
+                body?.message ||
+                ""
+            );
         }
     } catch (parseError) {
         console.warn(
@@ -1362,9 +1970,9 @@ async function getFunctionErrorDetails(error) {
     return "";
 }
 
-/* =========================
+/* =========================================================
    DASHBOARD STATISTICS
-========================= */
+========================================================= */
 
 function renderDashboard() {
     updateStatistics();
@@ -1389,9 +1997,9 @@ function updateStatistics() {
     }
 }
 
-/* =========================
+/* =========================================================
    NAVIGATION
-========================= */
+========================================================= */
 
 function bindNavigationEvents() {
     document.querySelectorAll("[data-view]").forEach((link) => {
@@ -1415,10 +2023,13 @@ function bindNavigationEvents() {
         });
     });
 
-    $("addManagerBtn")?.addEventListener("click", (event) => {
-        event.preventDefault();
-        openManagerModal();
-    });
+    $("addManagerBtn")?.addEventListener(
+        "click",
+        (event) => {
+            event.preventDefault();
+            openManagerModal();
+        }
+    );
 }
 
 function showView(viewName) {
@@ -1429,18 +2040,29 @@ function showView(viewName) {
         settings: "settingsView"
     };
 
-    if (!views[viewName] || !$(views[viewName])) return;
+    if (
+        !views[viewName] ||
+        !$(views[viewName])
+    ) {
+        return;
+    }
 
     Object.entries(views).forEach(([name, id]) => {
         const view = $(id);
+
         if (!view) return;
 
-        view.classList.toggle("hidden", name !== viewName);
+        view.classList.toggle(
+            "hidden",
+            name !== viewName
+        );
+
         view.hidden = name !== viewName;
     });
 
     document.querySelectorAll("[data-view]").forEach((link) => {
-        const active = link.dataset.view === viewName;
+        const active =
+            link.dataset.view === viewName;
 
         link.classList.toggle("active", active);
 
@@ -1459,17 +2081,19 @@ function showView(viewName) {
     };
 
     if ($("pageTitle")) {
-        $("pageTitle").textContent = titles[viewName];
+        $("pageTitle").textContent =
+            titles[viewName];
     }
 
     if ($("breadcrumbCurrent")) {
-        $("breadcrumbCurrent").textContent = titles[viewName];
+        $("breadcrumbCurrent").textContent =
+            titles[viewName];
     }
 }
 
-/* =========================
-   MODALS
-========================= */
+/* =========================================================
+   SCHOOL MODAL
+========================================================= */
 
 function openSchoolModal() {
     const modal = $("schoolModal");
@@ -1491,12 +2115,17 @@ function openSchoolModal() {
 
 function closeSchoolModal() {
     const modal = $("schoolModal");
+
     if (!modal) return;
 
     modal.classList.remove("is-open");
     modal.classList.add("hidden");
     modal.hidden = true;
 }
+
+/* =========================================================
+   MANAGER MODAL
+========================================================= */
 
 function openManagerModal(schoolId = null) {
     const activeSchools = dashboardData.schools.filter(
@@ -1531,7 +2160,8 @@ function openManagerModal(schoolId = null) {
         select &&
         schoolId !== null &&
         activeSchools.some(
-            (school) => String(school.id) === String(schoolId)
+            (school) =>
+                String(school.id) === String(schoolId)
         )
     ) {
         select.value = String(schoolId);
@@ -1546,6 +2176,7 @@ function openManagerModal(schoolId = null) {
 
 function closeManagerModal() {
     const modal = $("managerModal");
+
     if (!modal) return;
 
     modal.classList.remove("is-open");
@@ -1553,15 +2184,79 @@ function closeManagerModal() {
     modal.hidden = true;
 }
 
-/* =========================
-   FORM EVENTS
-========================= */
+/* =========================================================
+   SCHOOL MANAGEMENT EVENTS
+========================================================= */
+
+function bindSchoolManagementEvents() {
+    $("editSchoolForm")?.addEventListener(
+        "submit",
+        updateSchool
+    );
+
+    $("schoolSearchSecondary")?.addEventListener(
+        "input",
+        renderSchools
+    );
+
+    $("closeEditSchoolBtn")?.addEventListener(
+        "click",
+        closeEditSchoolModal
+    );
+
+    $("cancelEditSchoolBtn")?.addEventListener(
+        "click",
+        closeEditSchoolModal
+    );
+
+    $("confirmDeleteSchoolBtn")?.addEventListener(
+        "click",
+        confirmDeleteSchool
+    );
+
+    $("closeDeleteSchoolBtn")?.addEventListener(
+        "click",
+        closeDeleteSchoolModal
+    );
+
+    $("cancelDeleteSchoolBtn")?.addEventListener(
+        "click",
+        closeDeleteSchoolModal
+    );
+
+    $("editSchoolModal")?.addEventListener(
+        "click",
+        (event) => {
+            if (event.target === $("editSchoolModal")) {
+                closeEditSchoolModal();
+            }
+        }
+    );
+
+    $("deleteSchoolModal")?.addEventListener(
+        "click",
+        (event) => {
+            if (event.target === $("deleteSchoolModal")) {
+                closeDeleteSchoolModal();
+            }
+        }
+    );
+}
+
+/* =========================================================
+   SCHOOL FORM EVENTS
+========================================================= */
 
 function bindSchoolEvents() {
-    $("schoolForm")?.addEventListener("submit", addSchool);
+    $("schoolForm")?.addEventListener(
+        "submit",
+        addSchool
+    );
 
-    // البحث في جدول الرئيسية
-    $("schoolSearch")?.addEventListener("input", renderSchools);
+    $("schoolSearch")?.addEventListener(
+        "input",
+        renderSchools
+    );
 
     $("closeModalBtn")?.addEventListener(
         "click",
@@ -1572,11 +2267,31 @@ function bindSchoolEvents() {
         "click",
         closeSchoolModal
     );
+
+    $("schoolModal")?.addEventListener(
+        "click",
+        (event) => {
+            if (event.target === $("schoolModal")) {
+                closeSchoolModal();
+            }
+        }
+    );
 }
 
+/* =========================================================
+   MANAGER EVENTS
+========================================================= */
+
 function bindManagerEvents() {
-    $("managerForm")?.addEventListener("submit", createManager);
-    $("managerSearch")?.addEventListener("input", renderManagers);
+    $("managerForm")?.addEventListener(
+        "submit",
+        createManager
+    );
+
+    $("managerSearch")?.addEventListener(
+        "input",
+        renderManagers
+    );
 
     $("closeManagerModalBtn")?.addEventListener(
         "click",
@@ -1587,10 +2302,74 @@ function bindManagerEvents() {
         "click",
         closeManagerModal
     );
+
+    $("managerModal")?.addEventListener(
+        "click",
+        (event) => {
+            if (event.target === $("managerModal")) {
+                closeManagerModal();
+            }
+        }
+    );
+
+    $("editManagerForm")?.addEventListener(
+        "submit",
+        updateManager
+    );
+
+    $("closeEditManagerModalBtn")?.addEventListener(
+        "click",
+        closeEditManagerModal
+    );
+
+    $("cancelEditManagerModalBtn")?.addEventListener(
+        "click",
+        closeEditManagerModal
+    );
+
+    $("editManagerModal")?.addEventListener(
+        "click",
+        (event) => {
+            if (event.target === $("editManagerModal")) {
+                closeEditManagerModal();
+            }
+        }
+    );
+
+    $("confirmDeleteManagerBtn")?.addEventListener(
+        "click",
+        confirmDeleteManager
+    );
+
+    $("closeDeleteManagerModalBtn")?.addEventListener(
+        "click",
+        closeDeleteManagerModal
+    );
+
+    $("cancelDeleteManagerModalBtn")?.addEventListener(
+        "click",
+        closeDeleteManagerModal
+    );
+
+    $("deleteManagerModal")?.addEventListener(
+        "click",
+        (event) => {
+            if (event.target === $("deleteManagerModal")) {
+                closeDeleteManagerModal();
+            }
+        }
+    );
 }
 
+/* =========================================================
+   GENERAL EVENTS
+========================================================= */
+
 function bindGeneralEvents() {
-    $("logoutBtn")?.addEventListener("click", logout);
+    $("logoutBtn")?.addEventListener(
+        "click",
+        logout
+    );
 
     document.addEventListener("keydown", (event) => {
         if (event.key !== "Escape") return;
@@ -1599,26 +2378,14 @@ function bindGeneralEvents() {
         closeManagerModal();
         closeEditSchoolModal();
         closeDeleteSchoolModal();
-    });
-
-    ["schoolModal", "managerModal"].forEach((id) => {
-        $(id)?.addEventListener("click", (event) => {
-            if (event.target !== $(id)) return;
-
-            if (id === "schoolModal") {
-                closeSchoolModal();
-            }
-
-            if (id === "managerModal") {
-                closeManagerModal();
-            }
-        });
+        closeEditManagerModal();
+        closeDeleteManagerModal();
     });
 }
 
-/* =========================
+/* =========================================================
    LOGOUT
-========================= */
+========================================================= */
 
 async function logout() {
     if (!supabaseClientInstance) {
@@ -1633,20 +2400,29 @@ async function logout() {
         if (error) throw error;
 
         redirectToLogin();
+
     } catch (error) {
         console.error("Logout error:", error);
-        showToast("تعذر تسجيل الخروج.", "error");
+
+        showToast(
+            "تعذر تسجيل الخروج.",
+            "error"
+        );
     }
 }
 
-/* =========================
+/* =========================================================
    UTILITIES
-========================= */
+========================================================= */
 
 function setElementVisible(element, visible) {
     if (!element) return;
 
-    element.classList.toggle("hidden", !visible);
+    element.classList.toggle(
+        "hidden",
+        !visible
+    );
+
     element.hidden = !visible;
 }
 
@@ -1655,7 +2431,9 @@ function formatDate(value) {
 
     const date = new Date(value);
 
-    if (Number.isNaN(date.getTime())) return "—";
+    if (Number.isNaN(date.getTime())) {
+        return "—";
+    }
 
     return new Intl.DateTimeFormat("ar-IQ", {
         year: "numeric",
@@ -1692,7 +2470,8 @@ function setButtonLoading(button, loading, loadingText) {
 
     if (loading) {
         if (!button.dataset.originalText) {
-            button.dataset.originalText = button.textContent;
+            button.dataset.originalText =
+                button.textContent;
         }
 
         button.disabled = true;
@@ -1707,7 +2486,9 @@ function setButtonLoading(button, loading, loadingText) {
     button.disabled = false;
 
     if (button.dataset.originalText) {
-        button.textContent = button.dataset.originalText;
+        button.textContent =
+            button.dataset.originalText;
+
         delete button.dataset.originalText;
     }
 }

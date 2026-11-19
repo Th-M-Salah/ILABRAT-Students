@@ -2710,3 +2710,449 @@ img {
         flex-wrap: wrap;
     }
 }
+
+/* =========================================================
+   ILABRAT TEACHER PORTAL — FINAL RESPONSIVE OVERRIDES
+   تحسين التوافق مع الكمبيوتر والتابلت والهواتف
+   ========================================================= */
+
+html,
+body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.teacher-layout,
+.teacher-main,
+.teacher-content,
+.teacher-section,
+.content-panel,
+.panel-heading,
+.form-grid,
+.stats-grid,
+.weekly-days-grid,
+.teacher-chat-conversation-panel {
+    min-width: 0;
+}
+
+.teacher-content {
+    width: 100%;
+}
+
+/* منع النصوص والعناصر الطويلة من دفع الصفحة خارج الشاشة */
+.teacher-content :where(h1, h2, h3, h4, p, span, strong, small, label, a) {
+    overflow-wrap: anywhere;
+}
+
+.teacher-content :where(input, select, textarea, button) {
+    max-width: 100%;
+}
+
+/* الشاشات المتوسطة واللابتوب الصغير */
+@media (min-width: 761px) and (max-width: 1100px) {
+    .teacher-layout {
+        grid-template-columns: 215px minmax(0, 1fr);
+    }
+
+    .teacher-sidebar {
+        width: 215px;
+        padding-right: 13px;
+        padding-left: 13px;
+    }
+
+    .teacher-content {
+        padding-right: 18px;
+        padding-left: 18px;
+    }
+
+    .teacher-topbar {
+        padding-right: 18px;
+        padding-left: 18px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .teacher-assignments-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #section-chat.teacher-section.active {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #section-chat > .section-intro,
+    #section-chat > .teacher-chat-open-panel,
+    #section-chat > .content-panel:not(.teacher-chat-open-panel):not(.teacher-chat-conversation-panel),
+    #section-chat .teacher-chat-conversation-panel {
+        grid-column: 1;
+        grid-row: auto;
+    }
+}
+
+/* التابلت والهواتف */
+@media (max-width: 760px) {
+    .teacher-layout {
+        display: block;
+        min-height: 100dvh;
+    }
+
+    .teacher-main {
+        width: 100%;
+        margin: 0;
+    }
+
+    .teacher-topbar {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        width: 100%;
+        min-height: 68px;
+        gap: 8px;
+        padding: 9px 12px;
+    }
+
+    .topbar-right {
+        min-width: 0;
+        gap: 8px;
+    }
+
+    .teacher-topbar h1 {
+        max-width: min(48vw, 260px);
+        font-size: clamp(14px, 3.5vw, 17px);
+        overflow-wrap: anywhere;
+    }
+
+    .teacher-top-profile {
+        min-width: 0;
+        max-width: 42%;
+    }
+
+    .top-profile-info strong {
+        max-width: 100%;
+    }
+
+    .teacher-content {
+        width: 100%;
+        padding: 16px 12px 24px;
+    }
+
+    .welcome-panel {
+        gap: 12px;
+    }
+
+    .welcome-panel > div:first-child {
+        min-width: 0;
+    }
+
+    .welcome-panel p {
+        max-width: 100%;
+    }
+
+    .welcome-decoration {
+        flex: 0 0 auto;
+    }
+
+    .content-panel {
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    .panel-heading {
+        width: 100%;
+    }
+
+    .panel-heading > div {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .panel-heading > button {
+        align-self: flex-start;
+        max-width: 100%;
+    }
+
+    .day-tabs {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .day-tab {
+        min-width: 0;
+        white-space: normal;
+    }
+
+    .form-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .form-field,
+    .form-field.full-width {
+        grid-column: 1 / -1;
+        min-width: 0;
+    }
+
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+        min-width: 0;
+        font-size: 16px; /* يمنع التكبير التلقائي للحقول في iPhone */
+    }
+
+    .form-actions {
+        width: 100%;
+    }
+
+    .form-actions > button {
+        min-height: 42px;
+    }
+
+    .teacher-homework-header,
+    .teacher-homework-footer,
+    .profile-header,
+    .weekly-table-footer {
+        flex-wrap: wrap;
+    }
+
+    .teacher-homework-header {
+        gap: 10px;
+    }
+
+    .homework-card-actions {
+        width: 100%;
+    }
+
+    .homework-card-actions button {
+        flex: 1 1 auto;
+    }
+
+    .profile-details {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #section-chat.teacher-section.active {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+    }
+
+    #section-chat > .section-intro,
+    #section-chat > .teacher-chat-open-panel,
+    #section-chat > .content-panel:not(.teacher-chat-open-panel):not(.teacher-chat-conversation-panel),
+    #section-chat .teacher-chat-conversation-panel {
+        grid-column: 1;
+        grid-row: auto;
+        width: 100%;
+        min-width: 0;
+    }
+
+    #section-chat .teacher-chat-conversation-panel {
+        min-height: 400px;
+    }
+
+    #section-chat .teacher-chat-messages {
+        min-height: 240px;
+        max-height: 55vh;
+    }
+
+    .teacher-modal,
+    .image-modal {
+        width: calc(100% - 20px);
+        max-width: 560px;
+        max-height: calc(100dvh - 20px);
+        margin: auto;
+    }
+}
+
+/* الهواتف الصغيرة */
+@media (max-width: 480px) {
+    .teacher-topbar {
+        min-height: 64px;
+        padding: 8px 9px;
+    }
+
+    .mobile-menu-button {
+        width: 36px;
+        height: 36px;
+        flex: 0 0 36px;
+    }
+
+    .topbar-greeting {
+        font-size: 9px;
+    }
+
+    .teacher-topbar h1 {
+        max-width: 43vw;
+        font-size: 14px;
+    }
+
+    .teacher-top-profile {
+        max-width: 39%;
+        padding: 4px 6px;
+    }
+
+    .top-profile-avatar {
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+    }
+
+    .top-profile-info strong {
+        max-width: 82px;
+        font-size: 9px;
+    }
+
+    .top-profile-info small {
+        font-size: 8px;
+    }
+
+    .teacher-content {
+        padding: 12px 9px 20px;
+    }
+
+    .welcome-panel {
+        min-height: 0;
+        padding: 18px 14px;
+        border-radius: 16px;
+    }
+
+    .welcome-panel h2 {
+        font-size: 17px;
+        line-height: 1.6;
+    }
+
+    .welcome-panel p {
+        font-size: 10px;
+        line-height: 1.8;
+    }
+
+    .welcome-decoration {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        font-size: 25px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .stat-card {
+        min-height: 64px;
+        height: auto;
+        padding: 8px;
+    }
+
+    .stat-card span {
+        white-space: normal;
+        overflow: visible;
+        font-size: 9px;
+        line-height: 1.5;
+    }
+
+    .stat-card strong {
+        font-size: 17px;
+    }
+
+    .content-panel {
+        padding: 14px 10px;
+        border-radius: 14px;
+    }
+
+    .section-intro h2 {
+        font-size: 20px;
+    }
+
+    .section-intro p,
+    .panel-heading p {
+        font-size: 10px;
+    }
+
+    .day-tabs {
+        gap: 3px;
+        padding: 3px;
+    }
+
+    .day-tab {
+        min-height: 38px;
+        padding: 5px 1px;
+        font-size: 9px;
+    }
+
+    .assignment-summary {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .teacher-assignments-list {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .profile-header {
+        align-items: flex-start;
+    }
+
+    .teacher-chat-heading {
+        flex-wrap: wrap;
+    }
+
+    #section-chat .teacher-chat-heading {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    #section-chat #closeTeacherChatRoomButton {
+        max-width: 100%;
+    }
+
+    #section-chat .teacher-chat-message {
+        max-width: 96%;
+    }
+
+    #section-chat .teacher-chat-message-form .form-actions,
+    #section-chat #sendTeacherChatMessageButton {
+        width: 100%;
+    }
+
+    .teacher-page-footer {
+        flex-wrap: wrap;
+        text-align: center;
+    }
+}
+
+/* الهواتف شديدة الصغر */
+@media (max-width: 350px) {
+    .teacher-top-profile {
+        max-width: 35%;
+    }
+
+    .top-profile-info strong {
+        max-width: 58px;
+    }
+
+    .teacher-topbar h1 {
+        max-width: 39vw;
+        font-size: 13px;
+    }
+
+    .welcome-decoration {
+        display: none;
+    }
+
+    .stats-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .day-tab {
+        font-size: 8px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .form-actions > button {
+        width: 100%;
+    }
+}

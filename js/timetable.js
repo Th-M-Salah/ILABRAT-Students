@@ -1,8 +1,10 @@
+
 "use strict";
 
 /* =========================================================
    ILABRAT STUDENTS — STUDENT PORTAL
    Daily / Weekly / Account / School Announcements / Chat
+   Optimized version
    ========================================================= */
 
 (() => {
@@ -24,11 +26,21 @@
         profile: null,
         classItem: null,
         school: null,
+
         lessons: [],
         posts: [],
         postsError: "",
+        postsLoaded: false,
+        postsLoading: false,
+        homeworkMap: new Map(),
+
         announcements: [],
         announcementsError: "",
+        announcementsLoaded: false,
+        announcementsLoading: false,
+        announcementsPromise: null,
+        announcementsRead: false,
+
         currentDayIndex: 0,
         currentView: "daily",
         academicYear: "",
@@ -37,7 +49,9 @@
         selectedChatRoom: null,
         chatMessages: [],
         chatLoading: false,
-        chatSending: false
+        chatSending: false,
+        chatRoomsLoaded: false,
+        chatRoomsPromise: null
     };
 
     const elements = {
@@ -58,7 +72,11 @@
         viewerImage: $("viewerImage"),
         viewerCaption: $("viewerCaption"),
         logoutButton: $("logoutButton"),
-
+        logoutDialog: $("logoutDialog"),
+        logoutDialogMessage: $("logoutDialogMessage"),
+        logoutDialogError: $("logoutDialogError"),
+        cancelLogoutButton: $("cancelLogoutButton"),
+        confirmLogoutButton: $("confirmLogoutButton"),
         chatOpenCount: $("chatOpenCount"),
         chatRoomsList: $("studentChatRoomsList"),
         chatMessages: $("studentChatMessages"),
@@ -117,13 +135,19 @@
 
     function parseLocalDate(value) {
         if (!value) return null;
+
         const parts = String(value).slice(0, 10).split("-").map(Number);
-        if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
+
+        if (parts.length !== 3 || parts.some(Number.isNaN)) {
+            return null;
+        }
+
         return new Date(parts[0], parts[1] - 1, parts[2], 12);
     }
 
     function getWeekDates() {
         const today = new Date();
+
         const sunday = new Date(
             today.getFullYear(),
             today.getMonth(),
@@ -170,7 +194,11 @@
 
         try {
             const url = new URL(String(value), window.location.origin);
-            return ["https:", "http:"].includes(url.protocol) ? url.href : "";
+
+            return ["https:", "http:"].includes(url.protocol)
+                ? url.href
+                : "";
+
         } catch {
             return "";
         }
@@ -216,19 +244,21 @@
         ].filter(Boolean).join(" · ");
     }
 
+    function compareLessons(a, b) {
+        const periodDifference =
+            getPeriodNumber(a.period) - getPeriodNumber(b.period);
+
+        if (periodDifference !== 0) return periodDifference;
+
+        return normalizeTime(a.start_time).localeCompare(
+            normalizeTime(b.start_time)
+        );
+    }
+
     function getDayLessons(dayId) {
         return state.lessons
             .filter(lesson => lesson.day_of_week === dayId)
-            .sort((a, b) => {
-                const periodDifference =
-                    getPeriodNumber(a.period) - getPeriodNumber(b.period);
-
-                if (periodDifference !== 0) return periodDifference;
-
-                return normalizeTime(a.start_time).localeCompare(
-                    normalizeTime(b.start_time)
-                );
-            });
+            .sort(compareLessons);
     }
 
     function getPostDate(post) {
@@ -762,7 +792,8 @@
     /* -------------------- LOAD STUDENT -------------------- */
 
     async function loadStudentData() {
-        const { data: authData, error: authError } = await db.auth.getUser();
+        const { data: authData, error: authError } =
+            await db.auth.getUser();
 
         if (authError) throw authError;
 
@@ -796,36 +827,69 @@
             .maybeSingle();
 
         if (classError) throw classError;
+
         if (!classItem) {
             throw new Error("تعذر العثور على الشعبة المرتبطة بحسابك.");
         }
 
         state.classItem = classItem;
 
-        const profileResult = await db
+        // الملف الشخصي والمدرسة مستقلان بعد معرفة الشعبة؛ تحميلهما بالتوازي.
+        const profilePromise = db
             .from("profiles")
             .select("id, full_name")
             .eq("id", state.user.id)
             .maybeSingle();
 
+        const schoolPromise = classItem.school_id
+            ? db
+                .from("schools")
+                .select("id, name")
+                .eq("id", classItem.school_id)
+                .maybeSingle()
+            : Promise.resolve({
+                data: null,
+                error: null
+            });
+
+        const [profileResult, schoolResult] = await Promise.all([
+            profilePromise,
+            schoolPromise
+        ]);
+
         if (profileResult.error) {
-            console.warn("Student profile query:", profileResult.error);
+            console.warn(
+                "Student profile query:",
+                profileResult.error
+            );
         }
 
         state.profile = profileResult.data || {};
 
-        if (classItem.school_id) {
-            const schoolResult = await db
-                .from("schools")
-                .select("id, name")
-                .eq("id", classItem.school_id)
-                .maybeSingle();
+        if (schoolResult.error) {
+            console.error("STUDENT SCHOOL QUERY ERROR:", {
+                schoolId: classItem.school_id,
+                error: schoolResult.error
+            });
 
-            if (schoolResult.error) {
-                console.warn("School query:", schoolResult.error);
-            }
+            state.school = null;
 
+        } else {
             state.school = schoolResult.data || null;
+
+            if (classItem.school_id && !state.school) {
+                console.warn(
+                    "لم يتم العثور على مدرسة مرتبطة بالشعبة:",
+                    classItem.school_id
+                );
+            }
+        }
+
+        if (!classItem.school_id) {
+            console.warn(
+                "الشعبة لا تحتوي على school_id:",
+                classItem.id
+            );
         }
 
         return true;
@@ -880,12 +944,15 @@
 
                 if (years.length) {
                     state.academicYear = years[0];
+
                     data = available.filter(
                         item => item.academic_year === state.academicYear
                     );
+
                 } else {
                     data = available;
                 }
+
             } else {
                 data = [];
             }
@@ -901,124 +968,178 @@
         }
     }
 
-    /* -------------------- LOAD POSTS FROM EDGE FUNCTION -------------------- */
+    /* -------------------- LOAD HOMEWORK ONLY -------------------- */
+
+    function buildHomeworkMap() {
+        const map = new Map();
+
+        state.posts.forEach(post => {
+            if (post.post_type !== "teacher_homework") return;
+
+            const subject = String(post.subject || "").trim();
+            const date = getPostDate(post);
+
+            if (!subject || !date) return;
+
+            const key = `${date}::${subject}`;
+
+            // الاحتفاظ بأول واجب مطابق كما كان find يفعل.
+            if (!map.has(key)) {
+                map.set(key, post);
+            }
+        });
+
+        state.homeworkMap = map;
+    }
 
     async function loadPosts() {
+        if (state.postsLoaded || state.postsLoading) return;
+
+        state.postsLoading = true;
         state.postsError = "";
 
         try {
-            const { data, error } = await db.functions.invoke("homework-handler", {
-                body: { action: "student_posts" }
-            });
+            const { data, error } = await db.functions.invoke(
+                "homework-handler",
+                {
+                    body: {
+                        action: "student_posts"
+                    }
+                }
+            );
 
             if (error) throw error;
 
             if (!data?.success) {
                 throw new Error(
-                    data?.message || data?.error ||
+                    data?.message ||
+                    data?.error ||
                     "لم تتمكن الخدمة من تحميل واجبات الشعبة."
                 );
             }
 
-            state.posts = (Array.isArray(data.posts) ? data.posts : [])
-                .filter(post => post.post_type !== "school_announcement");
-        } catch (homeworkError) {
-            console.error("STUDENT HOMEWORK ERROR:", homeworkError);
-            state.posts = [];
-            state.postsError = homeworkError?.message || "تعذر تحميل الواجبات.";
-        }
-
-        state.announcementsError = "";
-
-        try {
-            const announcementResult = await db.functions.invoke(
-                "school-announcements-handler",
-                { body: { action: "student_announcements" } }
+            state.posts = (
+                Array.isArray(data.posts) ? data.posts : []
+            ).filter(post =>
+                post.post_type !== "school_announcement"
             );
 
-            if (announcementResult.error) {
-                throw announcementResult.error;
+            buildHomeworkMap();
+            state.postsLoaded = true;
+
+        } catch (homeworkError) {
+            console.error(
+                "STUDENT HOMEWORK ERROR:",
+                homeworkError
+            );
+
+            state.posts = [];
+            state.homeworkMap.clear();
+            state.postsError =
+                homeworkError?.message || "تعذر تحميل الواجبات.";
+
+        } finally {
+            state.postsLoading = false;
+
+            if (state.currentView === "daily") {
+                renderDaily();
             }
-
-            if (!announcementResult.data?.success) {
-                throw new Error(
-                    announcementResult.data?.error ||
-                    announcementResult.data?.message ||
-                    "تعذر تحميل إعلانات المدرسة."
-                );
-            }
-
-            state.announcements = Array.isArray(announcementResult.data.posts)
-                ? announcementResult.data.posts
-                : [];
-        } catch (announcementError) {
-            console.error("STUDENT ANNOUNCEMENTS ERROR:", announcementError);
-            state.announcements = [];
-            state.announcementsError =
-                announcementError?.message || "تعذر تحميل إعلانات المدرسة.";
-        }
-
-        const count = state.announcements.length;
-
-        if (elements.announcementCount) {
-            elements.announcementCount.textContent = formatArabicDigits(count);
-            elements.announcementCount.hidden = count === 0;
         }
     }
 
-    /* -------------------- ACCOUNT -------------------- */
+    /* -------------------- WELCOME / ACCOUNT -------------------- */
+
+    function renderWelcome() {
+        if (elements.welcomeStudentName) {
+            elements.welcomeStudentName.textContent =
+                getStudentDisplayName();
+        }
+
+        if (elements.welcomeSchoolName) {
+            elements.welcomeSchoolName.textContent =
+                state.school?.name ||
+                "نتمنى لك يوماً دراسياً موفقاً";
+        }
+    }
 
     function renderAccount() {
         if (!elements.accountContent) return;
 
         const info = [
-            { label: "اسم الطالب", value: getStudentDisplayName(), icon: "♙" },
-            { label: "اسم المدرسة", value: state.school?.name || "غير متاح", icon: "⌂" },
-            { label: "المرحلة", value: state.classItem?.stage || "غير محددة", icon: "▤" },
-            { label: "الصف", value: state.classItem?.grade_name || state.classItem?.name || "غير محدد", icon: "▦" },
-            { label: "الشعبة", value: state.classItem?.section_name ? `الشعبة ${state.classItem.section_name}` : "غير محددة", icon: "▧" },
-            { label: "الجنس", value: state.classItem?.gender || "غير محدد", icon: "♧" }
+            {
+                label: "اسم الطالب",
+                value: getStudentDisplayName(),
+                icon: "♙"
+            },
+            {
+                label: "اسم المدرسة",
+                value: state.school?.name || "غير متاح",
+                icon: "⌂"
+            },
+            {
+                label: "المرحلة",
+                value: state.classItem?.stage || "غير محددة",
+                icon: "▤"
+            },
+            {
+                label: "الصف",
+                value: state.classItem?.grade_name ||
+                    state.classItem?.name ||
+                    "غير محدد",
+                icon: "▦"
+            },
+            {
+                label: "الشعبة",
+                value: state.classItem?.section_name
+                    ? `الشعبة ${state.classItem.section_name}`
+                    : "غير محددة",
+                icon: "▧"
+            },
+            {
+                label: "الجنس",
+                value: state.classItem?.gender || "غير محدد",
+                icon: "♧"
+            }
         ];
 
         elements.accountContent.innerHTML = info.map(item => `
             <article class="account-item">
                 <span class="account-item-icon">${item.icon}</span>
                 <div>
-                    <span class="account-item-label">${escapeHTML(item.label)}</span>
+                    <span class="account-item-label">
+                        ${escapeHTML(item.label)}
+                    </span>
                     <strong>${escapeHTML(item.value)}</strong>
                 </div>
             </article>
         `).join("");
 
-        if (elements.welcomeStudentName) {
-            elements.welcomeStudentName.textContent = getStudentDisplayName();
-        }
-
-        if (elements.welcomeSchoolName) {
-            elements.welcomeSchoolName.textContent =
-                state.school?.name || "نتمنى لك يوماً دراسياً موفقاً";
-        }
+        renderWelcome();
     }
 
     /* -------------------- HOMEWORK MATCHING -------------------- */
 
     function getHomeworkForLesson(lesson, date) {
-        return state.posts.find(post =>
-            post.post_type === "teacher_homework" &&
-            String(post.subject || "").trim() ===
-                String(lesson.subject || "").trim() &&
-            getPostDate(post) === date
-        ) || null;
+        const key =
+            `${date}::${String(lesson.subject || "").trim()}`;
+
+        return state.homeworkMap.get(key) || null;
     }
 
     function renderLesson(lesson, index, selectedDate) {
         const homework = getHomeworkForLesson(lesson, selectedDate);
-        const subject = escapeHTML(lesson.subject || "مادة غير محددة");
+        const subject = escapeHTML(
+            lesson.subject || "مادة غير محددة"
+        );
 
         let homeworkStatus = "لا يوجد واجب لهذا اليوم";
 
         if (state.postsError) {
             homeworkStatus = "تعذر تحميل بيانات الواجب";
+
+        } else if (state.postsLoading && !state.postsLoaded) {
+            homeworkStatus = "جارٍ التحقق من الواجبات...";
+
         } else if (homework) {
             homeworkStatus = "يوجد واجب لهذه المادة";
         }
@@ -1029,6 +1150,7 @@
                     <div class="lesson-number">
                         ${formatArabicDigits(index + 1)}
                     </div>
+
                     <div class="lesson-info">
                         <h3>${subject}</h3>
                     </div>
@@ -1044,8 +1166,10 @@
                     <span>${homeworkStatus}</span>
 
                     ${homework ? `
-                        <a class="homework-details-link"
-                           href="homework-details.html?post_id=${encodeURIComponent(homework.id)}">
+                        <a
+                            class="homework-details-link"
+                            href="homework-details.html?post_id=${encodeURIComponent(homework.id)}">
+
                             عرض الواجب
                             <span aria-hidden="true">←</span>
                         </a>
@@ -1083,7 +1207,8 @@
         });
 
         if (elements.previousDay) {
-            elements.previousDay.disabled = state.currentDayIndex === 0;
+            elements.previousDay.disabled =
+                state.currentDayIndex === 0;
         }
 
         if (elements.nextDay) {
@@ -1106,11 +1231,13 @@
         const lessons = getDayLessons(day.id);
 
         if (elements.currentDayTitle) {
-            elements.currentDayTitle.textContent = `جدولي يوم ${day.name}`;
+            elements.currentDayTitle.textContent =
+                `جدولي يوم ${day.name}`;
         }
 
         if (elements.currentDate) {
-            elements.currentDate.textContent = formatDate(dateInfo.date);
+            elements.currentDate.textContent =
+                formatDate(dateInfo.date);
         }
 
         updateDayNavigation();
@@ -1121,14 +1248,19 @@
                 "لا توجد حصص لهذا اليوم",
                 "لا توجد حصص منشورة لشعبتك في هذا اليوم حالياً."
             );
+
         } else if (elements.dayContent) {
-            elements.dayContent.innerHTML = lessons.map((lesson, index) =>
-                renderLesson(lesson, index, dateInfo.date)
+            elements.dayContent.innerHTML = lessons.map(
+                (lesson, index) =>
+                    renderLesson(lesson, index, dateInfo.date)
             ).join("");
         }
 
         const legacyPosts = $("dailyPostsSection");
-        if (legacyPosts) legacyPosts.hidden = true;
+
+        if (legacyPosts) {
+            legacyPosts.hidden = true;
+        }
     }
 
     /* -------------------- WEEKLY VIEW -------------------- */
@@ -1138,6 +1270,7 @@
             console.error(
                 "Weekly timetable container not found. Check .weekly-table-wrapper in HTML."
             );
+
             return;
         }
 
@@ -1146,21 +1279,28 @@
         const weekDates = getWeekDates();
         const todayString = localDateString(new Date());
 
-        const allLessons = [...state.lessons].sort((a, b) => {
-            const periodDifference =
-                getPeriodNumber(a.period) - getPeriodNumber(b.period);
+        // فرز الحصص مرة واحدة فقط.
+        const allLessons = [...state.lessons].sort(compareLessons);
 
-            if (periodDifference !== 0) return periodDifference;
+        // تجميع حصص كل يوم مرة واحدة بدلاً من إعادة تصفيتها داخل كل خلية.
+        const lessonsByDay = new Map(
+            DAYS.map(day => [day.id, []])
+        );
 
-            return normalizeTime(a.start_time).localeCompare(
-                normalizeTime(b.start_time)
-            );
+        allLessons.forEach(lesson => {
+            const dayLessons = lessonsByDay.get(lesson.day_of_week);
+
+            if (dayLessons) {
+                dayLessons.push(lesson);
+            }
         });
 
         const periodsMap = new Map();
 
         allLessons.forEach((lesson, index) => {
-            const periodKey = String(lesson.period ?? "").trim();
+            const periodKey = String(
+                lesson.period ?? ""
+            ).trim();
 
             if (!periodsMap.has(periodKey)) {
                 periodsMap.set(periodKey, {
@@ -1178,6 +1318,34 @@
             }
 
             return a.startTime.localeCompare(b.startTime);
+        });
+
+        // تجهيز فهرس سريع للحصة حسب اليوم ورقم/اسم الحصة.
+        const lessonIndex = new Map();
+
+        DAYS.forEach(day => {
+            const dayLessons = lessonsByDay.get(day.id) || [];
+
+            dayLessons.forEach(lesson => {
+                const number = getPeriodNumber(lesson.period);
+                const periodKey = String(
+                    lesson.period ?? ""
+                ).trim();
+
+                const key = number
+                    ? `number:${number}`
+                    : `label:${periodKey}`;
+
+                if (!lessonIndex.has(day.id)) {
+                    lessonIndex.set(day.id, new Map());
+                }
+
+                const dayIndex = lessonIndex.get(day.id);
+
+                if (!dayIndex.has(key)) {
+                    dayIndex.set(key, lesson);
+                }
+            });
         });
 
         const headerHTML = `
@@ -1220,70 +1388,69 @@
                     </tr>
                 </tbody>
             `;
+
         } else {
             bodyHTML = `
                 <tbody>
-                    ${periods.map(period => `
-                        <tr>
-                            <th scope="row">
-                                ${escapeHTML(
-                                    period.number
-                                        ? `الحصة ${formatArabicDigits(period.number)}`
-                                        : period.label
-                                )}
-                            </th>
+                    ${periods.map(period => {
+                        const periodLookupKey = period.number
+                            ? `number:${period.number}`
+                            : `label:${period.key}`;
 
-                            ${weekDates.map(day => {
-                                const isToday = day.date === todayString;
+                        return `
+                            <tr>
+                                <th scope="row">
+                                    ${escapeHTML(
+                                        period.number
+                                            ? `الحصة ${formatArabicDigits(period.number)}`
+                                            : period.label
+                                    )}
+                                </th>
 
-                                const lesson = getDayLessons(day.id).find(item => {
-                                    const itemPeriod = String(
-                                        item.period ?? ""
-                                    ).trim();
+                                ${weekDates.map(day => {
+                                    const isToday =
+                                        day.date === todayString;
 
-                                    if (period.number) {
-                                        return getPeriodNumber(item.period) ===
-                                            period.number;
+                                    const lesson = lessonIndex
+                                        .get(day.id)
+                                        ?.get(periodLookupKey);
+
+                                    if (!lesson) {
+                                        return `
+                                            <td class="${isToday ? "weekly-today-column" : ""}">
+                                                <span class="weekly-cell-empty">—</span>
+                                            </td>
+                                        `;
                                     }
 
-                                    return itemPeriod === period.key;
-                                });
-
-                                if (!lesson) {
                                     return `
                                         <td class="${isToday ? "weekly-today-column" : ""}">
-                                            <span class="weekly-cell-empty">—</span>
+                                            <div class="weekly-cell-lesson">
+                                                <strong class="weekly-cell-subject">
+                                                    ${escapeHTML(
+                                                        lesson.subject || "مادة غير محددة"
+                                                    )}
+                                                </strong>
+
+                                                <span class="weekly-cell-teacher">
+                                                    المعلم:
+                                                    ${escapeHTML(
+                                                        lesson.teacher_name || "غير محدد"
+                                                    )}
+                                                </span>
+
+                                                <span class="weekly-cell-time">
+                                                    ${escapeHTML(formatTime(lesson.start_time))}
+                                                    -
+                                                    ${escapeHTML(formatTime(lesson.end_time))}
+                                                </span>
+                                            </div>
                                         </td>
                                     `;
-                                }
-
-                                return `
-                                    <td class="${isToday ? "weekly-today-column" : ""}">
-                                        <div class="weekly-cell-lesson">
-                                            <strong class="weekly-cell-subject">
-                                                ${escapeHTML(
-                                                    lesson.subject || "مادة غير محددة"
-                                                )}
-                                            </strong>
-
-                                            <span class="weekly-cell-teacher">
-                                                المعلم:
-                                                ${escapeHTML(
-                                                    lesson.teacher_name || "غير محدد"
-                                                )}
-                                            </span>
-
-                                            <span class="weekly-cell-time">
-                                                ${escapeHTML(formatTime(lesson.start_time))}
-                                                -
-                                                ${escapeHTML(formatTime(lesson.end_time))}
-                                            </span>
-                                        </div>
-                                    </td>
-                                `;
-                            }).join("")}
-                        </tr>
-                    `).join("")}
+                                }).join("")}
+                            </tr>
+                        `;
+                    }).join("")}
                 </tbody>
             `;
         }
@@ -1297,6 +1464,89 @@
     }
 
     /* -------------------- SCHOOL ANNOUNCEMENTS -------------------- */
+
+    function hideAnnouncementCount() {
+        if (!elements.announcementCount) return;
+
+        elements.announcementCount.textContent = "";
+        elements.announcementCount.hidden = true;
+    }
+
+    async function loadAnnouncements() {
+        if (state.announcementsLoaded) {
+            renderAnnouncements();
+            return;
+        }
+
+        if (state.announcementsPromise) {
+            await state.announcementsPromise;
+            return;
+        }
+
+        state.announcementsLoading = true;
+        state.announcementsError = "";
+
+        if (elements.announcementsContent) {
+            elements.announcementsContent.innerHTML = `
+                <div class="loading-state">
+                    جارٍ تحميل إعلانات المدرسة...
+                </div>
+            `;
+        }
+
+        state.announcementsPromise = (async () => {
+            try {
+                const { data, error } = await db.functions.invoke(
+                    "school-announcements-handler",
+                    {
+                        body: {
+                            action: "student_announcements"
+                        }
+                    }
+                );
+
+                if (error) throw error;
+
+                if (!data?.success) {
+                    throw new Error(
+                        data?.error ||
+                        data?.message ||
+                        "تعذر تحميل إعلانات المدرسة."
+                    );
+                }
+
+                state.announcements = Array.isArray(data.posts)
+                    ? data.posts
+                    : [];
+
+                state.announcementsLoaded = true;
+
+            } catch (announcementError) {
+                console.error(
+                    "STUDENT ANNOUNCEMENTS ERROR:",
+                    announcementError
+                );
+
+                state.announcements = [];
+
+                state.announcementsError =
+                    announcementError?.message ||
+                    "تعذر تحميل إعلانات المدرسة.";
+
+            } finally {
+                state.announcementsLoading = false;
+                state.announcementsPromise = null;
+
+                if (state.announcementsRead) {
+                    hideAnnouncementCount();
+                }
+
+                renderAnnouncements();
+            }
+        })();
+
+        await state.announcementsPromise;
+    }
 
     function getPostAttachments(post) {
         const attachments = Array.isArray(post.attachments)
@@ -1388,8 +1638,32 @@
     function renderAnnouncements() {
         if (!elements.announcementsContent) return;
 
+        if (state.announcementsLoading) {
+            elements.announcementsContent.innerHTML = `
+                <div class="loading-state">
+                    جارٍ تحميل إعلانات المدرسة...
+                </div>
+            `;
+
+            return;
+        }
+
         if (state.announcementsError) {
-            showError(elements.announcementsContent, state.announcementsError);
+            showError(
+                elements.announcementsContent,
+                state.announcementsError
+            );
+
+            return;
+        }
+
+        if (!state.announcementsLoaded) {
+            elements.announcementsContent.innerHTML = `
+                <div class="loading-state">
+                    سيتم تحميل إعلانات المدرسة عند فتح هذا القسم.
+                </div>
+            `;
+
             return;
         }
 
@@ -1419,6 +1693,7 @@
         if (!elements.chatFormMessage) return;
 
         elements.chatFormMessage.textContent = message || "";
+
         elements.chatFormMessage.style.color = isError
             ? "#a12b38"
             : "#28734c";
@@ -1436,7 +1711,10 @@
         if (!value) return "غير محدد";
 
         const date = new Date(value);
-        if (Number.isNaN(date.getTime())) return "غير محدد";
+
+        if (Number.isNaN(date.getTime())) {
+            return "غير محدد";
+        }
 
         return new Intl.DateTimeFormat("ar-IQ", {
             year: "numeric",
@@ -1474,12 +1752,19 @@
         );
 
         if (error) {
-            let message = error.message || "تعذر الاتصال بخدمة غرف الأسئلة.";
+            let message =
+                error.message ||
+                "تعذر الاتصال بخدمة غرف الأسئلة.";
 
             if (typeof error.context?.json === "function") {
                 try {
                     const body = await error.context.json();
-                    message = body?.message || body?.error || message;
+
+                    message =
+                        body?.message ||
+                        body?.error ||
+                        message;
+
                 } catch {
                     // الاحتفاظ برسالة الخطأ الأصلية
                 }
@@ -1490,7 +1775,9 @@
 
         if (!data || data.success !== true) {
             throw new Error(
-                data?.message || data?.error || "لم تنجح العملية المطلوبة."
+                data?.message ||
+                data?.error ||
+                "لم تنجح العملية المطلوبة."
             );
         }
 
@@ -1506,12 +1793,14 @@
                 "لا توجد غرف أسئلة",
                 "لم يفتح معلموك غرف أسئلة لشعبتك حتى الآن."
             );
+
             return;
         }
 
         elements.chatRoomsList.innerHTML = state.chatRooms.map(room => {
             const roomId = getChatRoomId(room);
             const isOpen = isChatRoomOpen(room);
+
             const selected = String(
                 getChatRoomId(state.selectedChatRoom)
             ) === String(roomId);
@@ -1531,11 +1820,14 @@
                     </span>
 
                     <span class="student-chat-room-date">
-                        وقت الفتح: ${escapeHTML(formatChatDate(room.opened_at))}
+                        وقت الفتح:
+                        ${escapeHTML(formatChatDate(room.opened_at))}
                     </span>
 
                     <span class="student-chat-room-badge ${isOpen ? "open" : "closed"}">
-                        ${isOpen ? "مفتوحة لاستقبال الأسئلة" : "مغلقة · قراءة فقط"}
+                        ${isOpen
+                            ? "مفتوحة لاستقبال الأسئلة"
+                            : "مغلقة · قراءة فقط"}
                     </span>
                 </button>
             `;
@@ -1553,6 +1845,7 @@
                     <p>اختر غرفة من القائمة لعرض رسائلك مع المعلم.</p>
                 </div>
             `;
+
             return;
         }
 
@@ -1562,12 +1855,17 @@
                 "لا توجد رسائل بعد",
                 "يمكنك كتابة سؤالك للمعلم في الأسفل."
             );
+
             return;
         }
 
         elements.chatMessages.innerHTML = state.chatMessages.map(message => {
-            const senderRole = String(message.sender_role || "").toLowerCase();
+            const senderRole = String(
+                message.sender_role || ""
+            ).toLowerCase();
+
             const isTeacher = senderRole === "teacher";
+
             const senderName = message.sender_name ||
                 (isTeacher ? "المعلم" : "الطالب");
 
@@ -1575,7 +1873,9 @@
                 <article class="student-chat-message ${isTeacher ? "teacher" : "student"}">
                     <div class="student-chat-message-head">
                         <strong>${escapeHTML(senderName)}</strong>
-                        <time>${escapeHTML(formatChatDate(message.created_at))}</time>
+                        <time>
+                            ${escapeHTML(formatChatDate(message.created_at))}
+                        </time>
                     </div>
 
                     <div class="student-chat-message-body">${escapeHTML(message.message || "")}</div>
@@ -1583,37 +1883,51 @@
             `;
         }).join("");
 
-        elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+        elements.chatMessages.scrollTop =
+            elements.chatMessages.scrollHeight;
     }
 
     function updateStudentChatComposer() {
         const selected = state.selectedChatRoom;
-        const canSend = Boolean(selected && isChatRoomOpen(selected));
+
+        const canSend = Boolean(
+            selected && isChatRoomOpen(selected)
+        );
 
         if (elements.chatMessageInput) {
-            elements.chatMessageInput.disabled = !canSend || state.chatSending;
+            elements.chatMessageInput.disabled =
+                !canSend || state.chatSending;
+
             elements.chatMessageInput.placeholder = canSend
                 ? "اكتب سؤالك للمعلم..."
                 : "هذه الغرفة مغلقة، يمكنك قراءة المحادثة فقط.";
         }
 
         if (elements.chatSendButton) {
-            elements.chatSendButton.disabled = !canSend || state.chatSending;
-            elements.chatSendButton.textContent = state.chatSending
-                ? "جارٍ الإرسال..."
-                : "إرسال السؤال";
+            elements.chatSendButton.disabled =
+                !canSend || state.chatSending;
+
+            elements.chatSendButton.textContent =
+                state.chatSending
+                    ? "جارٍ الإرسال..."
+                    : "إرسال السؤال";
         }
 
         if (elements.chatRoomStatus) {
             if (!selected) {
                 elements.chatRoomStatus.textContent = "غير محددة";
-                elements.chatRoomStatus.className = "student-chat-status";
+                elements.chatRoomStatus.className =
+                    "student-chat-status";
+
             } else if (canSend) {
                 elements.chatRoomStatus.textContent = "مفتوحة";
-                elements.chatRoomStatus.className = "student-chat-status open";
+                elements.chatRoomStatus.className =
+                    "student-chat-status open";
+
             } else {
                 elements.chatRoomStatus.textContent = "مغلقة";
-                elements.chatRoomStatus.className = "student-chat-status closed";
+                elements.chatRoomStatus.className =
+                    "student-chat-status closed";
             }
         }
     }
@@ -1623,7 +1937,8 @@
 
         if (!room) {
             if (elements.chatRoomTitle) {
-                elements.chatRoomTitle.textContent = "اختر غرفة أسئلة";
+                elements.chatRoomTitle.textContent =
+                    "اختر غرفة أسئلة";
             }
 
             if (elements.chatRoomMeta) {
@@ -1633,11 +1948,13 @@
 
             updateStudentChatComposer();
             renderStudentChatMessages();
+
             return;
         }
 
         if (elements.chatRoomTitle) {
-            elements.chatRoomTitle.textContent = getRoomSubject(room);
+            elements.chatRoomTitle.textContent =
+                getRoomSubject(room);
         }
 
         if (elements.chatRoomMeta) {
@@ -1652,7 +1969,17 @@
     async function loadStudentChatRooms(options = {}) {
         if (!elements.chatRoomsList) return;
 
-        if (state.chatLoading) return;
+        // مشاركة الطلب الجاري بدلاً من إرسال طلبات متكررة.
+        if (state.chatRoomsPromise) {
+            return state.chatRoomsPromise;
+        }
+
+        // لا نعيد جلب الغرف عند العودة إلى التبويب ما دامت محملة.
+        if (state.chatRoomsLoaded && options.force !== true) {
+            renderStudentChatRooms();
+            renderSelectedStudentChatRoom();
+            return;
+        }
 
         state.chatLoading = true;
 
@@ -1660,56 +1987,88 @@
             elements.chatRefreshButton.disabled = true;
         }
 
-        if (options.showLoading !== false) {
+        if (
+            options.showLoading !== false &&
+            !state.chatRoomsLoaded
+        ) {
             elements.chatRoomsList.innerHTML =
                 `<div class="loading-state">جارٍ تحميل غرف الأسئلة...</div>`;
         }
 
-        try {
-            const data = await callStudentChatHandler("student_list_rooms");
-
-            state.chatRooms = Array.isArray(data.rooms)
-                ? data.rooms
-                : [];
-
-            const openCount = state.chatRooms.filter(isChatRoomOpen).length;
-
-            if (elements.chatOpenCount) {
-                elements.chatOpenCount.textContent =
-                    formatArabicDigits(openCount);
-                elements.chatOpenCount.hidden = openCount === 0;
-            }
-
-            if (state.selectedChatRoom) {
-                const selectedId = String(
-                    getChatRoomId(state.selectedChatRoom)
+        state.chatRoomsPromise = (async () => {
+            try {
+                const data = await callStudentChatHandler(
+                    "student_list_rooms"
                 );
 
-                const updatedRoom = state.chatRooms.find(room =>
-                    String(getChatRoomId(room)) === selectedId
+                state.chatRooms = Array.isArray(data.rooms)
+                    ? data.rooms
+                    : [];
+
+                state.chatRoomsLoaded = true;
+
+                const openCount = state.chatRooms.filter(
+                    isChatRoomOpen
+                ).length;
+
+                if (elements.chatOpenCount) {
+                    elements.chatOpenCount.textContent =
+                        formatArabicDigits(openCount);
+
+                    elements.chatOpenCount.hidden =
+                        openCount === 0;
+                }
+
+                if (state.selectedChatRoom) {
+                    const selectedId = String(
+                        getChatRoomId(state.selectedChatRoom)
+                    );
+
+                    const updatedRoom = state.chatRooms.find(room =>
+                        String(getChatRoomId(room)) === selectedId
+                    );
+
+                    if (updatedRoom) {
+                        state.selectedChatRoom = updatedRoom;
+
+                    } else {
+                        state.selectedChatRoom = null;
+                        state.chatMessages = [];
+                    }
+                }
+
+                renderStudentChatRooms();
+                renderSelectedStudentChatRoom();
+
+            } catch (error) {
+                console.error(
+                    "STUDENT CHAT ROOMS ERROR:",
+                    error
                 );
 
-                if (updatedRoom) {
-                    state.selectedChatRoom = updatedRoom;
-                } else {
-                    state.selectedChatRoom = null;
-                    state.chatMessages = [];
+                // السماح بإعادة المحاولة عند فتح التبويب مرة أخرى.
+                state.chatRoomsLoaded = false;
+
+                // إبقاء الغرف السابقة ظاهرة إن كان التحديث اليدوي قد فشل.
+                if (!state.chatRoomsLoaded || !state.chatRooms.length) {
+                    showError(elements.chatRoomsList, error.message);
+                }
+
+                setChatFormMessage(
+                    error.message || "تعذر تحديث غرف الأسئلة."
+                );
+
+            } finally {
+                state.chatLoading = false;
+                state.chatRoomsPromise = null;
+
+                if (elements.chatRefreshButton) {
+                    elements.chatRefreshButton.disabled = false;
                 }
             }
+        })();
 
-            renderStudentChatRooms();
-            renderSelectedStudentChatRoom();
-
-        } catch (error) {
-            console.error("STUDENT CHAT ROOMS ERROR:", error);
-            showError(elements.chatRoomsList, error.message);
-        } finally {
-            state.chatLoading = false;
-
-            if (elements.chatRefreshButton) {
-                elements.chatRefreshButton.disabled = false;
-            }
-        }
+        return state.chatRoomsPromise;
     }
 
     async function selectStudentChatRoom(roomId) {
@@ -1735,8 +2094,18 @@
         try {
             const data = await callStudentChatHandler(
                 "get_room_messages",
-                { room_id: roomId }
+                {
+                    room_id: roomId
+                }
             );
+
+            // لا نعرض بيانات غرفة أخرى إذا اختار الطالب غرفة مختلفة أثناء التحميل.
+            if (
+                String(getChatRoomId(state.selectedChatRoom)) !==
+                String(roomId)
+            ) {
+                return;
+            }
 
             if (data.room) {
                 state.selectedChatRoom = data.room;
@@ -1750,8 +2119,17 @@
             renderSelectedStudentChatRoom();
 
         } catch (error) {
-            console.error("STUDENT CHAT MESSAGES ERROR:", error);
-            showError(elements.chatMessages, error.message);
+            console.error(
+                "STUDENT CHAT MESSAGES ERROR:",
+                error
+            );
+
+            if (
+                String(getChatRoomId(state.selectedChatRoom)) ===
+                String(roomId)
+            ) {
+                showError(elements.chatMessages, error.message);
+            }
         }
     }
 
@@ -1761,8 +2139,12 @@
         const room = state.selectedChatRoom;
 
         if (!room || !isChatRoomOpen(room)) {
-            setChatFormMessage("لا يمكن إرسال رسالة؛ هذه الغرفة مغلقة.");
+            setChatFormMessage(
+                "لا يمكن إرسال رسالة؛ هذه الغرفة مغلقة."
+            );
+
             updateStudentChatComposer();
+
             return;
         }
 
@@ -1778,6 +2160,7 @@
         if (state.chatSending) return;
 
         state.chatSending = true;
+
         setChatFormMessage("");
         updateStudentChatComposer();
 
@@ -1794,11 +2177,19 @@
                 elements.chatMessageInput.value = "";
             }
 
-            // إعادة تحميل الرسائل من المصدر المعتمد بعد الإرسال.
             const data = await callStudentChatHandler(
                 "get_room_messages",
-                { room_id: getChatRoomId(room) }
+                {
+                    room_id: getChatRoomId(room)
+                }
             );
+
+            if (
+                String(getChatRoomId(state.selectedChatRoom)) !==
+                String(getChatRoomId(room))
+            ) {
+                return;
+            }
 
             if (data.room) {
                 state.selectedChatRoom = data.room;
@@ -1812,11 +2203,21 @@
             renderStudentChatMessages();
             renderStudentChatRooms();
 
-            setChatFormMessage("تم إرسال سؤالك بنجاح.", false);
+            setChatFormMessage(
+                "تم إرسال سؤالك بنجاح.",
+                false
+            );
 
         } catch (error) {
-            console.error("STUDENT CHAT SEND ERROR:", error);
-            setChatFormMessage(error.message || "تعذر إرسال السؤال.");
+            console.error(
+                "STUDENT CHAT SEND ERROR:",
+                error
+            );
+
+            setChatFormMessage(
+                error.message || "تعذر إرسال السؤال."
+            );
+
         } finally {
             state.chatSending = false;
             updateStudentChatComposer();
@@ -1824,18 +2225,26 @@
     }
 
     function bindStudentChatEvents() {
-        injectStudentChatStyles();
+        // لا يتم حقن تنسيقات المحادثات هنا؛ تؤجل حتى فتح التبويب.
 
         elements.chatRoomsList?.addEventListener("click", event => {
-            const button = event.target.closest("[data-student-chat-room]");
+            const button = event.target.closest(
+                "[data-student-chat-room]"
+            );
+
             if (!button) return;
 
-            selectStudentChatRoom(button.dataset.studentChatRoom);
+            selectStudentChatRoom(
+                button.dataset.studentChatRoom
+            );
         });
 
-        elements.chatRefreshButton?.addEventListener("click", () => {
-            loadStudentChatRooms();
-        });
+        elements.chatRefreshButton?.addEventListener(
+            "click",
+            () => {
+                loadStudentChatRooms({ force: true });
+            }
+        );
 
         elements.chatMessageForm?.addEventListener(
             "submit",
@@ -1859,22 +2268,42 @@
         state.currentView = viewName;
 
         Object.entries(views).forEach(([name, panel]) => {
-            if (panel) panel.hidden = name !== viewName;
+            if (panel) {
+                panel.hidden = name !== viewName;
+            }
         });
 
         document.querySelectorAll(".student-tab").forEach(button => {
             const active = button.dataset.view === viewName;
 
             button.classList.toggle("active", active);
-            button.setAttribute("aria-selected", String(active));
+
+            button.setAttribute(
+                "aria-selected",
+                String(active)
+            );
         });
 
-        if (viewName === "daily") renderDaily();
-        if (viewName === "weekly") renderWeekly();
-        if (viewName === "announcements") renderAnnouncements();
-        if (viewName === "account") renderAccount();
+        if (viewName === "daily") {
+            renderDaily();
+        }
+
+        if (viewName === "weekly") {
+            renderWeekly();
+        }
+
+        if (viewName === "announcements") {
+            state.announcementsRead = true;
+            hideAnnouncementCount();
+            loadAnnouncements();
+        }
+
+        if (viewName === "account") {
+            renderAccount();
+        }
 
         if (viewName === "chat") {
+            injectStudentChatStyles();
             loadStudentChatRooms();
         }
     }
@@ -1908,35 +2337,108 @@
 
     /* -------------------- LOGOUT -------------------- */
 
+    function closeLogoutDialog() {
+        if (elements.logoutDialog?.open) {
+            elements.logoutDialog.close();
+        }
+
+        if (elements.logoutDialogError) {
+            elements.logoutDialogError.hidden = true;
+            elements.logoutDialogError.textContent = "";
+        }
+    }
+
+    function openLogoutDialog() {
+        if (!elements.logoutDialog) return;
+
+        if (elements.logoutDialogMessage) {
+            elements.logoutDialogMessage.textContent =
+                "هل أنت متأكد أنك تريد تسجيل الخروج من حسابك؟";
+        }
+
+        if (elements.logoutDialogError) {
+            elements.logoutDialogError.hidden = true;
+            elements.logoutDialogError.textContent = "";
+        }
+
+        if (elements.confirmLogoutButton) {
+            elements.confirmLogoutButton.disabled = false;
+            elements.confirmLogoutButton.textContent = "تسجيل الخروج";
+        }
+
+        if (elements.cancelLogoutButton) {
+            elements.cancelLogoutButton.disabled = false;
+        }
+
+        elements.logoutDialog.showModal();
+    }
+
+    async function confirmStudentLogout() {
+        if (!elements.confirmLogoutButton) return;
+
+        elements.confirmLogoutButton.disabled = true;
+        elements.confirmLogoutButton.textContent =
+            "جارٍ تسجيل الخروج...";
+
+        if (elements.cancelLogoutButton) {
+            elements.cancelLogoutButton.disabled = true;
+        }
+
+        if (elements.logoutDialogError) {
+            elements.logoutDialogError.hidden = true;
+            elements.logoutDialogError.textContent = "";
+        }
+
+        try {
+            const { error } = await db.auth.signOut();
+
+            if (error) throw error;
+
+            window.location.replace("index.html");
+
+        } catch (error) {
+            console.error("Logout error:", error);
+
+            if (elements.logoutDialogError) {
+                elements.logoutDialogError.textContent =
+                    "تعذر تسجيل الخروج. تحقق من الاتصال ثم حاول مرة أخرى.";
+
+                elements.logoutDialogError.hidden = false;
+            }
+
+            elements.confirmLogoutButton.disabled = false;
+            elements.confirmLogoutButton.textContent = "إعادة المحاولة";
+
+            if (elements.cancelLogoutButton) {
+                elements.cancelLogoutButton.disabled = false;
+            }
+        }
+    }
+
     function bindLogout() {
         if (!elements.logoutButton) return;
 
-        elements.logoutButton.addEventListener("click", async () => {
-            if (!window.confirm("هل تريد تسجيل الخروج من النظام؟")) return;
+        elements.logoutButton.addEventListener("click", openLogoutDialog);
 
-            elements.logoutButton.disabled = true;
+        elements.cancelLogoutButton?.addEventListener(
+            "click",
+            closeLogoutDialog
+        );
 
-            elements.logoutButton.innerHTML =
-                "<span>↪</span><span>جارٍ تسجيل الخروج...</span>";
+        elements.confirmLogoutButton?.addEventListener(
+            "click",
+            confirmStudentLogout
+        );
 
-            try {
-                const { error } = await db.auth.signOut();
-
-                if (error) throw error;
-
-                window.location.replace("index.html");
-            } catch (error) {
-                console.error("Logout error:", error);
-
-                window.alert(
-                    "تعذر تسجيل الخروج. تحقق من الاتصال ثم حاول مرة أخرى."
-                );
-
-                elements.logoutButton.disabled = false;
-
-                elements.logoutButton.innerHTML =
-                    "<span>↪</span><span>تسجيل الخروج</span>";
+        elements.logoutDialog?.addEventListener("click", event => {
+            if (event.target === elements.logoutDialog) {
+                closeLogoutDialog();
             }
+        });
+
+        elements.logoutDialog?.addEventListener("cancel", event => {
+            event.preventDefault();
+            closeLogoutDialog();
         });
     }
 
@@ -1944,9 +2446,9 @@
 
     function bindEvents() {
         document.querySelectorAll(".student-tab").forEach(button => {
-            button.addEventListener("click", () =>
-                switchView(button.dataset.view)
-            );
+            button.addEventListener("click", () => {
+                switchView(button.dataset.view);
+            });
         });
 
         document.querySelectorAll(".day-tab").forEach(button => {
@@ -1977,7 +2479,9 @@
         });
 
         document.addEventListener("click", event => {
-            const imageButton = event.target.closest("[data-image-url]");
+            const imageButton = event.target.closest(
+                "[data-image-url]"
+            );
 
             if (imageButton) {
                 openImageViewer(
@@ -2016,8 +2520,11 @@
         const yearElement = $("currentYear");
 
         if (yearElement) {
-            yearElement.textContent = new Date().getFullYear();
+            yearElement.textContent =
+                new Date().getFullYear();
         }
+
+        hideAnnouncementCount();
 
         if (!db?.auth || !db?.from || !db?.functions) {
             showError(
@@ -2042,29 +2549,15 @@
 
             await loadTimetable();
 
-            renderAccount();
-            renderDaily();
-            renderWeekly();
+            // تجهيز اسم الطالب والمدرسة دون إنشاء محتوى صفحة الحساب.
+            renderWelcome();
 
-            try {
-                await loadPosts();
-            } catch (postError) {
-                console.error("Posts loading error:", postError);
-
-                state.posts = [];
-                state.postsError =
-                    postError?.message ||
-                    "تعذر تحميل الواجبات. حاول تحديث الصفحة.";
-
-                if (elements.announcementCount) {
-                    elements.announcementCount.hidden = true;
-                }
-            }
-
-            renderDaily();
-            renderAnnouncements();
-
+            // عرض التبويب اليومي فقط عند بدء الصفحة.
+            // الحساب والأسبوع والمحادثات والإعلانات تؤجل حتى فتحها.
             switchView("daily");
+
+            // تحميل الواجبات في الخلفية دون تعطيل ظهور الجدول.
+            loadPosts();
 
         } catch (error) {
             console.error(

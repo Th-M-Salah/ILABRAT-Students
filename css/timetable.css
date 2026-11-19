@@ -1,6 +1,12 @@
+
 /* =========================================================
    ILABRAT STUDENTS — STUDENT PORTAL
    Modern RTL Responsive Design
+   Organized & Optimized Stylesheet
+   ========================================================= */
+
+/* =========================================================
+   1. VARIABLES & RESET
    ========================================================= */
 
 :root {
@@ -52,7 +58,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
     font: inherit;
 }
 
@@ -82,7 +89,7 @@ img {
 }
 
 /* =========================================================
-   HEADER
+   2. HEADER
    ========================================================= */
 
 .app-header {
@@ -189,16 +196,12 @@ img {
 }
 
 /* =========================================================
-   MAIN
+   3. MAIN & WELCOME
    ========================================================= */
 
 .student-main {
     padding-block: 28px 42px;
 }
-
-/* =========================================================
-   WELCOME
-   ========================================================= */
 
 .welcome-card {
     position: relative;
@@ -315,18 +318,19 @@ img {
 }
 
 /* =========================================================
-   TABS
+   4. STUDENT TABS
    ========================================================= */
 
 .student-tabs {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 10px;
     margin-block: 24px 30px;
 }
 
 .student-tab {
     position: relative;
+    min-width: 0;
     min-height: 75px;
     padding: 10px 8px;
     display: flex;
@@ -393,7 +397,7 @@ img {
 }
 
 /* =========================================================
-   VIEW PANELS AND HEADINGS
+   5. PANELS & SECTION HEADINGS
    ========================================================= */
 
 .view-panel {
@@ -445,7 +449,7 @@ img {
 }
 
 /* =========================================================
-   DAILY NAVIGATION
+   6. DAILY DAY NAVIGATION
    ========================================================= */
 
 .days-navigation {
@@ -497,7 +501,7 @@ img {
 }
 
 /* =========================================================
-   LESSONS
+   7. DAILY LESSONS
    ========================================================= */
 
 .day-content {
@@ -562,6 +566,7 @@ img {
     color: var(--primary);
     font-size: 17px;
     font-weight: 800;
+    overflow-wrap: anywhere;
 }
 
 .lesson-info p {
@@ -608,882 +613,97 @@ img {
     color: var(--text);
     font-size: 12px;
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 
-/* =========================================================
-   DAILY POSTS
-   ========================================================= */
-
-.daily-posts-section {
-    margin-top: 28px;
-    animation: panelAppear .3s ease both;
+.daily-lesson-card {
+    padding: 19px 21px;
 }
 
-.subsection-heading {
-    margin-bottom: 13px;
+.daily-lesson-card .lesson-header {
+    min-height: 44px;
 }
 
-.subsection-heading h3 {
-    color: var(--primary);
+.daily-lesson-card .lesson-info h3 {
     font-size: 17px;
     font-weight: 800;
 }
 
-.subsection-heading p {
-    color: var(--muted);
-    font-size: 11px;
-}
-
 /* =========================================================
-   POSTS
+   8. DAILY HOMEWORK STATUS
    ========================================================= */
 
-.posts-list {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.post-card {
-    overflow: hidden;
-    padding: 19px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--white);
-    box-shadow: var(--shadow);
-    animation: cardAppear .3s ease both;
-    transition: transform .22s ease, box-shadow .22s ease;
-}
-
-.post-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 13px 28px rgba(67, 19, 29, .08);
-}
-
-.post-card-header {
+.daily-homework-status {
     display: flex;
     align-items: center;
-    gap: 11px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #F0EAE4;
-}
-
-.post-type-icon {
-    width: 37px;
-    height: 37px;
-    flex-shrink: 0;
-    display: grid;
-    place-items: center;
-    border-radius: 12px;
-    background: var(--beige);
-    color: var(--primary);
-    font-size: 20px;
-}
-
-.post-card-header div {
-    display: flex;
-    flex-direction: column;
-}
-
-.post-card-header strong {
-    color: var(--primary);
-    font-size: 13px;
-}
-
-.post-card-header small {
-    color: var(--muted);
-    font-size: 10px;
-}
-
-.post-content {
-    padding-block: 13px;
-    color: var(--text);
-    font-size: 13px;
-    line-height: 2;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-}
-
-.post-image-button {
-    position: relative;
-    overflow: hidden;
-    width: 100%;
-    max-width: 620px;
-    border: 0;
-    border-radius: 13px;
-    background: var(--beige);
-    text-align: center;
-}
-
-.post-image-button img {
-    width: 100%;
-    max-height: 370px;
-    object-fit: contain;
-    background: #F5F0E9;
-    transition: transform .35s ease;
-}
-
-.post-image-button:hover img {
-    transform: scale(1.025);
-}
-
-.image-open-hint {
-    display: block;
-    padding: 6px;
-    background: #F5F0E9;
-    color: var(--primary);
-    font-size: 10px;
-}
-
-.compact-post {
-    padding: 15px;
-}
-
-/* =========================================================
-   WEEKLY TABLE
-   ========================================================= */
-
-.weekly-note {
-    display: flex;
-    align-items: flex-start;
+    flex-wrap: wrap;
     gap: 9px;
-    padding: 12px 15px;
-    margin-bottom: 17px;
-    border: 1px solid #E8DCC9;
-    border-radius: 12px;
-    background: #F9F3E9;
-    color: #715C43;
-    font-size: 11px;
-}
-
-.weekly-note span {
-    font-weight: 800;
-}
-
-.weekly-table-wrapper {
-    width: 100%;
-    overflow-x: auto;
+    margin-top: 16px;
+    padding: 11px 13px;
     border: 1px solid var(--border);
-    border-radius: 17px;
-    background: var(--white);
-    box-shadow: var(--shadow);
-    -webkit-overflow-scrolling: touch;
-}
-
-.weekly-table {
-    width: 100%;
-    min-width: 850px;
-    border-collapse: separate;
-    border-spacing: 0;
-    text-align: center;
-}
-
-.weekly-table th,
-.weekly-table td {
-    min-width: 125px;
-    padding: 13px 10px;
-    border-left: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    vertical-align: middle;
-}
-
-.weekly-table thead th {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background: var(--primary);
-    color: white;
-    font-size: 12px;
-    font-weight: 800;
-    white-space: nowrap;
-}
-
-.weekly-table thead th:first-child {
-    min-width: 155px;
-    right: 0;
-    z-index: 2;
-}
-
-.weekly-table tbody tr:last-child th,
-.weekly-table tbody tr:last-child td {
-    border-bottom: 0;
-}
-
-.weekly-table th:last-child,
-.weekly-table td:last-child {
-    border-left: 0;
-}
-
-.weekly-day-column {
-    min-width: 155px;
-}
-
-.weekly-day-cell {
-    position: sticky;
-    right: 0;
-    z-index: 1;
-    min-width: 155px;
-    background: #F8F3ED;
-    color: var(--primary);
-    text-align: right;
-}
-
-.weekly-day-cell strong,
-.weekly-day-cell small {
-    display: block;
-}
-
-.weekly-day-cell strong {
-    font-size: 13px;
-    font-weight: 800;
-}
-
-.weekly-day-cell small {
-    margin-top: 2px;
+    border-radius: 12px;
+    background: #FCFAF7;
     color: var(--muted);
-    font-size: 10px;
-    font-weight: 500;
-}
-
-.today-label {
-    display: inline-block;
-    margin-top: 5px;
-    padding: 2px 8px;
-    border-radius: 20px;
-    background: var(--primary);
-    color: white;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
 }
 
-.weekly-today-row .weekly-day-cell {
-    background: #F2E9DC;
-}
-
-.weekly-today-row td {
-    background: #FFFCF8;
-}
-
-.weekly-lesson-cell {
-    min-height: 83px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-}
-
-.weekly-lesson-cell strong {
+.daily-homework-status.has-homework {
+    border-color: #D8C49F;
+    background: #FBF6EC;
     color: var(--primary);
-    font-size: 12px;
-    font-weight: 800;
 }
 
-.weekly-lesson-cell span {
-    color: var(--muted);
-    font-size: 10px;
+.daily-homework-status.no-homework {
+    border-color: #E8E5DF;
+    background: #FAFAF8;
+    color: #77716C;
 }
 
-.weekly-lesson-cell small {
-    color: #947A5A;
-    font-size: 10px;
-    direction: rtl;
-    white-space: nowrap;
-}
-
-.no-lesson {
-    color: #C8BFB7;
-    font-size: 18px;
-}
-
-.weekly-empty-cell {
-    padding: 30px !important;
-    color: var(--muted);
-    font-size: 12px;
-}
-
-.weekly-scroll-hint {
-    margin-top: 9px;
-    color: var(--muted);
-    font-size: 10px;
-    text-align: center;
-}
-
-/* =========================================================
-   ACCOUNT
-   ========================================================= */
-
-.account-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 13px;
-}
-
-.account-item {
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 13px;
-    padding: 17px;
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    background: var(--white);
-    box-shadow: var(--shadow);
-    transition: transform .22s ease, border-color .22s ease;
-}
-
-.account-item:hover {
-    transform: translateY(-3px);
-    border-color: var(--gold);
-}
-
-.account-item-icon {
-    width: 42px;
-    height: 42px;
-    flex-shrink: 0;
-    display: grid;
-    place-items: center;
-    border-radius: 13px;
-    background: var(--beige);
-    color: var(--primary);
-    font-size: 19px;
-}
-
-.account-item div {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-.account-item-label {
-    color: var(--muted);
-    font-size: 10px;
-}
-
-.account-item strong {
-    color: var(--primary);
-    font-size: 13px;
-    overflow-wrap: anywhere;
-}
-
-/* =========================================================
-   EMPTY / LOADING / ERROR
-   ========================================================= */
-
-.loading-state,
-.empty-state {
-    min-height: 180px;
-    padding: 25px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    border: 1px dashed #DCCFC2;
-    border-radius: var(--radius);
-    background: rgba(255, 255, 255, .8);
-    color: var(--muted);
-    text-align: center;
-    font-size: 12px;
-}
-
-.loading-state::before {
-    content: "";
+.daily-homework-icon {
     width: 25px;
     height: 25px;
-    border: 3px solid #EDE4DA;
-    border-top-color: var(--primary);
-    border-radius: 50%;
-    animation: spin .8s linear infinite;
-}
-
-.empty-state h3 {
-    color: var(--primary);
-    font-size: 15px;
-}
-
-.empty-state p {
-    max-width: 430px;
-    font-size: 11px;
-}
-
-.empty-state-icon {
-    width: 43px;
-    height: 43px;
     display: grid;
     place-items: center;
-    margin-bottom: 4px;
-    border-radius: 14px;
+    flex-shrink: 0;
+    border-radius: 8px;
     background: var(--beige);
     color: var(--primary);
-    font-size: 21px;
+    font-size: 13px;
 }
 
-.error-state {
-    border-color: #E4C7C7;
-    background: #FFF9F8;
-}
-
-/* =========================================================
-   DAY FOOTER
-   ========================================================= */
-
-.day-navigation-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: 22px;
-}
-
-.navigation-button {
-    min-height: 42px;
-    padding: 8px 15px;
-    border: 1px solid var(--border);
-    border-radius: 11px;
-    background: var(--white);
+.has-homework .daily-homework-icon {
+    background: #EFE1C8;
     color: var(--primary);
-    font-size: 11px;
-    font-weight: 700;
+}
+
+.homework-details-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 34px;
+    margin-right: auto;
+    padding: 6px 13px;
+    border: 1px solid var(--primary);
+    border-radius: 9px;
+    background: var(--primary);
+    color: #FFFFFF;
+    font-size: 10px;
+    font-weight: 800;
+    text-decoration: none;
     transition: var(--transition);
 }
 
-.navigation-button:hover:not(:disabled) {
-    border-color: var(--gold);
-    background: var(--beige);
+.homework-details-link:hover {
+    border-color: var(--primary-dark);
+    background: var(--primary-dark);
+    color: #FFFFFF;
     transform: translateY(-2px);
 }
 
-.primary-navigation {
-    border-color: var(--primary);
-    background: var(--primary);
-    color: white;
-}
-
-.primary-navigation:hover:not(:disabled) {
-    background: var(--primary-dark);
-}
-
-.day-position {
-    color: var(--muted);
-    font-size: 11px;
-}
-
 /* =========================================================
-   IMAGE VIEWER
-   ========================================================= */
-
-.image-viewer {
-    position: fixed;
-    inset: 0;
-    width: min(94vw, 950px);
-    max-width: none;
-    max-height: 92vh;
-    margin: auto;
-    padding: 48px 18px 15px;
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    background: white;
-}
-
-.image-viewer::backdrop {
-    background: rgba(25, 15, 17, .8);
-    backdrop-filter: blur(4px);
-}
-
-.image-viewer img {
-    max-width: 100%;
-    max-height: 75vh;
-    margin-inline: auto;
-    object-fit: contain;
-}
-
-.image-viewer p {
-    margin-top: 10px;
-    color: var(--muted);
-    font-size: 11px;
-    text-align: center;
-    overflow-wrap: anywhere;
-}
-
-.close-image-viewer {
-    position: absolute;
-    top: 8px;
-    left: 10px;
-    width: 36px;
-    height: 36px;
-    border: 0;
-    border-radius: 50%;
-    background: var(--beige);
-    color: var(--primary);
-    font-size: 25px;
-    transition: var(--transition);
-}
-
-.close-image-viewer:hover {
-    background: var(--primary);
-    color: white;
-    transform: rotate(90deg);
-}
-
-/* =========================================================
-   FOOTER
-   ========================================================= */
-
-.app-footer {
-    min-height: 65px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    border-top: 1px solid var(--border);
-    color: var(--muted);
-    font-size: 11px;
-}
-
-/* =========================================================
-   ANIMATIONS
-   ========================================================= */
-
-@keyframes appear {
-    from {
-        opacity: 0;
-        transform: translateY(6px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes cardAppear {
-    from {
-        opacity: 0;
-        transform: translateY(9px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes panelAppear {
-    from {
-        opacity: 0;
-        transform: translateY(5px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes symbolFloat {
-    0%, 100% {
-        transform: translateY(0) rotate(0);
-    }
-    50% {
-        transform: translateY(-7px) rotate(4deg);
-    }
-}
-
-@keyframes orbitFloat {
-    0%, 100% {
-        transform: translate(0, 0);
-    }
-    50% {
-        transform: translate(8px, 10px);
-    }
-}
-
-@keyframes statusPulse {
-    0%, 100% {
-        box-shadow: 0 0 0 4px rgba(67, 133, 106, .12);
-    }
-    50% {
-        box-shadow: 0 0 0 7px rgba(67, 133, 106, .04);
-    }
-}
-
-@keyframes countPop {
-    from {
-        opacity: 0;
-        transform: scale(.7);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-/* =========================================================
-   TABLET
-   ========================================================= */
-
-@media (max-width: 700px) {
-    .account-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .welcome-card {
-        min-height: 150px;
-    }
-}
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media (max-width: 480px) {
-    .app-container {
-        width: calc(100% - 22px);
-    }
-
-    .app-header {
-        min-height: 69px;
-    }
-
-    .brand {
-        gap: 7px;
-    }
-
-    .brand-icon {
-        width: 39px;
-        height: 39px;
-    }
-
-    .brand-text strong {
-        font-size: 16px;
-    }
-
-    .brand-text small {
-        font-size: 8px;
-    }
-
-    .header-actions {
-        gap: 6px;
-    }
-
-    .header-student {
-        padding: 6px 8px;
-        gap: 6px;
-        font-size: 9px;
-    }
-
-    .student-status-dot {
-        width: 7px;
-        height: 7px;
-    }
-
-    .logout-button {
-        min-height: 34px;
-        padding: 6px 8px;
-        gap: 4px;
-        font-size: 9px;
-    }
-
-    .student-main {
-        padding-top: 18px;
-    }
-
-    .welcome-card {
-        min-height: 135px;
-        padding: 20px;
-        border-radius: 19px;
-    }
-
-    .welcome-symbol {
-        width: 48px;
-        height: 48px;
-        border-radius: 15px;
-        font-size: 26px;
-    }
-
-    .welcome-card h1 {
-        font-size: 20px;
-    }
-
-    .welcome-card p:last-child {
-        font-size: 10px;
-    }
-
-    .student-tabs {
-        gap: 6px;
-        margin-block: 17px 23px;
-    }
-
-    .student-tab {
-        min-height: 68px;
-        padding: 7px 2px;
-        border-radius: 12px;
-        font-size: 10px;
-    }
-
-    .tab-icon {
-        font-size: 19px;
-    }
-
-    .tab-count {
-        top: 3px;
-        left: 4px;
-        min-width: 16px;
-        height: 16px;
-        font-size: 9px;
-    }
-
-    .section-heading {
-        margin-bottom: 17px;
-    }
-
-    .section-heading h2 {
-        font-size: 21px;
-    }
-
-    .section-subtitle {
-        font-size: 10px;
-    }
-
-    .heading-icon {
-        width: 42px;
-        height: 42px;
-        border-radius: 13px;
-    }
-
-    .days-navigation {
-        gap: 5px;
-        margin-bottom: 17px;
-    }
-
-    .day-tab {
-        min-height: 61px;
-        padding: 6px 2px;
-        border-radius: 10px;
-    }
-
-    .day-tab span {
-        font-size: 10px;
-    }
-
-    .day-tab small {
-        font-size: 9px;
-    }
-
-    .lesson-card {
-        padding: 15px;
-        border-radius: 15px;
-    }
-
-    .lesson-header {
-        gap: 9px;
-    }
-
-    .lesson-number {
-        width: 35px;
-        height: 35px;
-        border-radius: 10px;
-        font-size: 13px;
-    }
-
-    .lesson-info h3 {
-        font-size: 14px;
-    }
-
-    .lesson-info p {
-        font-size: 9px;
-    }
-
-    .lesson-time {
-        padding: 5px 6px;
-        font-size: 9px;
-    }
-
-    .lesson-time small {
-        font-size: 9px;
-    }
-
-    .post-card {
-        padding: 14px;
-        border-radius: 15px;
-    }
-
-    .post-content {
-        font-size: 12px;
-    }
-
-    .account-item {
-        padding: 13px;
-    }
-
-    .weekly-table {
-        min-width: 820px;
-    }
-
-    .weekly-table th,
-    .weekly-table td {
-        padding: 10px 7px;
-        min-width: 115px;
-    }
-
-    .weekly-table thead th:first-child,
-    .weekly-day-cell {
-        min-width: 125px;
-    }
-
-    .weekly-lesson-cell {
-        min-height: 75px;
-    }
-
-    .weekly-lesson-cell strong {
-        font-size: 11px;
-    }
-
-    .weekly-lesson-cell span,
-    .weekly-lesson-cell small {
-        font-size: 9px;
-    }
-
-    .day-navigation-footer {
-        gap: 6px;
-    }
-
-    .navigation-button {
-        padding: 8px 9px;
-        font-size: 10px;
-    }
-
-    .day-position {
-        font-size: 9px;
-    }
-
-    .app-footer {
-        min-height: 55px;
-        font-size: 9px;
-    }
-}
-
-/* =========================================================
-   REDUCED MOTION
-   ========================================================= */
-
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        scroll-behavior: auto !important;
-        animation-duration: .01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: .01ms !important;
-    }
-}
-
-/* =========================================================
-   HOMEWORK INSIDE DAILY LESSON CARDS
+   9. HOMEWORK INSIDE LESSON CARDS
    ========================================================= */
 
 .lesson-homework {
@@ -1602,8 +822,129 @@ img {
 }
 
 /* =========================================================
-   ANNOUNCEMENT ATTACHMENTS
+   10. DAILY POSTS & ANNOUNCEMENTS
    ========================================================= */
+
+.daily-posts-section {
+    margin-top: 28px;
+    animation: panelAppear .3s ease both;
+}
+
+.subsection-heading {
+    margin-bottom: 13px;
+}
+
+.subsection-heading h3 {
+    color: var(--primary);
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.subsection-heading p {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.post-card {
+    overflow: hidden;
+    padding: 19px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--white);
+    box-shadow: var(--shadow);
+    animation: cardAppear .3s ease both;
+    transition: transform .22s ease, box-shadow .22s ease;
+}
+
+.post-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 13px 28px rgba(67, 19, 29, .08);
+}
+
+.post-card-header {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #F0EAE4;
+}
+
+.post-type-icon {
+    width: 37px;
+    height: 37px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: var(--beige);
+    color: var(--primary);
+    font-size: 20px;
+}
+
+.post-card-header div {
+    display: flex;
+    flex-direction: column;
+}
+
+.post-card-header strong {
+    color: var(--primary);
+    font-size: 13px;
+}
+
+.post-card-header small {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.post-content {
+    padding-block: 13px;
+    color: var(--text);
+    font-size: 13px;
+    line-height: 2;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.post-image-button {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: 620px;
+    border: 0;
+    border-radius: 13px;
+    background: var(--beige);
+    text-align: center;
+}
+
+.post-image-button img {
+    width: 100%;
+    max-height: 370px;
+    object-fit: contain;
+    background: #F5F0E9;
+    transition: transform .35s ease;
+}
+
+.post-image-button:hover img {
+    transform: scale(1.025);
+}
+
+.image-open-hint {
+    display: block;
+    padding: 6px;
+    background: #F5F0E9;
+    color: var(--primary);
+    font-size: 10px;
+}
+
+.compact-post {
+    padding: 15px;
+}
 
 .post-card .homework-attachments {
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -1613,133 +954,46 @@ img {
     height: 190px;
 }
 
-/* =========================================================
-   MOBILE HOMEWORK
-   ========================================================= */
-
-@media (max-width: 480px) {
-    .lesson-homework {
-        margin-top: 13px;
-        padding: 11px;
-        border-radius: 12px;
-    }
-
-    .lesson-homework-heading strong {
-        font-size: 12px;
-    }
-
-    .homework-content {
-        font-size: 11px;
-    }
-
-    .homework-attachments {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 7px;
-    }
-
-    .homework-image-button img {
-        height: 115px;
-    }
-
-    .post-card .homework-attachments {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .post-card .homework-image-button img {
-        height: 130px;
-    }
-}
-
-/* =========================================================
-   ILABRAT — UPDATED STUDENT DAILY & WEEKLY VIEWS
-   ========================================================= */
-
-/* -------------------- DAILY LESSONS -------------------- */
-
-.daily-lesson-card {
-    padding: 19px 21px;
-}
-
-.daily-lesson-card .lesson-header {
-    min-height: 44px;
-}
-
-.daily-lesson-card .lesson-info h3 {
-    font-size: 17px;
-    font-weight: 800;
-}
-
-.daily-homework-status {
+#announcementsContent {
     display: flex;
-    align-items: center;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 14px;
+}
+
+#announcementsContent .post-card {
+    width: 100%;
+}
+
+#announcementsContent .post-content {
+    overflow-wrap: anywhere;
+}
+
+#announcementsContent .homework-attachments {
+    margin-top: 12px;
+}
+
+/* =========================================================
+   11. WEEKLY SCHEDULE
+   ========================================================= */
+
+.weekly-note {
+    display: flex;
+    align-items: flex-start;
     gap: 9px;
-    margin-top: 16px;
-    padding: 11px 13px;
-    border: 1px solid var(--border);
+    padding: 12px 15px;
+    margin-bottom: 17px;
+    border: 1px solid #E8DCC9;
     border-radius: 12px;
-    background: #FCFAF7;
-    color: var(--muted);
+    background: #F9F3E9;
+    color: #715C43;
     font-size: 11px;
-    font-weight: 700;
 }
 
-.daily-homework-status.has-homework {
-    border-color: #D8C49F;
-    background: #FBF6EC;
-    color: var(--primary);
-}
-
-.daily-homework-status.no-homework {
-    border-color: #E8E5DF;
-    background: #FAFAF8;
-    color: #77716C;
-}
-
-.daily-homework-icon {
-    width: 25px;
-    height: 25px;
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    border-radius: 8px;
-    background: var(--beige);
-    color: var(--primary);
-    font-size: 13px;
-}
-
-.has-homework .daily-homework-icon {
-    background: #EFE1C8;
-    color: var(--primary);
-}
-
-.homework-details-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    min-height: 34px;
-    margin-right: auto;
-    padding: 6px 13px;
-    border: 1px solid var(--primary);
-    border-radius: 9px;
-    background: var(--primary);
-    color: #FFFFFF;
-    font-size: 10px;
+.weekly-note span {
     font-weight: 800;
-    text-decoration: none;
-    transition: var(--transition);
 }
 
-.homework-details-link:hover {
-    border-color: var(--primary-dark);
-    background: var(--primary-dark);
-    color: #FFFFFF;
-    transform: translateY(-2px);
-}
-
-/* -------------------- WEEKLY DAYS LIST -------------------- */
-
+/* Weekly cards are the primary view */
 .weekly-table-wrapper {
     width: 100%;
     overflow: visible;
@@ -1898,30 +1152,327 @@ img {
     background: #FFF9F8;
 }
 
-/* -------------------- ANNOUNCEMENTS -------------------- */
+/* Legacy weekly table styles retained for compatibility */
+.weekly-table {
+    width: 100%;
+    min-width: 850px;
+    border-collapse: separate;
+    border-spacing: 0;
+    text-align: center;
+}
 
-#announcementsContent {
+.weekly-table th,
+.weekly-table td {
+    min-width: 125px;
+    padding: 13px 10px;
+    border-left: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.weekly-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--primary);
+    color: white;
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.weekly-table thead th:first-child {
+    min-width: 155px;
+    right: 0;
+    z-index: 2;
+}
+
+.weekly-table tbody tr:last-child th,
+.weekly-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.weekly-table th:last-child,
+.weekly-table td:last-child {
+    border-left: 0;
+}
+
+.weekly-day-column {
+    min-width: 155px;
+}
+
+.weekly-day-cell {
+    position: sticky;
+    right: 0;
+    z-index: 1;
+    min-width: 155px;
+    background: #F8F3ED;
+    color: var(--primary);
+    text-align: right;
+}
+
+.weekly-day-cell strong,
+.weekly-day-cell small {
+    display: block;
+}
+
+.weekly-day-cell strong {
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.weekly-day-cell small {
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.today-label {
+    display: inline-block;
+    margin-top: 5px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: var(--primary);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.weekly-today-row .weekly-day-cell {
+    background: #F2E9DC;
+}
+
+.weekly-today-row td {
+    background: #FFFCF8;
+}
+
+.weekly-lesson-cell {
+    min-height: 83px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
 }
 
-#announcementsContent .post-card {
-    width: 100%;
+.weekly-lesson-cell strong {
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 800;
 }
 
-#announcementsContent .post-content {
+.weekly-lesson-cell span {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.weekly-lesson-cell small {
+    color: #947A5A;
+    font-size: 10px;
+    direction: rtl;
+    white-space: nowrap;
+}
+
+.no-lesson {
+    color: #C8BFB7;
+    font-size: 18px;
+}
+
+.weekly-empty-cell {
+    padding: 30px !important;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.weekly-scroll-hint {
+    margin-top: 9px;
+    color: var(--muted);
+    font-size: 10px;
+    text-align: center;
+}
+
+/* =========================================================
+   12. ACCOUNT
+   ========================================================= */
+
+.account-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px;
+}
+
+.account-item {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 17px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--white);
+    box-shadow: var(--shadow);
+    transition: transform .22s ease, border-color .22s ease;
+}
+
+.account-item:hover {
+    transform: translateY(-3px);
+    border-color: var(--gold);
+}
+
+.account-item-icon {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 13px;
+    background: var(--beige);
+    color: var(--primary);
+    font-size: 19px;
+}
+
+.account-item div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.account-item-label {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.account-item strong {
+    color: var(--primary);
+    font-size: 13px;
     overflow-wrap: anywhere;
 }
 
-#announcementsContent .homework-attachments {
-    margin-top: 12px;
+/* =========================================================
+   13. LOADING / EMPTY / ERROR
+   ========================================================= */
+
+.loading-state,
+.empty-state {
+    min-height: 180px;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px dashed #DCCFC2;
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, .8);
+    color: var(--muted);
+    text-align: center;
+    font-size: 12px;
 }
 
-/* -------------------- IMAGE VIEWER -------------------- */
+.loading-state::before {
+    content: "";
+    width: 25px;
+    height: 25px;
+    border: 3px solid #EDE4DA;
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+}
+
+.empty-state h3 {
+    color: var(--primary);
+    font-size: 15px;
+}
+
+.empty-state p {
+    max-width: 430px;
+    font-size: 11px;
+}
+
+.empty-state-icon {
+    width: 43px;
+    height: 43px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 4px;
+    border-radius: 14px;
+    background: var(--beige);
+    color: var(--primary);
+    font-size: 21px;
+}
+
+.error-state {
+    border-color: #E4C7C7;
+    background: #FFF9F8;
+}
+
+/* =========================================================
+   14. DAILY NAVIGATION FOOTER
+   ========================================================= */
+
+.day-navigation-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 22px;
+}
+
+.navigation-button {
+    min-height: 42px;
+    padding: 8px 15px;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: var(--white);
+    color: var(--primary);
+    font-size: 11px;
+    font-weight: 700;
+    transition: var(--transition);
+}
+
+.navigation-button:hover:not(:disabled) {
+    border-color: var(--gold);
+    background: var(--beige);
+    transform: translateY(-2px);
+}
+
+.primary-navigation {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: white;
+}
+
+.primary-navigation:hover:not(:disabled) {
+    background: var(--primary-dark);
+}
+
+.day-position {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+/* =========================================================
+   15. IMAGE VIEWER
+   ========================================================= */
 
 .image-viewer {
+    position: fixed;
+    inset: 0;
     z-index: 1000;
+    width: min(94vw, 950px);
+    max-width: none;
+    max-height: 92vh;
+    margin: auto;
+    padding: 48px 18px 15px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: white;
+}
+
+.image-viewer::backdrop {
+    background: rgba(25, 15, 17, .8);
+    backdrop-filter: blur(4px);
 }
 
 .image-viewer img {
@@ -1929,12 +1480,196 @@ img {
     height: auto;
     max-width: 100%;
     max-height: 75vh;
+    margin-inline: auto;
     object-fit: contain;
 }
 
-/* -------------------- RESPONSIVE -------------------- */
+.image-viewer p {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 11px;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+.close-image-viewer {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--beige);
+    color: var(--primary);
+    font-size: 25px;
+    transition: var(--transition);
+}
+
+.close-image-viewer:hover {
+    background: var(--primary);
+    color: white;
+    transform: rotate(90deg);
+}
+
+/* =========================================================
+   16. FOOTER
+   ========================================================= */
+
+.app-footer {
+    min-height: 65px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
+}
+
+/* =========================================================
+   17. ANIMATIONS
+   ========================================================= */
+
+@keyframes appear {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes cardAppear {
+    from {
+        opacity: 0;
+        transform: translateY(9px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes panelAppear {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes symbolFloat {
+    0%, 100% {
+        transform: translateY(0) rotate(0);
+    }
+    50% {
+        transform: translateY(-7px) rotate(4deg);
+    }
+}
+
+@keyframes orbitFloat {
+    0%, 100% {
+        transform: translate(0, 0);
+    }
+    50% {
+        transform: translate(8px, 10px);
+    }
+}
+
+@keyframes statusPulse {
+    0%, 100% {
+        box-shadow: 0 0 0 4px rgba(67, 133, 106, .12);
+    }
+    50% {
+        box-shadow: 0 0 0 7px rgba(67, 133, 106, .04);
+    }
+}
+
+@keyframes countPop {
+    from {
+        opacity: 0;
+        transform: scale(.7);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* =========================================================
+   18. TABLET RESPONSIVE
+   ========================================================= */
 
 @media (max-width: 700px) {
+    .account-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .welcome-card {
+        min-height: 150px;
+    }
+
+    /* Tabs become a horizontal scrolling navigation */
+    .student-tabs {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 8px;
+        width: 100%;
+        margin-block: 12px 22px;
+        padding: 9px 2px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        background: var(--page);
+        scrollbar-width: thin;
+        scrollbar-color: var(--gold) transparent;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-inline: contain;
+    }
+
+    .student-tabs::-webkit-scrollbar {
+        height: 3px;
+    }
+
+    .student-tabs::-webkit-scrollbar-thumb {
+        border-radius: 10px;
+        background: var(--gold);
+    }
+
+    .student-tab {
+        position: relative;
+        flex: 0 0 82px;
+        min-width: 82px;
+        min-height: 62px;
+        padding: 7px 5px;
+        border-radius: 12px;
+        font-size: 10px;
+        white-space: nowrap;
+    }
+
+    .tab-icon {
+        font-size: 19px;
+    }
+
+    .tab-count {
+        top: 3px;
+        left: 4px;
+    }
+
     .weekly-days-list {
         gap: 12px;
     }
@@ -1973,13 +1708,220 @@ img {
     }
 }
 
+/* =========================================================
+   19. MOBILE RESPONSIVE
+   ========================================================= */
+
 @media (max-width: 480px) {
-    .daily-lesson-card {
-        padding: 14px;
+    .app-container {
+        width: calc(100% - 22px);
     }
 
+    /* Header */
+    .app-header {
+        min-height: 69px;
+        gap: 5px;
+    }
+
+    .brand {
+        gap: 7px;
+        min-width: 0;
+    }
+
+    .brand-icon {
+        width: 39px;
+        height: 39px;
+    }
+
+    .brand-text strong {
+        font-size: 16px;
+    }
+
+    .brand-text small {
+        font-size: 8px;
+    }
+
+    .header-actions {
+        gap: 6px;
+    }
+
+    .header-student {
+        padding: 6px 8px;
+        gap: 6px;
+        font-size: 9px;
+    }
+
+    .student-status-dot {
+        width: 7px;
+        height: 7px;
+    }
+
+    .logout-button {
+        min-height: 34px;
+        padding: 6px 8px;
+        gap: 4px;
+        font-size: 9px;
+    }
+
+    /* Main */
+    .student-main {
+        padding-top: 18px;
+        padding-bottom: 28px;
+    }
+
+    /* Welcome */
+    .welcome-card {
+        min-height: 135px;
+        padding: 20px;
+        border-radius: 19px;
+    }
+
+    .welcome-symbol {
+        width: 48px;
+        height: 48px;
+        border-radius: 15px;
+        font-size: 26px;
+    }
+
+    .welcome-card h1 {
+        font-size: 20px;
+    }
+
+    .welcome-card p:last-child {
+        font-size: 10px;
+    }
+
+    /* Tabs */
+    .student-tabs {
+        gap: 6px;
+        margin-block: 12px 20px;
+        padding-block: 8px;
+    }
+
+    .student-tab {
+        flex-basis: 75px;
+        min-width: 75px;
+        min-height: 59px;
+        padding: 7px 5px;
+        font-size: 9px;
+    }
+
+    .tab-icon {
+        font-size: 18px;
+    }
+
+    .tab-count {
+        min-width: 16px;
+        height: 16px;
+        font-size: 9px;
+    }
+
+    /* Section headings */
+    .section-heading {
+        margin-bottom: 17px;
+    }
+
+    .section-heading h2 {
+        font-size: 21px;
+    }
+
+    .section-subtitle {
+        font-size: 10px;
+    }
+
+    .heading-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 13px;
+    }
+
+    /* Daily navigation */
+    .days-navigation {
+        gap: 5px;
+        margin-bottom: 17px;
+    }
+
+    .day-tab {
+        min-height: 61px;
+        padding: 6px 2px;
+        border-radius: 10px;
+    }
+
+    .day-tab span {
+        font-size: 10px;
+    }
+
+    .day-tab small {
+        font-size: 9px;
+    }
+
+    /* Lessons */
+    .lesson-card,
+    .daily-lesson-card {
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .lesson-header {
+        gap: 9px;
+    }
+
+    .lesson-number {
+        width: 35px;
+        height: 35px;
+        border-radius: 10px;
+        font-size: 13px;
+    }
+
+    .lesson-info h3,
     .daily-lesson-card .lesson-info h3 {
         font-size: 14px;
+    }
+
+    .lesson-info p {
+        font-size: 9px;
+    }
+
+    .lesson-time {
+        padding: 5px 6px;
+        font-size: 9px;
+    }
+
+    .lesson-time small {
+        font-size: 9px;
+    }
+
+    .lesson-note {
+        margin-top: 12px;
+        padding: 10px;
+    }
+
+    .lesson-note p {
+        font-size: 11px;
+    }
+
+    /* Homework */
+    .lesson-homework {
+        margin-top: 13px;
+        padding: 11px;
+        border-radius: 12px;
+    }
+
+    .lesson-homework-heading strong {
+        font-size: 12px;
+    }
+
+    .homework-content {
+        font-size: 11px;
+    }
+
+    .homework-attachments {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .homework-image-button img {
+        height: 115px;
     }
 
     .daily-homework-status {
@@ -1994,6 +1936,25 @@ img {
         font-size: 9px;
     }
 
+    /* Posts */
+    .post-card {
+        padding: 14px;
+        border-radius: 15px;
+    }
+
+    .post-content {
+        font-size: 12px;
+    }
+
+    .post-card .homework-attachments {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .post-card .homework-image-button img {
+        height: 130px;
+    }
+
+    /* Weekly cards */
     .weekly-day-card {
         border-radius: 14px;
     }
@@ -2028,5 +1989,513 @@ img {
     .weekly-lesson-main small {
         font-size: 9px;
     }
+
+    /* Legacy weekly table */
+    .weekly-table {
+        min-width: 820px;
+    }
+
+    .weekly-table th,
+    .weekly-table td {
+        padding: 10px 7px;
+        min-width: 115px;
+    }
+
+    .weekly-table thead th:first-child,
+    .weekly-day-cell {
+        min-width: 125px;
+    }
+
+    .weekly-lesson-cell {
+        min-height: 75px;
+    }
+
+    .weekly-lesson-cell strong {
+        font-size: 11px;
+    }
+
+    .weekly-lesson-cell span,
+    .weekly-lesson-cell small {
+        font-size: 9px;
+    }
+
+    /* Account */
+    .account-grid {
+        grid-template-columns: 1fr;
+        gap: 9px;
+    }
+
+    .account-item {
+        padding: 13px;
+    }
+
+    /* Footer navigation */
+    .day-navigation-footer {
+        gap: 6px;
+    }
+
+    .navigation-button {
+        padding: 8px 9px;
+        font-size: 10px;
+    }
+
+    .day-position {
+        font-size: 9px;
+    }
+
+    /* Footer */
+    .app-footer {
+        min-height: 55px;
+        font-size: 9px;
+    }
+
+    /* Image viewer */
+    .image-viewer {
+        width: 96vw;
+        max-height: 90vh;
+        padding: 45px 10px 12px;
+        border-radius: 14px;
+    }
+
+    .image-viewer img {
+        max-height: 70vh;
+    }
 }
 
+/* =========================================================
+   20. EXTRA SMALL PHONES
+   ========================================================= */
+
+@media (max-width: 380px) {
+    .app-container {
+        width: calc(100% - 16px);
+    }
+
+    .brand-text strong {
+        font-size: 14px;
+    }
+
+    .brand-icon {
+        width: 35px;
+        height: 35px;
+    }
+
+    .header-student {
+        padding-inline: 6px;
+        font-size: 8px;
+    }
+
+    .logout-button {
+        padding-inline: 6px;
+        font-size: 8px;
+    }
+
+    .welcome-card {
+        padding: 16px;
+    }
+
+    .welcome-card h1 {
+        font-size: 18px;
+    }
+
+    .student-tab {
+        flex-basis: 70px;
+        min-width: 70px;
+    }
+
+    .lesson-time {
+        padding-inline: 4px;
+        font-size: 8px;
+    }
+
+    .weekly-day-header .today-label {
+        padding-inline: 8px;
+        font-size: 9px;
+    }
+}
+
+/* =========================================================
+   21. REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}
+
+/* =========================================================
+   ILABRAT — MOBILE COMPACT LAYOUT
+   تحسين استغلال مساحة شاشة الهاتف
+   ========================================================= */
+
+@media (max-width: 480px) {
+
+    /* تقليل الفراغ أعلى الصفحة */
+    .student-main {
+        padding-top: 10px;
+        padding-bottom: 20px;
+    }
+
+    /* بطاقة مساحتك الدراسية */
+    .welcome-card {
+        min-height: 112px;
+        padding: 13px 16px;
+        border-radius: 16px;
+    }
+
+    .welcome-eyebrow {
+        margin-bottom: 2px;
+        font-size: 10px;
+    }
+
+    .welcome-card h1 {
+        font-size: 17px;
+        line-height: 1.65;
+    }
+
+    .welcome-card p:last-child {
+        margin-top: 3px;
+        font-size: 9px;
+    }
+
+    .welcome-symbol {
+        width: 41px;
+        height: 41px;
+        border-radius: 12px;
+        font-size: 22px;
+    }
+
+    /* تقليل المسافة بين البطاقة والتبويبات */
+    .student-tabs {
+        gap: 5px;
+        margin-block: 8px 13px;
+        padding-block: 5px;
+    }
+
+    .student-tab {
+        flex-basis: 70px;
+        min-width: 70px;
+        min-height: 52px;
+        padding: 5px 3px;
+        border-radius: 10px;
+        font-size: 9px;
+    }
+
+    .tab-icon {
+        font-size: 16px;
+    }
+
+    /* تقليل الفراغ قبل عنوان الجدول */
+    .view-panel {
+        min-height: 0;
+    }
+
+    .section-heading {
+        margin-bottom: 11px;
+        gap: 8px;
+    }
+
+    .section-heading h2 {
+        font-size: 19px;
+    }
+
+    .section-subtitle {
+        font-size: 9px;
+        line-height: 1.7;
+    }
+
+    .eyebrow {
+        font-size: 10px;
+    }
+
+    .heading-icon {
+        width: 37px;
+        height: 37px;
+        border-radius: 11px;
+        font-size: 19px;
+    }
+
+    /* ملاحظة الجدول الأسبوعي */
+    .weekly-note {
+        gap: 6px;
+        padding: 8px 10px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+        font-size: 9px;
+        line-height: 1.7;
+    }
+
+    /* جعل الجدول القديم يتناسب مع عرض الهاتف */
+    .weekly-table-wrapper {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+        overflow-y: visible;
+    }
+
+    .weekly-table {
+        width: 100%;
+        min-width: 0;
+        table-layout: fixed;
+        border-spacing: 0;
+        font-size: 9px;
+    }
+
+    .weekly-table th,
+    .weekly-table td {
+        min-width: 0;
+        padding: 7px 3px;
+        overflow-wrap: anywhere;
+        word-break: normal;
+        line-height: 1.55;
+    }
+
+    .weekly-table thead th {
+        padding: 8px 2px;
+        font-size: 9px;
+        white-space: normal;
+        line-height: 1.5;
+    }
+
+    .weekly-table thead th:first-child,
+    .weekly-day-cell {
+        min-width: 0;
+        width: 17%;
+    }
+
+    .weekly-day-cell {
+        padding-inline: 4px;
+        text-align: center;
+    }
+
+    .weekly-day-cell strong {
+        font-size: 9px;
+        line-height: 1.5;
+    }
+
+    .weekly-day-cell small {
+        margin-top: 2px;
+        font-size: 8px;
+        line-height: 1.4;
+    }
+
+    .weekly-lesson-cell {
+        min-height: 57px;
+        gap: 2px;
+        padding: 4px 1px;
+    }
+
+    .weekly-lesson-cell strong {
+        font-size: 9px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+
+    .weekly-lesson-cell span,
+    .weekly-lesson-cell small {
+        font-size: 8px;
+        line-height: 1.4;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .weekly-empty-cell {
+        padding: 12px 4px !important;
+        font-size: 9px;
+    }
+
+    .weekly-scroll-hint {
+        font-size: 9px;
+    }
+}
+
+/* الهواتف الصغيرة جدًا */
+@media (max-width: 380px) {
+
+    .welcome-card {
+        min-height: 105px;
+        padding: 11px 13px;
+    }
+
+    .welcome-card h1 {
+        font-size: 16px;
+    }
+
+    .welcome-symbol {
+        width: 36px;
+        height: 36px;
+        font-size: 19px;
+    }
+
+    .student-tab {
+        flex-basis: 66px;
+        min-width: 66px;
+        min-height: 49px;
+    }
+
+    .weekly-table th,
+    .weekly-table td {
+        padding-inline: 2px;
+    }
+
+    .weekly-table thead th {
+        font-size: 8px;
+    }
+
+    .weekly-lesson-cell strong {
+        font-size: 8px;
+    }
+}
+/* =========================================
+   ILABRAT — STUDENT LOGOUT DIALOG
+========================================= */
+
+.logout-dialog {
+    width: min(420px, calc(100% - 32px));
+    max-width: 420px;
+    padding: 0;
+    border: 1px solid #eadfd9;
+    border-radius: 20px;
+    background: #fff;
+    color: #43131D;
+    box-shadow: 0 22px 70px rgba(35, 12, 18, .25);
+    overflow: hidden;
+}
+
+.logout-dialog::backdrop {
+    background: rgba(32, 15, 19, .58);
+    backdrop-filter: blur(4px);
+}
+
+.logout-dialog[open] {
+    animation: logoutDialogShow .2s ease-out;
+}
+
+.logout-dialog-content {
+    padding: 30px 26px 25px;
+    text-align: center;
+    font-family: "Cairo", sans-serif;
+}
+
+.logout-dialog-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 65px;
+    height: 65px;
+    margin: 0 auto 17px;
+    border: 1px solid #ead7d3;
+    border-radius: 20px;
+    background: #f8efed;
+    color: #5A1825;
+    font-size: 32px;
+    font-weight: 800;
+}
+
+.logout-dialog-content h2 {
+    margin: 0 0 9px;
+    color: #5A1825;
+    font-size: 21px;
+    font-weight: 800;
+}
+
+.logout-dialog-content > p {
+    margin: 0;
+    color: #77696b;
+    font-size: 14px;
+    line-height: 1.9;
+}
+
+.logout-dialog-actions {
+    display: flex;
+    gap: 11px;
+    margin-top: 25px;
+}
+
+.logout-dialog-actions button {
+    flex: 1;
+    min-height: 46px;
+    padding: 9px 14px;
+    border: 0;
+    border-radius: 11px;
+    font-family: "Cairo", sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: .2s ease;
+}
+
+.logout-cancel-button {
+    background: #f1ece8;
+    color: #65575a;
+}
+
+.logout-cancel-button:hover {
+    background: #e8dfda;
+}
+
+.logout-confirm-button {
+    background: #5A1825;
+    color: #fff;
+}
+
+.logout-confirm-button:hover {
+    background: #43131D;
+}
+
+.logout-dialog-actions button:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.logout-dialog-error {
+    margin-top: 15px;
+    padding: 10px 12px;
+    border: 1px solid #f0d0d0;
+    border-radius: 9px;
+    background: #fff2f2;
+    color: #a12b38;
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+.logout-dialog-error[hidden] {
+    display: none;
+}
+
+@keyframes logoutDialogShow {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 480px) {
+    .logout-dialog-content {
+        padding: 25px 19px 20px;
+    }
+
+    .logout-dialog-content h2 {
+        font-size: 19px;
+    }
+
+    .logout-dialog-content > p {
+        font-size: 13px;
+    }
+
+    .logout-dialog-actions button {
+        min-height: 44px;
+        font-size: 12px;
+    }
+}

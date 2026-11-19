@@ -302,7 +302,35 @@
         <span>تعليم أكثر تنظيماً</span>
     </footer>
 </div>
+<dialog id="logoutDialog" class="logout-dialog">
+    <div class="logout-dialog-content">
+        <div class="logout-dialog-icon">↪</div>
 
+        <h2>تسجيل الخروج</h2>
+
+        <p id="logoutDialogMessage">
+            هل أنت متأكد أنك تريد تسجيل الخروج من حسابك؟
+        </p>
+
+        <div id="logoutDialogError" class="logout-dialog-error" hidden></div>
+
+        <div class="logout-dialog-actions">
+            <button
+                type="button"
+                id="cancelLogoutButton"
+                class="logout-cancel-button">
+                إلغاء
+            </button>
+
+            <button
+                type="button"
+                id="confirmLogoutButton"
+                class="logout-confirm-button">
+                تسجيل الخروج
+            </button>
+        </div>
+    </div>
+</dialog>
 <dialog id="imageViewer" class="image-viewer">
     <button
         type="button"

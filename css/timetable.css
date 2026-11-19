@@ -2499,3 +2499,39 @@ img {
         font-size: 12px;
     }
 }
+/* =========================================
+   ILABRAT — FIX STUDENT TABS ON MOBILE
+========================================= */
+
+@media (max-width: 700px) {
+
+    .student-tabs {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        width: 100%;
+        max-width: 100%;
+        direction: rtl;
+        justify-content: flex-start;
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+        scrollbar-width: thin;
+        touch-action: pan-x;
+    }
+
+    .student-tab {
+        display: flex !important;
+        flex: 0 0 76px !important;
+        min-width: 76px !important;
+        flex-shrink: 0 !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .student-tab[data-view="chat"] {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+}

@@ -1,4 +1,4 @@
-
+ 
 "use strict";
 
 /* =========================================================
@@ -1966,110 +1966,112 @@
         renderStudentChatMessages();
     }
 
-    async function loadStudentChatRooms(options = {}) {
-        if (!elements.chatRoomsList) return;
+   
+async function loadStudentChatRooms(options = {}) {
+    if (!elements.chatRoomsList) return;
 
-        // مشاركة الطلب الجاري بدلاً من إرسال طلبات متكررة.
-        if (state.chatRoomsPromise) {
-            return state.chatRoomsPromise;
-        }
-
-        // لا نعيد جلب الغرف عند العودة إلى التبويب ما دامت محملة.
-        if (state.chatRoomsLoaded && options.force !== true) {
-            renderStudentChatRooms();
-            renderSelectedStudentChatRoom();
-            return;
-        }
-
-        state.chatLoading = true;
-
-        if (elements.chatRefreshButton) {
-            elements.chatRefreshButton.disabled = true;
-        }
-
-        if (
-            options.showLoading !== false &&
-            !state.chatRoomsLoaded
-        ) {
-            elements.chatRoomsList.innerHTML =
-                `<div class="loading-state">جارٍ تحميل غرف الأسئلة...</div>`;
-        }
-
-        state.chatRoomsPromise = (async () => {
-            try {
-                const data = await callStudentChatHandler(
-                    "student_list_rooms"
-                );
-
-                state.chatRooms = Array.isArray(data.rooms)
-                    ? data.rooms
-                    : [];
-
-                state.chatRoomsLoaded = true;
-
-                const openCount = state.chatRooms.filter(
-                    isChatRoomOpen
-                ).length;
-
-                if (elements.chatOpenCount) {
-                    elements.chatOpenCount.textContent =
-                        formatArabicDigits(openCount);
-
-                    elements.chatOpenCount.hidden =
-                        openCount === 0;
-                }
-
-                if (state.selectedChatRoom) {
-                    const selectedId = String(
-                        getChatRoomId(state.selectedChatRoom)
-                    );
-
-                    const updatedRoom = state.chatRooms.find(room =>
-                        String(getChatRoomId(room)) === selectedId
-                    );
-
-                    if (updatedRoom) {
-                        state.selectedChatRoom = updatedRoom;
-
-                    } else {
-                        state.selectedChatRoom = null;
-                        state.chatMessages = [];
-                    }
-                }
-
-                renderStudentChatRooms();
-                renderSelectedStudentChatRoom();
-
-            } catch (error) {
-                console.error(
-                    "STUDENT CHAT ROOMS ERROR:",
-                    error
-                );
-
-                // السماح بإعادة المحاولة عند فتح التبويب مرة أخرى.
-                state.chatRoomsLoaded = false;
-
-                // إبقاء الغرف السابقة ظاهرة إن كان التحديث اليدوي قد فشل.
-                if (!state.chatRoomsLoaded || !state.chatRooms.length) {
-                    showError(elements.chatRoomsList, error.message);
-                }
-
-                setChatFormMessage(
-                    error.message || "تعذر تحديث غرف الأسئلة."
-                );
-
-            } finally {
-                state.chatLoading = false;
-                state.chatRoomsPromise = null;
-
-                if (elements.chatRefreshButton) {
-                    elements.chatRefreshButton.disabled = false;
-                }
-            }
-        })();
-
+    if (state.chatRoomsPromise) {
         return state.chatRoomsPromise;
     }
+
+    if (state.chatRoomsLoaded && options.force !== true) {
+        renderStudentChatRooms();
+        renderSelectedStudentChatRoom();
+        return;
+    }
+
+    state.chatLoading = true;
+
+    if (elements.chatRefreshButton) {
+        elements.chatRefreshButton.disabled = true;
+    }
+
+    if (
+        options.showLoading !== false &&
+        !state.chatRoomsLoaded
+    ) {
+        elements.chatRoomsList.innerHTML =
+            `<div class="loading-state">جارٍ تحميل غرف الأسئلة...</div>`;
+    }
+
+    state.chatRoomsPromise = (async () => {
+        try {
+            const data = await callStudentChatHandler(
+                "student_list_rooms"
+            );
+
+            state.chatRooms = Array.isArray(data.rooms)
+                ? data.rooms
+                : [];
+
+            state.chatRoomsLoaded = true;
+
+            const openCount = state.chatRooms.filter(
+                isChatRoomOpen
+            ).length;
+
+            if (elements.chatOpenCount) {
+                elements.chatOpenCount.textContent =
+                    formatArabicDigits(openCount);
+
+                elements.chatOpenCount.hidden =
+                    openCount === 0;
+            }
+
+            if (state.selectedChatRoom) {
+                const selectedId = String(
+                    getChatRoomId(state.selectedChatRoom)
+                );
+
+                const updatedRoom = state.chatRooms.find(room =>
+                    String(getChatRoomId(room)) === selectedId
+                );
+
+                if (updatedRoom) {
+                    state.selectedChatRoom = updatedRoom;
+                } else {
+                    state.selectedChatRoom = null;
+                    state.chatMessages = [];
+                }
+            }
+
+            renderStudentChatRooms();
+            renderSelectedStudentChatRoom();
+
+        } catch (error) {
+            console.error(
+                "STUDENT CHAT ROOMS ERROR:",
+                error
+            );
+
+            const hasPreviousRooms =
+                state.chatRooms.length > 0;
+
+            state.chatRoomsLoaded = false;
+
+            if (!hasPreviousRooms) {
+                showError(elements.chatRoomsList, error.message);
+            } else {
+                renderStudentChatRooms();
+            }
+
+            setChatFormMessage(
+                error.message || "تعذر تحديث غرف الأسئلة."
+            );
+
+        } finally {
+            state.chatLoading = false;
+            state.chatRoomsPromise = null;
+
+            if (elements.chatRefreshButton) {
+                elements.chatRefreshButton.disabled = false;
+            }
+        }
+    })();
+
+    return state.chatRoomsPromise;
+}
+
 
     async function selectStudentChatRoom(roomId) {
         const room = state.chatRooms.find(item =>

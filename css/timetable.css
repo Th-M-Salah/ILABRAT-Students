@@ -2535,3 +2535,26 @@ img {
         opacity: 1 !important;
     }
 }
+@media (max-width: 700px) {
+    .student-tabs {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        justify-content: flex-start !important;
+        direction: rtl;
+        width: 100%;
+        max-width: 100%;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+
+    .student-tab {
+        display: flex !important;
+        flex: 0 0 76px !important;
+        min-width: 76px !important;
+        flex-shrink: 0 !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+}

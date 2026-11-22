@@ -2488,7 +2488,7 @@ img {
 
 /* =========================================================
    22. FINAL MOBILE STUDENT TABS FIX
-   إصلاح التمرير الأفقي ومنع انكماش التبويبات
+   عرض التبويبات الخمسة كاملة على الهاتف دون تمرير أفقي
    ========================================================= */
 
 @media (max-width: 700px) {
@@ -2496,75 +2496,47 @@ img {
         position: relative !important;
         z-index: 100;
 
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        justify-content: flex-start !important;
+        display: grid !important;
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        grid-auto-flow: row !important;
         align-items: stretch;
+        justify-content: stretch;
 
         direction: rtl;
-
         width: 100%;
         max-width: 100%;
         min-width: 0;
 
-        gap: 8px;
-        padding: 8px 3px;
+        gap: 6px;
+        padding: 6px 0;
         margin-block: 8px 13px;
 
-        overflow-x: auto !important;
-        overflow-y: hidden !important;
-
+        overflow: visible !important;
+        touch-action: auto;
+        scroll-snap-type: none;
         background: var(--page);
-
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior-x: contain;
-        touch-action: pan-x;
-        scroll-behavior: smooth;
-        scroll-snap-type: x proximity;
-
-        scrollbar-width: auto;
-        scrollbar-color: var(--gold) transparent;
-    }
-
-    .student-tabs::-webkit-scrollbar {
-        display: block;
-        height: 5px;
-    }
-
-    .student-tabs::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    .student-tabs::-webkit-scrollbar-thumb {
-        border-radius: 10px;
-        background: var(--gold);
     }
 
     .student-tabs > .student-tab {
         position: relative;
-
         display: flex !important;
+        flex: initial !important;
         flex-direction: column !important;
         align-items: center;
         justify-content: center;
 
-        flex: 0 0 76px !important;
-        width: 76px !important;
-        min-width: 76px !important;
-        max-width: 76px !important;
-
-        flex-shrink: 0 !important;
-
-        min-height: 58px;
-        padding: 6px 4px;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        min-height: 61px;
+        padding: 5px 2px;
 
         white-space: normal;
         overflow-wrap: anywhere;
+        word-break: normal;
         line-height: 1.35;
         text-align: center;
-
-        scroll-snap-align: center;
+        font-size: 10px;
     }
 
     .student-tabs > .student-tab[data-view="chat"] {
@@ -2575,31 +2547,32 @@ img {
 
     .student-tabs > .student-tab .tab-icon {
         flex-shrink: 0;
-        font-size: 18px;
-        line-height: 1.3;
+        font-size: 17px;
+        line-height: 1.2;
     }
 
     .student-tabs > .student-tab .tab-count {
-        top: 3px;
-        left: 4px;
+        top: 2px;
+        left: 2px;
+        min-width: 16px;
+        height: 16px;
+        padding-inline: 3px;
+        font-size: 9px;
     }
 }
 
-/* الهواتف */
+/* الهواتف الصغيرة */
 @media (max-width: 480px) {
     .student-tabs {
-        gap: 5px;
+        gap: 4px;
         padding-block: 5px;
     }
 
     .student-tabs > .student-tab {
-        flex: 0 0 70px !important;
-        width: 70px !important;
-        min-width: 70px !important;
-        max-width: 70px !important;
-        min-height: 52px;
-        padding: 5px 3px;
+        min-height: 57px;
+        padding: 4px 1px;
         font-size: 9px;
+        border-radius: 11px;
     }
 
     .student-tabs > .student-tab .tab-icon {
@@ -2608,13 +2581,828 @@ img {
 }
 
 /* الهواتف الصغيرة جداً */
-@media (max-width: 380px) {
+@media (max-width: 360px) {
+    .student-tabs {
+        gap: 3px;
+    }
+
     .student-tabs > .student-tab {
-        flex: 0 0 66px !important;
-        width: 66px !important;
-        min-width: 66px !important;
-        max-width: 66px !important;
-        min-height: 49px;
+        min-height: 55px;
+        font-size: 8px;
+    }
+
+    .student-tabs > .student-tab .tab-count {
+        min-width: 14px;
+        height: 14px;
         font-size: 8px;
     }
 }
+/* =========================================================
+   ILABRAT — WEEKLY SCHEDULE COMPACT SIZE
+   تصغير حجم الجدول الأسبوعي فقط
+   ========================================================= */
+
+/* تقليل المسافات بين بطاقات الأيام */
+.weekly-days-list {
+    gap: 9px;
+}
+
+/* تصغير رأس بطاقة اليوم */
+.weekly-day-header {
+    min-height: 48px;
+    padding: 8px 13px;
+}
+
+.weekly-day-header h3 {
+    font-size: 14px;
+}
+
+.weekly-day-header p {
+    font-size: 9px;
+}
+
+/* تصغير المسافات داخل قائمة الحصص */
+.weekly-day-lessons {
+    padding: 2px 13px;
+}
+
+/* تصغير كل حصة */
+.weekly-lesson-card {
+    gap: 9px;
+    padding: 8px 2px;
+}
+
+/* تصغير مربع رقم الحصة */
+.weekly-lesson-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    font-size: 11px;
+}
+
+/* تصغير اسم المادة */
+.weekly-lesson-main {
+    gap: 1px;
+}
+
+.weekly-lesson-main strong {
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.weekly-lesson-main span {
+    font-size: 10px;
+}
+
+.weekly-lesson-main small {
+    font-size: 9px;
+}
+
+/* الهاتف */
+@media (max-width: 480px) {
+    .weekly-days-list {
+        gap: 7px;
+    }
+
+    .weekly-day-header {
+        min-height: 42px;
+        padding: 6px 10px;
+    }
+
+    .weekly-day-header h3 {
+        font-size: 12px;
+    }
+
+    .weekly-day-header p {
+        font-size: 8px;
+    }
+
+    .weekly-day-header .today-label {
+        padding: 3px 8px;
+        font-size: 8px;
+    }
+
+    .weekly-day-lessons {
+        padding: 1px 10px;
+    }
+
+    .weekly-lesson-card {
+        gap: 8px;
+        padding: 6px 1px;
+    }
+
+    .weekly-lesson-number {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        font-size: 10px;
+    }
+
+    .weekly-lesson-main strong {
+        font-size: 10px;
+    }
+
+    .weekly-lesson-main span,
+    .weekly-lesson-main small {
+        font-size: 8px;
+    }
+
+    .weekly-day-empty {
+        padding: 10px 6px;
+        font-size: 9px;
+    }
+}
+
+/* =========================================================
+   ILABRAT STUDENTS — STUDENT CHAT ROOMS
+   غرف الأسئلة — تصميم متجاوب للكمبيوتر والهاتف
+   ========================================================= */
+
+#chatView.student-chat-ready {
+    direction: rtl;
+    width: 100%;
+}
+
+/* الملاحظة التعريفية */
+
+#chatView .chat-information-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 13px 16px;
+    border: 1px solid #E8DCC9;
+    border-radius: 13px;
+    background: #F9F3E9;
+    color: #715C43;
+    font-size: 12px;
+    line-height: 1.9;
+}
+
+#chatView .chat-information-note > span {
+    flex-shrink: 0;
+    color: #956D50;
+    font-weight: 800;
+}
+
+/* التخطيط الرئيسي */
+
+#chatView .student-chat-layout {
+    display: grid;
+    grid-template-columns: minmax(250px, 310px) minmax(0, 1fr);
+    gap: 16px;
+    width: 100%;
+    min-width: 0;
+    align-items: stretch;
+    direction: rtl;
+}
+
+/* البطاقات الرئيسية */
+
+#chatView .student-chat-rooms-panel,
+#chatView .student-chat-conversation {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--border, #E8DED5);
+    border-radius: 17px;
+    background: #FFFFFF;
+    box-shadow: 0 8px 24px rgba(67, 19, 29, .055);
+}
+
+/* قائمة الغرف */
+
+#chatView .student-chat-rooms-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 510px;
+}
+
+#chatView .student-chat-panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 17px 16px;
+    border-bottom: 1px solid #EEE6DF;
+    background: #FCFAF7;
+}
+
+#chatView .student-chat-panel-heading h3 {
+    color: var(--primary, #5A1825);
+    font-size: 15px;
+    font-weight: 800;
+}
+
+#chatView .student-chat-panel-heading p {
+    margin-top: 3px;
+    color: var(--muted, #766B68);
+    font-size: 10px;
+}
+
+#chatView .student-chat-refresh {
+    width: 37px;
+    height: 37px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border: 1px solid #E7D9CB;
+    border-radius: 11px;
+    background: #FFFFFF;
+    color: var(--primary, #5A1825);
+    font-size: 23px;
+    line-height: 1;
+    transition: .2s ease;
+}
+
+#chatView .student-chat-refresh:hover {
+    border-color: var(--gold, #C7A56A);
+    background: var(--beige, #F3EEE7);
+    transform: rotate(30deg);
+}
+
+#chatView .student-chat-rooms-list {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 9px;
+    min-height: 0;
+    padding: 12px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+#chatView .student-chat-room-item {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    padding: 13px 13px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    border: 1px solid #EAE2DB;
+    border-radius: 12px;
+    background: #FFFFFF;
+    color: var(--text, #292323);
+    text-align: right;
+    font-family: inherit;
+    transition: border-color .2s ease,
+                background .2s ease,
+                transform .2s ease;
+}
+
+#chatView .student-chat-room-item:hover {
+    border-color: var(--gold, #C7A56A);
+    background: #FCFAF7;
+    transform: translateY(-1px);
+}
+
+#chatView .student-chat-room-item.active {
+    border-color: var(--primary, #5A1825);
+    background: #F8F1EE;
+    box-shadow: inset -3px 0 0 var(--primary, #5A1825);
+}
+
+#chatView .student-chat-room-subject {
+    display: block;
+    max-width: 100%;
+    color: var(--primary, #5A1825);
+    font-size: 13px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+#chatView .student-chat-room-teacher {
+    display: block;
+    max-width: 100%;
+    color: #6F6561;
+    font-size: 11px;
+    overflow-wrap: anywhere;
+}
+
+#chatView .student-chat-room-date {
+    display: block;
+    color: #96877E;
+    font-size: 10px;
+    line-height: 1.7;
+}
+
+#chatView .student-chat-room-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 3px;
+    padding: 4px 9px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+#chatView .student-chat-room-badge.open {
+    background: #EAF5EF;
+    color: #347653;
+}
+
+#chatView .student-chat-room-badge.closed {
+    background: #F2EEEE;
+    color: #837575;
+}
+
+/* مساحة المحادثة */
+
+#chatView .student-chat-conversation {
+    display: flex;
+    flex-direction: column;
+    min-height: 510px;
+}
+
+#chatView .student-chat-conversation-header {
+    min-height: 77px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid #EEE6DF;
+    background: #FCFAF7;
+}
+
+#chatView .student-chat-conversation-header > div {
+    min-width: 0;
+}
+
+#chatView .student-chat-conversation-header h3 {
+    color: var(--primary, #5A1825);
+    font-size: 15px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+#chatView .student-chat-conversation-header p {
+    margin-top: 4px;
+    color: var(--muted, #766B68);
+    font-size: 10px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+#chatView .student-chat-status {
+    flex-shrink: 0;
+    padding: 5px 11px;
+    border: 1px solid #E8DED5;
+    border-radius: 20px;
+    background: #F2EEEE;
+    color: #837575;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+#chatView .student-chat-status.open {
+    border-color: #CBE5D5;
+    background: #EAF5EF;
+    color: #347653;
+}
+
+#chatView .student-chat-status.closed {
+    border-color: #E8DCDD;
+    background: #F8EEEE;
+    color: #98515A;
+}
+
+/* الرسائل */
+
+#chatView .student-chat-messages {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 320px;
+    max-height: 510px;
+    padding: 18px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background:
+        radial-gradient(
+            circle at 10% 10%,
+            rgba(199, 165, 106, .055),
+            transparent 35%
+        ),
+        #FFFEFC;
+}
+
+#chatView .student-chat-message {
+    width: fit-content;
+    max-width: min(82%, 520px);
+    padding: 11px 14px;
+    border: 1px solid #EAE1D9;
+    border-radius: 14px;
+    background: #FFFFFF;
+    box-shadow: 0 3px 10px rgba(67, 19, 29, .035);
+    overflow-wrap: anywhere;
+}
+
+#chatView .student-chat-message.student {
+    align-self: flex-start;
+    border-color: #E7D9CB;
+    border-bottom-right-radius: 4px;
+    background: #F8F1E9;
+}
+
+#chatView .student-chat-message.teacher {
+    align-self: flex-end;
+    border-color: #E8D9DC;
+    border-bottom-left-radius: 4px;
+    background: #FFFFFF;
+}
+
+#chatView .student-chat-message-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 5px 12px;
+    margin-bottom: 6px;
+}
+
+#chatView .student-chat-message-head strong {
+    color: var(--primary, #5A1825);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+#chatView .student-chat-message-head time {
+    color: #978A82;
+    font-size: 9px;
+}
+
+#chatView .student-chat-message-body {
+    color: #38302D;
+    font-size: 12px;
+    line-height: 2;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/* الحالة الفارغة */
+
+#chatView .student-chat-placeholder {
+    flex: 1;
+    min-height: 270px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 25px 15px;
+    text-align: center;
+    color: var(--muted, #766B68);
+}
+
+#chatView .student-chat-placeholder > span {
+    width: 58px;
+    height: 58px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 12px;
+    border: 1px solid #E8DCC9;
+    border-radius: 18px;
+    background: var(--beige, #F3EEE7);
+    color: var(--primary, #5A1825);
+    font-size: 27px;
+}
+
+#chatView .student-chat-placeholder strong {
+    color: var(--primary, #5A1825);
+    font-size: 14px;
+    font-weight: 800;
+}
+
+#chatView .student-chat-placeholder p {
+    max-width: 290px;
+    margin-top: 6px;
+    font-size: 11px;
+    line-height: 1.9;
+}
+
+/* كتابة السؤال */
+
+#chatView .student-chat-composer {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 13px 15px;
+    border-top: 1px solid #EEE6DF;
+    background: #FFFFFF;
+}
+
+#chatView .student-chat-composer textarea {
+    flex: 1;
+    min-width: 0;
+    min-height: 48px;
+    max-height: 125px;
+    padding: 10px 13px;
+    resize: vertical;
+    border: 1px solid #E5DAD1;
+    border-radius: 12px;
+    outline: none;
+    background: #FCFAF7;
+    color: var(--text, #292323);
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1.8;
+    transition: border-color .2s ease,
+                box-shadow .2s ease;
+}
+
+#chatView .student-chat-composer textarea:focus {
+    border-color: var(--gold, #C7A56A);
+    box-shadow: 0 0 0 3px rgba(199, 165, 106, .13);
+}
+
+#chatView .student-chat-composer textarea:disabled {
+    background: #F2F0ED;
+    color: #8B817B;
+    cursor: not-allowed;
+}
+
+#chatView .student-chat-composer button {
+    min-width: 112px;
+    min-height: 46px;
+    padding: 8px 14px;
+    border: 1px solid var(--primary, #5A1825);
+    border-radius: 11px;
+    background: linear-gradient(
+        135deg,
+        var(--primary, #5A1825),
+        var(--primary-light, #7A2A39)
+    );
+    color: #FFFFFF;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 800;
+    transition: .2s ease;
+}
+
+#chatView .student-chat-composer button:hover:not(:disabled) {
+    background: var(--primary-dark, #43131D);
+    transform: translateY(-2px);
+}
+
+#chatView .student-chat-composer button:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#chatView .student-chat-form-message {
+    min-height: 25px;
+    padding: 2px 16px 8px;
+    color: #347653;
+    font-size: 10px;
+    line-height: 1.7;
+}
+
+/* رسائل التحميل والحالات الفارغة داخل قائمة الغرف */
+
+#chatView .student-chat-rooms-list .loading-state,
+#chatView .student-chat-rooms-list .empty-state,
+#chatView .student-chat-rooms-list .error-state {
+    padding: 22px 10px;
+    color: var(--muted, #766B68);
+    text-align: center;
+    font-size: 11px;
+}
+
+#chatView .student-chat-messages .loading-state,
+#chatView .student-chat-messages .empty-state,
+#chatView .student-chat-messages .error-state {
+    margin: auto;
+    padding: 20px 10px;
+    color: var(--muted, #766B68);
+    text-align: center;
+    font-size: 11px;
+}
+
+/* تحسين شريط التمرير */
+
+#chatView .student-chat-rooms-list::-webkit-scrollbar,
+#chatView .student-chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+#chatView .student-chat-rooms-list::-webkit-scrollbar-thumb,
+#chatView .student-chat-messages::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: #D9CFC6;
+}
+
+#chatView .student-chat-rooms-list::-webkit-scrollbar-track,
+#chatView .student-chat-messages::-webkit-scrollbar-track {
+    background: #F8F5F1;
+}
+
+/* الشاشات المتوسطة */
+
+@media (max-width: 850px) {
+    #chatView .student-chat-layout {
+        grid-template-columns: minmax(210px, 260px) minmax(0, 1fr);
+        gap: 11px;
+    }
+
+    #chatView .student-chat-message {
+        max-width: 90%;
+    }
+
+    #chatView .student-chat-composer button {
+        min-width: 95px;
+    }
+}
+
+/* الهواتف */
+
+@media (max-width: 600px) {
+    #chatView .section-heading {
+        gap: 9px;
+        margin-bottom: 16px;
+    }
+
+    #chatView .section-heading h2 {
+        font-size: 21px;
+    }
+
+    #chatView .heading-icon {
+        width: 43px;
+        height: 43px;
+        border-radius: 13px;
+        font-size: 21px;
+    }
+
+    #chatView .chat-information-note {
+        margin-bottom: 13px;
+        padding: 10px 12px;
+        font-size: 10px;
+        line-height: 1.9;
+    }
+
+    #chatView .student-chat-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+    }
+
+    #chatView .student-chat-rooms-panel {
+        min-height: auto;
+        max-height: 250px;
+        border-radius: 14px;
+    }
+
+    #chatView .student-chat-panel-heading {
+        padding: 11px 13px;
+    }
+
+    #chatView .student-chat-panel-heading h3 {
+        font-size: 13px;
+    }
+
+    #chatView .student-chat-refresh {
+        width: 34px;
+        height: 34px;
+    }
+
+    #chatView .student-chat-rooms-list {
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        gap: 9px;
+        padding: 10px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        min-height: 105px;
+        max-height: 170px;
+        scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #chatView .student-chat-room-item {
+        flex: 0 0 205px;
+        width: 205px;
+        min-width: 205px;
+        min-height: 95px;
+        padding: 10px 11px;
+        scroll-snap-align: start;
+    }
+
+    #chatView .student-chat-room-subject {
+        font-size: 12px;
+    }
+
+    #chatView .student-chat-room-teacher {
+        font-size: 10px;
+    }
+
+    #chatView .student-chat-room-date {
+        font-size: 9px;
+    }
+
+    #chatView .student-chat-conversation {
+        min-height: 430px;
+        border-radius: 14px;
+    }
+
+    #chatView .student-chat-conversation-header {
+        min-height: 68px;
+        padding: 11px 12px;
+        gap: 8px;
+    }
+
+    #chatView .student-chat-conversation-header h3 {
+        font-size: 13px;
+    }
+
+    #chatView .student-chat-conversation-header p {
+        font-size: 9px;
+    }
+
+    #chatView .student-chat-status {
+        padding: 4px 8px;
+        font-size: 9px;
+    }
+
+    #chatView .student-chat-messages {
+        min-height: 270px;
+        max-height: 390px;
+        padding: 12px 10px;
+        gap: 10px;
+    }
+
+    #chatView .student-chat-message {
+        max-width: 92%;
+        padding: 9px 11px;
+        border-radius: 12px;
+    }
+
+    #chatView .student-chat-message-head strong {
+        font-size: 10px;
+    }
+
+    #chatView .student-chat-message-head time {
+        font-size: 8px;
+    }
+
+    #chatView .student-chat-message-body {
+        font-size: 11px;
+        line-height: 1.9;
+    }
+
+    #chatView .student-chat-composer {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px;
+    }
+
+    #chatView .student-chat-composer textarea {
+        width: 100%;
+        min-height: 65px;
+        max-height: 110px;
+        font-size: 12px;
+    }
+
+    #chatView .student-chat-composer button {
+        width: 100%;
+        min-height: 42px;
+        font-size: 12px;
+    }
+
+    #chatView .student-chat-form-message {
+        padding: 2px 11px 8px;
+        font-size: 10px;
+    }
+
+    #chatView .student-chat-placeholder {
+        min-height: 220px;
+    }
+}
+
+/* الهواتف الصغيرة جداً */
+
+@media (max-width: 360px) {
+    #chatView .student-chat-room-item {
+        flex-basis: 180px;
+        width: 180px;
+        min-width: 180px;
+    }
+
+    #chatView .student-chat-conversation-header {
+        align-items: flex-start;
+    }
+
+    #chatView .student-chat-status {
+        margin-top: 3px;
+    }
+
+    #chatView .student-chat-message {
+        max-width: 96%;
+    }
+}
+

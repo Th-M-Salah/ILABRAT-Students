@@ -1,4 +1,3 @@
- 
 "use strict";
 
 /* =========================================================
@@ -274,517 +273,200 @@
         style.id = "ilabratWeeklyDesignStyles";
 
         style.textContent = `
-            .weekly-table-wrapper {
-                width: 100%;
-                overflow-x: auto;
-                overflow-y: visible;
-                border: 1px solid #e7ded8;
-                border-radius: 12px;
-                background: #fff;
-                direction: rtl;
-            }
-
-            .weekly-classic-table {
-                width: 100%;
-                min-width: 760px;
-                border-collapse: collapse;
-                table-layout: fixed;
-                direction: rtl;
-                background: #fff;
-            }
-
-            .weekly-classic-table th,
-            .weekly-classic-table td {
-                border: 1px solid #e5dcd6;
-                padding: 13px 9px;
-                text-align: center;
-                vertical-align: middle;
-            }
-
-            .weekly-classic-table thead th {
-                background: #5A1825;
-                color: #fff;
-                font-size: 14px;
-                font-weight: 800;
-                padding: 16px 8px;
-            }
-
-            .weekly-classic-table thead th:first-child {
-                width: 105px;
-                background: #43131D;
-            }
-
-            .weekly-classic-table tbody th {
-                background: #F3EEE7;
-                color: #5A1825;
-                font-size: 13px;
-                font-weight: 800;
-                width: 105px;
-            }
-
-            .weekly-classic-table tbody td {
-                min-height: 100px;
-                background: #fff;
-            }
-
-            .weekly-classic-table .weekly-today-column {
-                background: #F3EEE7 !important;
-            }
-
-            .weekly-classic-table thead th.weekly-today-column {
-                background: #C7A56A !important;
-                color: #43131D !important;
-            }
-
-            .weekly-classic-table tbody td.weekly-today-column {
-                box-shadow: inset 0 0 0 1px rgba(199, 165, 106, .35);
-            }
-
-            .weekly-classic-table .weekly-day-date {
-                display: block;
-                margin-top: 5px;
-                color: rgba(255,255,255,.8);
-                font-size: 11px;
-                font-weight: 400;
-            }
-
-            .weekly-classic-table th.weekly-today-column .weekly-day-date {
-                color: #43131D;
-            }
-
-            .weekly-cell-lesson {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                gap: 7px;
-                min-height: 85px;
-                padding: 5px 2px;
-            }
-
-            .weekly-cell-subject {
-                color: #5A1825;
-                font-size: 15px;
-                font-weight: 800;
-                line-height: 1.5;
-                overflow-wrap: anywhere;
-            }
-
-            .weekly-cell-teacher {
-                color: #75696c;
-                font-size: 12px;
-                line-height: 1.5;
-                overflow-wrap: anywhere;
-            }
-
-            .weekly-cell-time {
-                color: #7A2A39;
-                font-size: 11px;
-                font-weight: 800;
-                line-height: 1.5;
-                direction: rtl;
-            }
-
-            .weekly-cell-empty {
-                color: #c2b8b3;
-                font-size: 18px;
-            }
-
-            .weekly-empty-state {
-                padding: 25px;
-                border: 1px solid #eee4e2;
-                border-radius: 12px;
-                background: #fff;
-                color: #75696c;
-                text-align: center;
-            }
-
-            .weekly-empty-state.error-state {
-                color: #a12b38;
-            }
-
-            @media (max-width: 600px) {
-                .weekly-classic-table {
-                    min-width: 700px;
-                }
-
-                .weekly-classic-table th,
-                .weekly-classic-table td {
-                    padding: 10px 6px;
-                }
-
-                .weekly-classic-table thead th {
-                    font-size: 12px;
-                }
-
-                .weekly-cell-subject {
-                    font-size: 13px;
-                }
-
-                .weekly-cell-teacher {
-                    font-size: 11px;
-                }
-
-                .weekly-cell-time {
-                    font-size: 10px;
-                }
-            }
-        `;
-
-        document.head.appendChild(style);
+    .weekly-table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: visible;
+        border: 1px solid #e7ded8;
+        border-radius: 10px;
+        background: #fff;
+        direction: rtl;
     }
 
-    /* -------------------- STUDENT CHAT STYLES -------------------- */
+    .weekly-classic-table {
+        width: 100%;
+        min-width: 650px;
+        border-collapse: collapse;
+        table-layout: fixed;
+        direction: rtl;
+        background: #fff;
+    }
 
-    function injectStudentChatStyles() {
-        if ($("ilabratStudentChatStyles")) return;
+    .weekly-classic-table th,
+    .weekly-classic-table td {
+        border: 1px solid #e5dcd6;
+        padding: 7px 5px;
+        text-align: center;
+        vertical-align: middle;
+    }
 
-        const style = document.createElement("style");
-        style.id = "ilabratStudentChatStyles";
+    .weekly-classic-table thead th {
+        background: #5A1825;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 800;
+        padding: 9px 5px;
+    }
 
-        style.textContent = `
-            .chat-information-note {
-                display: flex;
-                align-items: flex-start;
-                gap: 10px;
-                padding: 14px 16px;
-                margin-bottom: 20px;
-                border: 1px solid #eadfcf;
-                border-radius: 12px;
-                background: #faf7f1;
-                color: #675b50;
-                font-size: 13px;
-                line-height: 1.8;
-            }
+    .weekly-classic-table thead th:first-child {
+        width: 85px;
+        background: #43131D;
+    }
 
-            .chat-information-note > span {
-                color: #9b7741;
-                font-weight: 800;
-            }
+    .weekly-classic-table tbody th {
+        background: #F3EEE7;
+        color: #5A1825;
+        font-size: 11px;
+        font-weight: 800;
+        width: 85px;
+    }
 
-            .student-chat-layout {
-                display: grid;
-                grid-template-columns: minmax(250px, 0.8fr) minmax(0, 1.7fr);
-                gap: 16px;
-                align-items: stretch;
-                min-width: 0;
-            }
+    .weekly-period-number {
+        display: block;
+        font-size: 11px;
+    }
 
-            .student-chat-rooms-panel,
-            .student-chat-conversation {
-                min-width: 0;
-                border: 1px solid #eadfda;
-                border-radius: 14px;
-                background: #fff;
-                overflow: hidden;
-            }
+    .weekly-period-time {
+        display: block;
+        margin-top: 3px;
+        color: #7A2A39;
+        font-size: 9px;
+        font-weight: 700;
+        line-height: 1.4;
+        direction: rtl;
+    }
 
-            .student-chat-panel-heading,
-            .student-chat-conversation-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 12px;
-                padding: 16px;
-                border-bottom: 1px solid #eee6e1;
-            }
+    .weekly-classic-table tbody td {
+        min-height: 65px;
+        height: 65px;
+        background: #fff;
+    }
 
-            .student-chat-panel-heading h3,
-            .student-chat-conversation-header h3 {
-                margin: 0;
-                color: #5A1825;
-                font-size: 15px;
-                font-weight: 800;
-            }
+    .weekly-classic-table .weekly-today-column {
+        background: #F3EEE7 !important;
+    }
 
-            .student-chat-panel-heading p,
-            .student-chat-conversation-header p {
-                margin: 5px 0 0;
-                color: #817579;
-                font-size: 12px;
-                line-height: 1.7;
-            }
+    .weekly-classic-table thead th.weekly-today-column {
+        background: #C7A56A !important;
+        color: #43131D !important;
+    }
 
-            .student-chat-refresh {
-                width: 36px;
-                height: 36px;
-                border: 1px solid #e8ddd7;
-                border-radius: 9px;
-                background: #faf7f4;
-                color: #5A1825;
-                font-size: 22px;
-                cursor: pointer;
-            }
+    .weekly-classic-table tbody td.weekly-today-column {
+        box-shadow: inset 0 0 0 1px rgba(199, 165, 106, .35);
+    }
 
-            .student-chat-refresh:disabled {
-                opacity: .5;
-                cursor: wait;
-            }
+    .weekly-classic-table .weekly-day-date {
+        display: block;
+        margin-top: 3px;
+        color: rgba(255,255,255,.8);
+        font-size: 9px;
+        font-weight: 400;
+    }
 
-            .student-chat-rooms-list {
-                display: flex;
-                flex-direction: column;
-                gap: 9px;
-                max-height: 570px;
-                overflow-y: auto;
-                padding: 12px;
-            }
+    .weekly-classic-table th.weekly-today-column .weekly-day-date {
+        color: #43131D;
+    }
 
-            .student-chat-room-item {
-                display: block;
-                width: 100%;
-                padding: 13px;
-                border: 1px solid #eee5e0;
-                border-radius: 11px;
-                background: #fff;
-                text-align: right;
-                cursor: pointer;
-                transition: border-color .15s, background .15s;
-                font-family: inherit;
-            }
+    .weekly-cell-lesson {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        min-height: 55px;
+        padding: 3px 1px;
+    }
 
-            .student-chat-room-item:hover,
-            .student-chat-room-item.active {
-                border-color: #b98e72;
-                background: #fbf7f3;
-            }
+    .weekly-cell-subject {
+        color: #5A1825;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
 
-            .student-chat-room-subject {
-                display: block;
-                color: #5A1825;
-                font-size: 14px;
-                font-weight: 800;
-                margin-bottom: 6px;
-            }
+    .weekly-cell-teacher {
+        color: #75696c;
+        font-size: 10px;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
 
-            .student-chat-room-teacher,
-            .student-chat-room-date {
-                display: block;
-                color: #82767a;
-                font-size: 11px;
-                line-height: 1.8;
-            }
+    .weekly-cell-time {
+        color: #7A2A39;
+        font-size: 9px;
+        font-weight: 800;
+        line-height: 1.4;
+        direction: rtl;
+    }
 
-            .student-chat-room-badge {
-                display: inline-block;
-                margin-top: 8px;
-                padding: 3px 9px;
-                border-radius: 20px;
-                font-size: 10px;
-                font-weight: 800;
-            }
+    .weekly-cell-empty {
+        color: #c2b8b3;
+        font-size: 14px;
+    }
 
-            .student-chat-room-badge.open {
-                color: #236b48;
-                background: #e9f5ed;
-            }
+    .weekly-empty-state {
+        padding: 20px;
+        border: 1px solid #eee4e2;
+        border-radius: 10px;
+        background: #fff;
+        color: #75696c;
+        text-align: center;
+    }
 
-            .student-chat-room-badge.closed {
-                color: #765f56;
-                background: #f1ece8;
-            }
+    .weekly-empty-state.error-state {
+        color: #a12b38;
+    }
 
-            .student-chat-conversation {
-                display: flex;
-                flex-direction: column;
-                min-height: 500px;
-            }
+    @media (max-width: 600px) {
+        .weekly-classic-table {
+            min-width: 620px;
+        }
 
-            .student-chat-status {
-                flex-shrink: 0;
-                padding: 5px 10px;
-                border-radius: 20px;
-                background: #f1ece8;
-                color: #75645e;
-                font-size: 11px;
-                font-weight: 800;
-            }
+        .weekly-classic-table th,
+        .weekly-classic-table td {
+            padding: 6px 3px;
+        }
 
-            .student-chat-status.open {
-                color: #236b48;
-                background: #e9f5ed;
-            }
+        .weekly-classic-table thead th {
+            font-size: 10px;
+            padding: 7px 3px;
+        }
 
-            .student-chat-status.closed {
-                color: #765f56;
-                background: #f1ece8;
-            }
+        .weekly-classic-table thead th:first-child,
+        .weekly-classic-table tbody th {
+            width: 75px;
+        }
 
-            .student-chat-messages {
-                display: flex;
-                flex: 1;
-                flex-direction: column;
-                gap: 12px;
-                min-height: 320px;
-                max-height: 470px;
-                overflow-y: auto;
-                padding: 16px;
-                background: #fcfaf8;
-            }
+        .weekly-classic-table tbody th {
+            font-size: 10px;
+        }
 
-            .student-chat-placeholder {
-                display: flex;
-                flex: 1;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                min-height: 260px;
-                text-align: center;
-                color: #817579;
-            }
+        .weekly-period-time {
+            font-size: 8px;
+        }
 
-            .student-chat-placeholder > span {
-                margin-bottom: 10px;
-                color: #b18b69;
-                font-size: 34px;
-            }
+        .weekly-cell-lesson {
+            min-height: 48px;
+        }
 
-            .student-chat-placeholder strong {
-                color: #5A1825;
-                font-size: 14px;
-            }
+        .weekly-cell-subject {
+            font-size: 10px;
+        }
 
-            .student-chat-placeholder p {
-                font-size: 12px;
-            }
+        .weekly-cell-teacher {
+            font-size: 9px;
+        }
 
-            .student-chat-message {
-                max-width: 88%;
-                padding: 11px 13px;
-                border: 1px solid #eadfd9;
-                border-radius: 12px 12px 3px 12px;
-                background: #fff;
-                align-self: flex-start;
-                overflow-wrap: anywhere;
-            }
+        .weekly-cell-time {
+            font-size: 8px;
+        }
 
-            .student-chat-message.teacher {
-                border-color: #e4d5b9;
-                background: #faf5eb;
-                align-self: flex-end;
-                border-radius: 12px 12px 12px 3px;
-            }
-
-            .student-chat-message-head {
-                display: flex;
-                flex-wrap: wrap;
-                align-items: center;
-                gap: 8px;
-                margin-bottom: 6px;
-            }
-
-            .student-chat-message-head strong {
-                color: #5A1825;
-                font-size: 11px;
-            }
-
-            .student-chat-message-head time {
-                color: #94878a;
-                font-size: 10px;
-            }
-
-            .student-chat-message-body {
-                color: #433a3d;
-                font-size: 13px;
-                line-height: 1.9;
-                white-space: pre-wrap;
-                overflow-wrap: anywhere;
-            }
-
-            .student-chat-composer {
-                display: flex;
-                align-items: flex-end;
-                gap: 10px;
-                padding: 13px;
-                border-top: 1px solid #eee6e1;
-                background: #fff;
-            }
-
-            .student-chat-composer textarea {
-                flex: 1;
-                min-width: 0;
-                min-height: 46px;
-                max-height: 130px;
-                resize: vertical;
-                padding: 11px 12px;
-                border: 1px solid #e6dcd7;
-                border-radius: 10px;
-                outline: none;
-                font: inherit;
-                font-size: 13px;
-            }
-
-            .student-chat-composer textarea:focus {
-                border-color: #9b6d72;
-                box-shadow: 0 0 0 3px rgba(90, 24, 37, .07);
-            }
-
-            .student-chat-composer textarea:disabled {
-                background: #f5f2ef;
-                cursor: not-allowed;
-            }
-
-            .student-chat-composer button {
-                min-height: 44px;
-                padding: 0 17px;
-                border: 0;
-                border-radius: 10px;
-                background: #5A1825;
-                color: #fff;
-                font: inherit;
-                font-size: 12px;
-                font-weight: 800;
-                cursor: pointer;
-                white-space: nowrap;
-            }
-
-            .student-chat-composer button:disabled {
-                opacity: .45;
-                cursor: not-allowed;
-            }
-
-            .student-chat-form-message {
-                min-height: 20px;
-                margin: 0;
-                padding: 0 14px 10px;
-                color: #a12b38;
-                font-size: 11px;
-            }
-
-            @media (max-width: 760px) {
-                .student-chat-layout {
-                    grid-template-columns: 1fr;
-                }
-
-                .student-chat-rooms-list {
-                    max-height: 250px;
-                }
-
-                .student-chat-conversation {
-                    min-height: 440px;
-                }
-
-                .student-chat-messages {
-                    min-height: 280px;
-                    max-height: 390px;
-                }
-            }
-
-            @media (max-width: 420px) {
-                .student-chat-composer {
-                    flex-direction: column;
-                    align-items: stretch;
-                }
-
-                .student-chat-composer button {
-                    width: 100%;
-                }
-
-                .student-chat-message {
-                    max-width: 96%;
-                }
-            }
-        `;
+        .weekly-classic-table .weekly-day-date {
+            font-size: 8px;
+        }
+    }
+`;
 
         document.head.appendChild(style);
     }
@@ -913,8 +595,7 @@
             .eq("academic_year", expectedYear)
             .eq("is_published", true)
             .order("period", { ascending: true });
-
-        if (error) throw error;
+                    if (error) throw error;
 
         if (!data?.length) {
             const fallback = await db
@@ -1128,8 +809,13 @@
 
     function renderLesson(lesson, index, selectedDate) {
         const homework = getHomeworkForLesson(lesson, selectedDate);
+
         const subject = escapeHTML(
             lesson.subject || "مادة غير محددة"
+        );
+
+        const teacher = escapeHTML(
+            lesson.teacher_name || "غير محدد"
         );
 
         let homeworkStatus = "لا يوجد واجب لهذا اليوم";
@@ -1145,38 +831,41 @@
         }
 
         return `
-            <article class="lesson-card daily-lesson-card">
-                <div class="lesson-header">
-                    <div class="lesson-number">
-                        ${formatArabicDigits(index + 1)}
-                    </div>
-
-                    <div class="lesson-info">
-                        <h3>${subject}</h3>
-                    </div>
+        <article class="lesson-card daily-lesson-card">
+            <div class="lesson-header">
+                <div class="lesson-number">
+                    ${formatArabicDigits(index + 1)}
                 </div>
 
-                <div class="daily-homework-status ${
-                    homework ? "has-homework" : "no-homework"
-                }">
-                    <span class="daily-homework-icon">
-                        ${homework ? "✦" : "✓"}
-                    </span>
-
-                    <span>${homeworkStatus}</span>
-
-                    ${homework ? `
-                        <a
-                            class="homework-details-link"
-                            href="homework-details.html?post_id=${encodeURIComponent(homework.id)}">
-
-                            عرض الواجب
-                            <span aria-hidden="true">←</span>
-                        </a>
-                    ` : ""}
+                <div class="lesson-info">
+                    <h3>${subject}</h3>
+                    <p class="lesson-teacher">
+                        المعلم: ${teacher}
+                    </p>
                 </div>
-            </article>
-        `;
+            </div>
+
+            <div class="daily-homework-status ${
+                homework ? "has-homework" : "no-homework"
+            }">
+                <span class="daily-homework-icon">
+                    ${homework ? "✦" : "✓"}
+                </span>
+
+                <span>${homeworkStatus}</span>
+
+                ${homework ? `
+                    <a
+                        class="homework-details-link"
+                        href="homework-details.html?post_id=${encodeURIComponent(homework.id)}">
+
+                        عرض الواجب
+                        <span aria-hidden="true">←</span>
+                    </a>
+                ` : ""}
+            </div>
+        </article>
+    `;
     }
 
     /* -------------------- DAILY VIEW -------------------- */
@@ -1282,7 +971,7 @@
         // فرز الحصص مرة واحدة فقط.
         const allLessons = [...state.lessons].sort(compareLessons);
 
-        // تجميع حصص كل يوم مرة واحدة بدلاً من إعادة تصفيتها داخل كل خلية.
+        // تجميع حصص كل يوم مرة واحدة.
         const lessonsByDay = new Map(
             DAYS.map(day => [day.id, []])
         );
@@ -1320,7 +1009,7 @@
             return a.startTime.localeCompare(b.startTime);
         });
 
-        // تجهيز فهرس سريع للحصة حسب اليوم ورقم/اسم الحصة.
+        // تجهيز فهرس الحصص حسب اليوم ورقم/اسم الحصة.
         const lessonIndex = new Map();
 
         DAYS.forEach(day => {
@@ -1348,122 +1037,147 @@
             });
         });
 
+        // تحديد وقت كل فترة من جميع أيام الأسبوع.
+        // لا يعرض الوقت إذا كان مفقوداً أو مختلفاً بين الأيام.
+        function getUniformPeriodTime(periodLookupKey) {
+            const matchingLesson = allLessons.find(lesson => {
+                const number = getPeriodNumber(lesson.period);
+                const periodKey = String(
+                    lesson.period ?? ""
+                ).trim();
+
+                const key = number
+                    ? `number:${number}`
+                    : `label:${periodKey}`;
+
+                const start = normalizeTime(lesson.start_time);
+                const end = normalizeTime(lesson.end_time);
+
+                return (
+                    key === periodLookupKey &&
+                    /^\d{2}:\d{2}$/.test(start) &&
+                    /^\d{2}:\d{2}$/.test(end)
+                );
+            });
+
+            if (!matchingLesson) return "";
+
+            return `${formatTime(matchingLesson.start_time)} - ${formatTime(matchingLesson.end_time)}`;
+        }
+
         const headerHTML = `
-            <thead>
-                <tr>
-                    <th scope="col">الحصة</th>
+        <thead>
+            <tr>
+                <th scope="col">الحصة</th>
 
-                    ${weekDates.map(day => {
-                        const isToday = day.date === todayString;
+                ${weekDates.map(day => {
+                    const isToday = day.date === todayString;
 
-                        return `
-                            <th
-                                scope="col"
-                                class="${isToday ? "weekly-today-column" : ""}"
-                                aria-current="${isToday ? "date" : "false"}">
+                    return `
+                        <th
+                            scope="col"
+                            class="${isToday ? "weekly-today-column" : ""}"
+                            aria-current="${isToday ? "date" : "false"}">
 
-                                ${escapeHTML(day.name)}
+                            ${escapeHTML(day.name)}
 
-                                <span class="weekly-day-date">
-                                    ${escapeHTML(formatDate(day.date, false))}
-                                </span>
-                            </th>
-                        `;
-                    }).join("")}
-                </tr>
-            </thead>
-        `;
+                            <span class="weekly-day-date">
+                                ${escapeHTML(formatDate(day.date, false))}
+                            </span>
+                        </th>
+                    `;
+                }).join("")}
+            </tr>
+        </thead>
+    `;
 
         let bodyHTML = "";
 
         if (!periods.length) {
             bodyHTML = `
-                <tbody>
-                    <tr>
-                        <td colspan="6">
-                            <div class="weekly-empty-state">
-                                لا توجد حصص منشورة في الجدول الأسبوعي حالياً.
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            `;
+            <tbody>
+                <tr>
+                    <td colspan="6">
+                        <div class="weekly-empty-state">
+                            لا توجد حصص منشورة في الجدول الأسبوعي حالياً.
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        `;
 
         } else {
             bodyHTML = `
-                <tbody>
-                    ${periods.map(period => {
-                        const periodLookupKey = period.number
-                            ? `number:${period.number}`
-                            : `label:${period.key}`;
+            <tbody>
+                ${periods.map(period => {
+                    const periodLookupKey = period.number
+                        ? `number:${period.number}`
+                        : `label:${period.key}`;
 
-                        return `
-                            <tr>
-                                <th scope="row">
+                    const periodTime =
+                        getUniformPeriodTime(periodLookupKey);
+
+                    return `
+                        <tr>
+                            <th scope="row">
+                                <span class="weekly-period-number">
                                     ${escapeHTML(
                                         period.number
                                             ? `الحصة ${formatArabicDigits(period.number)}`
                                             : period.label
                                     )}
-                                </th>
+                                </span>
 
-                                ${weekDates.map(day => {
-                                    const isToday =
-                                        day.date === todayString;
+                                ${periodTime ? `
+                                    <span class="weekly-period-time">
+                                        ${escapeHTML(periodTime)}
+                                    </span>
+                                ` : ""}
+                            </th>
 
-                                    const lesson = lessonIndex
-                                        .get(day.id)
-                                        ?.get(periodLookupKey);
+                            ${weekDates.map(day => {
+                                const isToday =
+                                    day.date === todayString;
 
-                                    if (!lesson) {
-                                        return `
-                                            <td class="${isToday ? "weekly-today-column" : ""}">
-                                                <span class="weekly-cell-empty">—</span>
-                                            </td>
-                                        `;
-                                    }
+                                const lesson = lessonIndex
+                                    .get(day.id)
+                                    ?.get(periodLookupKey);
 
+                                if (!lesson) {
                                     return `
                                         <td class="${isToday ? "weekly-today-column" : ""}">
-                                            <div class="weekly-cell-lesson">
-                                                <strong class="weekly-cell-subject">
-                                                    ${escapeHTML(
-                                                        lesson.subject || "مادة غير محددة"
-                                                    )}
-                                                </strong>
-
-                                                <span class="weekly-cell-teacher">
-                                                    المعلم:
-                                                    ${escapeHTML(
-                                                        lesson.teacher_name || "غير محدد"
-                                                    )}
-                                                </span>
-
-                                                <span class="weekly-cell-time">
-                                                    ${escapeHTML(formatTime(lesson.start_time))}
-                                                    -
-                                                    ${escapeHTML(formatTime(lesson.end_time))}
-                                                </span>
-                                            </div>
+                                            <span class="weekly-cell-empty">—</span>
                                         </td>
                                     `;
-                                }).join("")}
-                            </tr>
-                        `;
-                    }).join("")}
-                </tbody>
-            `;
+                                }
+
+                                return `
+                                    <td class="${isToday ? "weekly-today-column" : ""}">
+                                        <div class="weekly-cell-lesson">
+                                            <strong class="weekly-cell-subject">
+                                                ${escapeHTML(
+                                                    lesson.subject || "مادة غير محددة"
+                                                )}
+                                            </strong>
+                                        </div>
+                                    </td>
+                                `;
+                            }).join("")}
+                        </tr>
+                    `;
+                }).join("")}
+            </tbody>
+        `;
         }
 
         elements.weeklyContainer.innerHTML = `
-            <table class="weekly-classic-table">
-                ${headerHTML}
-                ${bodyHTML}
-            </table>
-        `;
+        <table class="weekly-classic-table">
+            ${headerHTML}
+            ${bodyHTML}
+        </table>
+    `;
     }
-
-    /* -------------------- SCHOOL ANNOUNCEMENTS -------------------- */
+        /* -------------------- SCHOOL ANNOUNCEMENTS -------------------- */
 
     function hideAnnouncementCount() {
         if (!elements.announcementCount) return;
@@ -1966,114 +1680,111 @@
         renderStudentChatMessages();
     }
 
-   
-async function loadStudentChatRooms(options = {}) {
-    if (!elements.chatRoomsList) return;
+    async function loadStudentChatRooms(options = {}) {
+        if (!elements.chatRoomsList) return;
 
-    if (state.chatRoomsPromise) {
-        return state.chatRoomsPromise;
-    }
+        if (state.chatRoomsPromise) {
+            return state.chatRoomsPromise;
+        }
 
-    if (state.chatRoomsLoaded && options.force !== true) {
-        renderStudentChatRooms();
-        renderSelectedStudentChatRoom();
-        return;
-    }
-
-    state.chatLoading = true;
-
-    if (elements.chatRefreshButton) {
-        elements.chatRefreshButton.disabled = true;
-    }
-
-    if (
-        options.showLoading !== false &&
-        !state.chatRoomsLoaded
-    ) {
-        elements.chatRoomsList.innerHTML =
-            `<div class="loading-state">جارٍ تحميل غرف الأسئلة...</div>`;
-    }
-
-    state.chatRoomsPromise = (async () => {
-        try {
-            const data = await callStudentChatHandler(
-                "student_list_rooms"
-            );
-
-            state.chatRooms = Array.isArray(data.rooms)
-                ? data.rooms
-                : [];
-
-            state.chatRoomsLoaded = true;
-
-            const openCount = state.chatRooms.filter(
-                isChatRoomOpen
-            ).length;
-
-            if (elements.chatOpenCount) {
-                elements.chatOpenCount.textContent =
-                    formatArabicDigits(openCount);
-
-                elements.chatOpenCount.hidden =
-                    openCount === 0;
-            }
-
-            if (state.selectedChatRoom) {
-                const selectedId = String(
-                    getChatRoomId(state.selectedChatRoom)
-                );
-
-                const updatedRoom = state.chatRooms.find(room =>
-                    String(getChatRoomId(room)) === selectedId
-                );
-
-                if (updatedRoom) {
-                    state.selectedChatRoom = updatedRoom;
-                } else {
-                    state.selectedChatRoom = null;
-                    state.chatMessages = [];
-                }
-            }
-
+        if (state.chatRoomsLoaded && options.force !== true) {
             renderStudentChatRooms();
             renderSelectedStudentChatRoom();
-
-        } catch (error) {
-            console.error(
-                "STUDENT CHAT ROOMS ERROR:",
-                error
-            );
-
-            const hasPreviousRooms =
-                state.chatRooms.length > 0;
-
-            state.chatRoomsLoaded = false;
-
-            if (!hasPreviousRooms) {
-                showError(elements.chatRoomsList, error.message);
-            } else {
-                renderStudentChatRooms();
-            }
-
-            setChatFormMessage(
-                error.message || "تعذر تحديث غرف الأسئلة."
-            );
-
-        } finally {
-            state.chatLoading = false;
-            state.chatRoomsPromise = null;
-
-            if (elements.chatRefreshButton) {
-                elements.chatRefreshButton.disabled = false;
-            }
+            return;
         }
-    })();
 
-    return state.chatRoomsPromise;
-}
+        state.chatLoading = true;
 
+        if (elements.chatRefreshButton) {
+            elements.chatRefreshButton.disabled = true;
+        }
 
-    async function selectStudentChatRoom(roomId) {
+        if (
+            options.showLoading !== false &&
+            !state.chatRoomsLoaded
+        ) {
+            elements.chatRoomsList.innerHTML =
+                `<div class="loading-state">جارٍ تحميل غرف الأسئلة...</div>`;
+        }
+
+        state.chatRoomsPromise = (async () => {
+            try {
+                const data = await callStudentChatHandler(
+                    "student_list_rooms"
+                );
+
+                state.chatRooms = Array.isArray(data.rooms)
+                    ? data.rooms
+                    : [];
+
+                state.chatRoomsLoaded = true;
+
+                const openCount = state.chatRooms.filter(
+                    isChatRoomOpen
+                ).length;
+
+                if (elements.chatOpenCount) {
+                    elements.chatOpenCount.textContent =
+                        formatArabicDigits(openCount);
+
+                    elements.chatOpenCount.hidden =
+                        openCount === 0;
+                }
+
+                if (state.selectedChatRoom) {
+                    const selectedId = String(
+                        getChatRoomId(state.selectedChatRoom)
+                    );
+
+                    const updatedRoom = state.chatRooms.find(room =>
+                        String(getChatRoomId(room)) === selectedId
+                    );
+
+                    if (updatedRoom) {
+                        state.selectedChatRoom = updatedRoom;
+                    } else {
+                        state.selectedChatRoom = null;
+                        state.chatMessages = [];
+                    }
+                }
+
+                renderStudentChatRooms();
+                renderSelectedStudentChatRoom();
+
+            } catch (error) {
+                console.error(
+                    "STUDENT CHAT ROOMS ERROR:",
+                    error
+                );
+
+                const hasPreviousRooms =
+                    state.chatRooms.length > 0;
+
+                state.chatRoomsLoaded = false;
+
+                if (!hasPreviousRooms) {
+                    showError(elements.chatRoomsList, error.message);
+                } else {
+                    renderStudentChatRooms();
+                }
+
+                setChatFormMessage(
+                    error.message || "تعذر تحديث غرف الأسئلة."
+                );
+
+            } finally {
+                state.chatLoading = false;
+                state.chatRoomsPromise = null;
+
+                if (elements.chatRefreshButton) {
+                    elements.chatRefreshButton.disabled = false;
+                }
+            }
+        })();
+
+        return state.chatRoomsPromise;
+    }
+        async function selectStudentChatRoom(roomId) {
         const room = state.chatRooms.find(item =>
             String(getChatRoomId(item)) === String(roomId)
         );
@@ -2226,8 +1937,20 @@ async function loadStudentChatRooms(options = {}) {
         }
     }
 
+    /*
+     * تفعيل تنسيقات غرفة الأسئلة عند فتح التبويب فقط.
+     * قواعد التنسيق الفعلية موجودة في css/timetable.css.
+     */
+    function injectStudentChatStyles() {
+        const chatView = $("chatView");
+
+        if (!chatView) return;
+
+        chatView.classList.add("student-chat-ready");
+    }
+
     function bindStudentChatEvents() {
-        // لا يتم حقن تنسيقات المحادثات هنا؛ تؤجل حتى فتح التبويب.
+        // لا يتم تفعيل تنسيقات المحادثات هنا؛ تؤجل حتى فتح التبويب.
 
         elements.chatRoomsList?.addEventListener("click", event => {
             const button = event.target.closest(

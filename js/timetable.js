@@ -117,7 +117,7 @@
 
         const [hourString, minute] = time.split(":");
         const hour = Number(hourString);
-        const period = hour < 12 ? "صباحاً" : "مساءً";
+        const period = hour < 12 ? "ص" : "م";
         const displayHour = hour % 12 || 12;
 
         return `${formatArabicDigits(displayHour)}:${formatArabicDigits(minute)} ${period}`;
